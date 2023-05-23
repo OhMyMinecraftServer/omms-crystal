@@ -28,7 +28,24 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-    - name: Build with Gradle
-      uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
+    - name: Read Properties mod info
+      id: read_version
+      uses: christian-draeger/read-properties@1.1.1
       with:
-        arguments: shadowJar
+        path: gradle.properties
+        properties: 'version'
+    - name: Make Gradle Wrapper Executable
+      run: chmod +x gradlew
+    - name: Get commit sha
+      id: get_commit_sha
+      run: |
+        short_sha=$(echo ${GITHUB_SHA} | cut -c1-7)
+        echo "short_sha=$short_sha" >> $GITHUB_OUTPUT
+    - name: Build with Gradle
+      run: ./gradlew shadowJar
+    - name: Upload assets to GitHub Action
+      uses: actions/upload-artifact@v3
+      with:
+        name: omms-crystal-${{ steps.read_version.outputs.version }}-${{ steps.get_commit_sha.outputs.short_sha }}
+        path: |
+          build/libs/*.jar

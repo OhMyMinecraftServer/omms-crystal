@@ -9,7 +9,7 @@ plugins {
 
 
 group = "net.zhuruoling.omms"
-version = "0.1.0-SNAPSHOT"
+version = properties["version"]!!
 
 repositories {
     mavenCentral()
