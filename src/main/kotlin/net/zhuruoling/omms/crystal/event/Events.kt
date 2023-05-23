@@ -3,7 +3,6 @@ package net.zhuruoling.omms.crystal.event
 import net.zhuruoling.omms.crystal.main.SharedConstants
 import net.zhuruoling.omms.crystal.parser.Info
 import net.zhuruoling.omms.crystal.plugin.PluginInstance
-import net.zhuruoling.omms.crystal.plugin.CrystalInterface
 
 
 //base
@@ -126,27 +125,27 @@ class PlayerLeftEventArgs(val player: String) : EventArgs() {
 
 
 //plugin
-class PluginLoadEvent(override val pluginId: String) : PluginEvent("crystal.plugin.load", pluginId, 10)
-class PluginLoadEventArgs(
-    val pluginId: String,
-    val crystalInterface: CrystalInterface,
-    val pluginInstance: PluginInstance
-) : EventArgs() {
-    override fun toString(): String {
-        return "PluginLoadEventArgs(pluginId='$pluginId', serverInterface=$crystalInterface, pluginInstance=$pluginInstance)"
-    }
-}
+//class PluginLoadEvent(override val pluginId: String) : PluginEvent("crystal.plugin.load", pluginId, 10)
+//class PluginLoadEventArgs(
+//    val pluginId: String,
+//    val crystalInterface: CrystalInterface,
+//    val pluginInstance: PluginInstance
+//) : EventArgs() {
+//    override fun toString(): String {
+//        return "PluginLoadEventArgs(pluginId='$pluginId', serverInterface=$crystalInterface, pluginInstance=$pluginInstance)"
+//    }
+//}
 
-class PluginUnloadEvent(override val pluginId: String) : PluginEvent("crystal.plugin.unload", pluginId, 10)
-class PluginUnloadEventArgs(
-    val pluginId: String,
-    val crystalInterface: CrystalInterface,
-    val pluginInstance: PluginInstance
-) : EventArgs() {
-    override fun toString(): String {
-        return "PluginUnloadEventArgs(pluginId='$pluginId', serverInterface=$crystalInterface, pluginInstance=$pluginInstance)"
-    }
-}
+//class PluginUnloadEvent(override val pluginId: String) : PluginEvent("crystal.plugin.unload", pluginId, 10)
+//class PluginUnloadEventArgs(
+//    val pluginId: String,
+//    val crystalInterface: CrystalInterface,
+//    val pluginInstance: PluginInstance
+//) : EventArgs() {
+//    override fun toString(): String {
+//        return "PluginUnloadEventArgs(pluginId='$pluginId', serverInterface=$crystalInterface, pluginInstance=$pluginInstance)"
+//    }
+//}
 
 class PluginCustomEvent(pluginId: String, override val id: String) : PluginEvent(id, pluginId, 10)
 class PluginCustomEventArgs : EventArgs() {

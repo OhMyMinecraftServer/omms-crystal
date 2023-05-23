@@ -9,7 +9,7 @@ plugins {
 
 
 group = "net.zhuruoling.omms"
-version = "0.0.1-SNAPSHOT"
+version = "0.1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -20,9 +20,6 @@ tasks{
         archiveClassifier.set("full")
     }
 }
-
-
-
 
 dependencies {
     implementation("com.google.code.gson:gson:2.10")
