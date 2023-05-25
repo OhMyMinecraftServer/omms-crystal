@@ -191,6 +191,10 @@ fun registerEvents() {
     }
 }
 
+fun addEvent(id: String, event: Event){
+    eventMap[id] = event
+}
+
 fun getEventById(id: String): Event {
     if (eventMap.containsKey(id)) {
         return eventMap[id]!!
