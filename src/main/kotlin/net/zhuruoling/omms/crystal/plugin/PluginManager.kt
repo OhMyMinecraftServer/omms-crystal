@@ -18,46 +18,9 @@ private lateinit var pluginClassLoader: URLClassLoader
 private val pluginFileUrlList = mutableListOf<URL>()
 
 object PluginManager : Manager<String, PluginInstance>(
-    beforeInit = { pluginClassLoader = URLClassLoader.newInstance(pluginFileUrlList.toTypedArray()) },
+    beforeInit = { pluginClassLoader = URLClassLoader(pluginFileUrlList.toTypedArray()) },
     afterInit = {
-        val dependencies = mutableListOf<PluginDependency>()
-        dependencies += PluginDependency(ModuleDescriptor.Version.parse(BuildProperties["version"]!!), BuildProperties["applicationName"]!!)
-        map.forEach {
-            dependencies += PluginDependency(ModuleDescriptor.Version.parse(it.value.metadata.version), it.key)
-        }
-        val unsatisfied = mutableMapOf<PluginMetadata, List<PluginDependencyRequirement>>()
-        map.forEach {
-            unsatisfied += it.value.metadata to it.value.checkPluginDependencyRequirements(dependencies)
-        }
-        if (unsatisfied.isNotEmpty()) {
-            val dependencyMap = mutableMapOf<String, String>()
-            dependencies.forEach {
-                dependencyMap += it.id to it.version.toString()
-            }
-            val builder = StringBuilder()
-            builder.append("Incompatible plugin set.\n")
-            builder.append("Unmet dependency listing:\n")
-            unsatisfied.forEach {
-                it.value.forEach { requirement ->
-                    builder.append(
-                        "\t${it.key.id} ${it.key.version} requires ${requirement.id} ${requirement.requirement}, ${if (requirement.id !in dependencyMap) "which is missing!" else "but only the wrong version are present: ${dependencyMap[requirement.id]}!"}\n"
-                    )
-                }
-            }
-            builder.append("A potential solution has been determined:\n")
-            unsatisfied.forEach { entry ->
-                entry.value.forEach {
-                    builder.append(
-                        if (it.id !in dependencyMap)
-                            "\tInstall ${it.id} ${it.requirement}."
-                        else
-                            "\tReplace ${it.id} ${dependencyMap[it.id]} with ${it.id} ${it.requirement}"
-                    )
-                    builder.append("\n")
-                }
-            }
-            throw PluginException(builder.toString())
-        }
+        checkRequirements()
         map.forEach { entry ->
             entry.value.eventListeners.forEach {
                 SharedConstants.eventDispatcher.registerHandler(it.first, it.second)
@@ -75,7 +38,7 @@ object PluginManager : Manager<String, PluginInstance>(
     },
     scanFolder = "plugins",
     initializer = {
-        PluginInstance(pluginClassLoader, joinFilePaths("plugins", it)).run {
+        PluginInstance(pluginClassLoader, it).run {
             loadPluginMetadata()
             loadPluginClasses()
             metadata.id!! to this
@@ -88,5 +51,50 @@ object PluginManager : Manager<String, PluginInstance>(
         this.map.forEach { entry ->
             entry.value.onInitialize()
         }
+    }
+}
+
+private fun Manager<String, PluginInstance>.checkRequirements() {
+    val dependencies = mutableListOf<PluginDependency>()
+    dependencies += PluginDependency(
+        ModuleDescriptor.Version.parse(BuildProperties["version"]!!),
+        BuildProperties["applicationName"]!!
+    )
+    map.forEach {
+        dependencies += PluginDependency(ModuleDescriptor.Version.parse(it.value.metadata.version), it.key)
+    }
+    val unsatisfied = mutableMapOf<PluginMetadata, List<PluginDependencyRequirement>>()
+    map.forEach {
+        unsatisfied += it.value.metadata to it.value.checkPluginDependencyRequirements(dependencies)
+    }
+    if (unsatisfied.any { it.value.isNotEmpty() }) {
+        println("not empty")
+        val dependencyMap = mutableMapOf<String, String>()
+        dependencies.forEach {
+            dependencyMap += it.id to it.version.toString()
+        }
+        val builder = StringBuilder()
+        builder.append("Incompatible plugin set.\n")
+        builder.append("Unmet dependency listing:\n")
+        unsatisfied.forEach {
+            it.value.forEach { requirement ->
+                builder.append(
+                    "\t${it.key.id} ${it.key.version} requires ${requirement.id} ${requirement.requirement}, ${if (requirement.id !in dependencyMap) "which is missing!" else "but only the wrong version are present: ${dependencyMap[requirement.id]}!"}\n"
+                )
+            }
+        }
+        builder.append("A potential solution has been determined:\n")
+        unsatisfied.forEach { entry ->
+            entry.value.forEach {
+                builder.append(
+                    if (it.id !in dependencyMap)
+                        "\tInstall ${it.id} ${it.requirement}."
+                    else
+                        "\tReplace ${it.id} ${dependencyMap[it.id]} with ${it.id} ${it.requirement}"
+                )
+                builder.append("\n")
+            }
+        }
+        throw PluginException(builder.toString())
     }
 }

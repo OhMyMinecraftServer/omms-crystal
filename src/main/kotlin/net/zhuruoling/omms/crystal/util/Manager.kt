@@ -12,7 +12,7 @@ open class Manager<T, K>(
     private val fileNameFilter: (String) -> Boolean,
     private val beforeInit: (Manager<T, K>.() -> Unit) = {},
     private val initializer: (String) -> Pair<T, K>,
-    private val afterInit: (Manager<T, K>.() -> Unit)?
+    private val afterInit: (Manager<T, K>.() -> Unit) = {}
 ) {
     val map: MutableMap<T, K> = mutableMapOf()
     private val fileList = mutableListOf<String>()
@@ -25,12 +25,12 @@ open class Manager<T, K>(
         if (!folder.isDirectory || !folder.exists()) {
             Files.createDirectories(folder.toPath())
         }
-        val files = (Files.list(Path.of(joinFilePaths(scanFolder)))).filter { fileNameFilter(it.name) }
+        val files = (Files.list(Path.of(joinFilePaths(scanFolder)))).filter { fileNameFilter(it.name) }.toList()
         beforeInit()
         files.forEach {
             val pair = initializer(it.absolutePathString())
             map[pair.first] = pair.second
         }
-        afterInit?.invoke(this)
+        afterInit(this)
     }
 }

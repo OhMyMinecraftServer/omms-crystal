@@ -3,6 +3,7 @@ package net.zhuruoling.omms.crystal.server
 
 import net.zhuruoling.omms.crystal.config.Config
 import net.zhuruoling.omms.crystal.event.*
+import net.zhuruoling.omms.crystal.main.DebugOptions
 import net.zhuruoling.omms.crystal.main.SharedConstants
 import net.zhuruoling.omms.crystal.main.SharedConstants.serverController
 import net.zhuruoling.omms.crystal.parser.ParserManager
@@ -17,10 +18,14 @@ import java.io.OutputStream
 import java.nio.charset.Charset
 import java.util.ConcurrentModificationException
 import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.ConcurrentLinkedQueue
+
+var serverStatus = ServerStatus.STOPPED
 
 enum class LaunchParameter
+
+enum class ServerStatus{
+    STOPPED, RUNNING, STOPPING,STARTING
+}
 
 class ServerController(
     private val launchCommand: String,
@@ -61,7 +66,7 @@ class ServerController(
                     synchronized(queue) {
                         while (queue.isNotEmpty()) {
                             val line = queue.poll()
-                            logger.info("Handling input $line")
+                            if (DebugOptions.serverDebug()) logger.info("[DEBUG] Handling input $line")
                             writer.write(line + "\n")
                             writer.flush()
                         }

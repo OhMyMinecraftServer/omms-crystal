@@ -19,6 +19,10 @@ class PluginDependencyRequirement {
         private set
 
     fun parseRequirement() {
+        if (requirement == "*") {
+            symbol = "*"
+            return
+        }
         val matcher = versionNamePattern.matcher(requirement)
         check(matcher.matches()) { "Unexpected value: $requirement" }
         val match = matcher.toMatchResult()

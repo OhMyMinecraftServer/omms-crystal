@@ -13,6 +13,8 @@ import net.zhuruoling.omms.crystal.main.SharedConstants.serverController
 import net.zhuruoling.omms.crystal.permission.PermissionManager
 import net.zhuruoling.omms.crystal.plugin.PluginManager
 import net.zhuruoling.omms.crystal.server.ServerController
+import net.zhuruoling.omms.crystal.server.ServerStatus
+import net.zhuruoling.omms.crystal.server.serverStatus
 import net.zhuruoling.omms.crystal.text.Color
 import net.zhuruoling.omms.crystal.text.Text
 import net.zhuruoling.omms.crystal.text.TextGroup
@@ -53,6 +55,7 @@ fun init() {
             it as ServerStoppedEventArgs
             logger.info("Server exited with return value ${it.retValue} (who=${it.who})")
             serverController = null
+            serverStatus = ServerStatus.STOPPED
             if (it.who == "crystal") {
                 logger.info("Bye.")
                 exit()
@@ -64,6 +67,7 @@ fun init() {
                 logger.warn("Server is not running!")
             } else {
                 serverController!!.stopServer(who = it.id, force = it.force)
+                serverStatus = ServerStatus.STOPPING
             }
         }
         registerHandler(ServerStartEvent) {
@@ -72,12 +76,14 @@ fun init() {
                 logger.warn("Server already running!")
             }
             logger.info("Starting server using command ${args.startupCmd} at dir: ${args.workingDir}")
+
             serverController =
                 ServerController(args.startupCmd, args.workingDir)
             serverController!!.start()
         }
         registerHandler(ServerStartingEvent) {
             it as ServerStartingEventArgs
+            serverStatus = ServerStatus.STARTING
             logger.info("Server is running at pid ${it.pid}")
         }
         registerHandler(PlayerJoinEvent) {
@@ -86,34 +92,43 @@ fun init() {
                 PermissionManager.setPermission(it.player)
             }
         }
-        registerHandler(PlayerInfoEvent){
+        registerHandler(ServerStartedEvent) {
+            it as ServerStartedEventArgs
+            serverStatus = ServerStatus.RUNNING
+        }
+        registerHandler(PlayerInfoEvent) {
             it as PlayerInfoEventArgs
-            if (it.content.startsWith(Config.commandPrefix)){
-                val commandSourceStack = CommandSourceStack(CommandSource.PLAYER, it.player, PermissionManager.getPermission(it.player))
+            if (it.content.startsWith(Config.commandPrefix)) {
+                val commandSourceStack =
+                    CommandSourceStack(CommandSource.PLAYER, it.player, PermissionManager.getPermission(it.player))
                 try {
-                    CommandManager.execute(it.content,commandSourceStack)
-                }catch (e:CommandSyntaxException){
+                    CommandManager.execute(it.content, commandSourceStack)
+                } catch (e: CommandSyntaxException) {
                     //e.printStackTrace()
-                    commandSourceStack.sendFeedback(TextGroup(
-                        Text("Incomplete or invalid command, see errors below:\n").withColor(Color.red),
-                        Text(e.message!!).withColor(Color.red)
-                    ))
-                }
-                catch (e:Exception){
-                    e.printStackTrace()
-                    commandSourceStack.sendFeedback(TextGroup(
-                        Text("Unexpected error occurred while executing command.:\n").withColor(Color.red),
-                        Text(e.message!!).withColor(Color.red)
-                    ))
+                    commandSourceStack.sendFeedback(
+                        Text("Incomplete or invalid command${if (e.message != null) ", see errors below:" else ""}\n").withColor(
+                            Color.red
+                        )
+                    )
+                    if (e.message != null) {
+                        commandSourceStack.sendFeedback(Text(e.message!!).withColor(Color.red))
+                    }
+                } catch (e: Exception) {
+                    logger.error("An exception was thrown while processing command.",e)
+                    commandSourceStack.sendFeedback(
+                        TextGroup(
+                            Text("Unexpected error occurred while executing command:\n").withColor(Color.red),
+                            Text(e.message!!).withColor(Color.red)
+                        )
+                    )
                 }
             }
         }
-        registerHandler(ServerConsoleInputEvent){
+        registerHandler(ServerConsoleInputEvent) {
             it as ServerConsoleInputEventArgs
-            if(serverController != null){
+            if (serverController != null) {
                 serverController!!.input(it.content)
-            }
-            else{
+            } else {
                 logger.warn("Server is NOT running!")
             }
         }
@@ -124,7 +139,7 @@ fun main(args: Array<String>) {
     println("Starting net.zhuruoling.omms.crystal.main.MainKt.main()")
     Runtime.getRuntime().run {
         val thread = thread(name = "ShutdownThread\$Finalize", start = false) {
-            if (serverController != null){
+            if (serverController != null) {
                 println("Stopping server because jvm is shutting down.")
                 serverController!!.stopServer(true)
             }
@@ -164,7 +179,7 @@ fun main(args: Array<String>) {
     PluginManager.loadAll()
     PermissionManager.init()
     consoleHandler.reload()
-    if (args.contains("--noserver")){
+    if (args.contains("--noserver")) {
         Thread.sleep(1500)
         exit()
         exitProcess(0)

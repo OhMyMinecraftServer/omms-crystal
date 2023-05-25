@@ -76,26 +76,29 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
                 metadata.pluginEventHandlers!!.forEach {
                     try {
                         classes += urlClassLoader.loadClass(it)
+
                     } catch (e: ClassNotFoundException) {
                         throw PluginException("Cannot load event handler class $it", e)
                     }
                 }
-                val methods = mutableMapOf<String, Method>()
                 classes.map {
-                    Arrays.stream(it.declaredMethods)
-                        .filter { it3 -> it3.annotations.any { it2 -> it2 is EventHandler } }
-                        .map { it2 -> it2.getAnnotation(EventHandler::class.java).run { this.event to it2 } }
-                        .toList()
-                }.map { mutableMapOf<String, Method>().run { this += it;this } }.forEach { methods += it }
-                methods.forEach { (s, m) ->
-                    try {
-                        m.isAccessible = true
-                        val event = getEventById(s)
-                        eventListeners += event to { args -> m.invoke(null, args) }
-                    } catch (e: IllegalArgumentException) {
-                        throw PluginException("Cannot transform method ${m.toGenericString()} into EventHandler")
-                    } catch (e: Exception) {
-                        throw PluginException("", e)
+                    it.getDeclaredConstructor().run { isAccessible = true;this }.newInstance() to
+                            Arrays.stream(it.declaredMethods)
+                                .filter { it3 -> it3.annotations.any { it2 -> it2 is EventHandler } }
+                                .map { it2 -> it2.getAnnotation(EventHandler::class.java).run { this.event to it2 } }
+                                .toList()
+
+                }.forEach { p ->
+                    p.second.forEach { (s, m) ->
+                        try {
+                            m.isAccessible = true
+                            val event = getEventById(s)
+                            eventListeners += event to { args -> m.invoke(p.first, args) }
+                        } catch (e: IllegalArgumentException) {
+                            throw PluginException("Cannot transform method ${m.toGenericString()} into EventHandler", e)
+                        } catch (e: Exception) {
+                            throw PluginException("", e)
+                        }
                     }
                 }
             }
@@ -105,13 +108,13 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
                 try {
                     val clazz = urlClassLoader.loadClass(it.value)
                     val instance = clazz.getConstructor().newInstance()
-                    if (instance !is MinecraftParser){
+                    if (instance !is MinecraftParser) {
                         throw PluginException("Plugin declared Minecraft parser class is not derived from MinecraftParser.")
                     }
                     pluginParsers += it.key to instance
                 } catch (e: ClassNotFoundException) {
                     throw PluginException("Cannot load class ${it.value},", e)
-                }catch (e: NoSuchMethodException){
+                } catch (e: NoSuchMethodException) {
                     throw PluginException("Cannot load class ${it.value},", e)
                 }
             }
