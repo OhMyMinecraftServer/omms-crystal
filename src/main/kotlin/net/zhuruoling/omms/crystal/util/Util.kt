@@ -23,7 +23,7 @@ import java.util.function.Consumer
 
 
 const val PRODUCT_NAME = "Oh My Minecraft Server Crystal"
-
+const val VERSION = "0.1.0"
 fun getWorkingDir(): String {
     val directory = File("")
     return directory.absolutePath

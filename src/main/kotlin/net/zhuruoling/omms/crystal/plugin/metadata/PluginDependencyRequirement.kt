@@ -1,6 +1,7 @@
 package net.zhuruoling.omms.crystal.plugin.metadata
 
 import com.google.gson.annotations.SerializedName
+import net.zhuruoling.omms.crystal.plugin.pluginRequirementMatches
 import net.zhuruoling.omms.crystal.plugin.versionNamePattern
 import java.lang.module.ModuleDescriptor
 
@@ -26,6 +27,6 @@ class PluginDependencyRequirement {
     }
 
     fun requirementMatches(dependency: PluginDependency): Boolean {
-        return requirementMatches(this, dependency)
+        return pluginRequirementMatches(this, dependency)
     }
 }

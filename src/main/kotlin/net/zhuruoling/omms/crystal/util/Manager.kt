@@ -10,9 +10,9 @@ import kotlin.io.path.name
 open class Manager<T, K>(
     private val scanFolder: String,
     private val fileNameFilter: (String) -> Boolean,
-    private val beforeInit: (() -> Unit) = {},
+    private val beforeInit: (Manager<T, K>.() -> Unit) = {},
     private val initializer: (String) -> Pair<T, K>,
-    private val afterInit: ((Manager<T, K>) -> Unit)?
+    private val afterInit: (Manager<T, K>.() -> Unit)?
 ) {
     val map: MutableMap<T, K> = mutableMapOf()
     private val fileList = mutableListOf<String>()
@@ -28,13 +28,8 @@ open class Manager<T, K>(
         val files = (Files.list(Path.of(joinFilePaths(scanFolder)))).filter { fileNameFilter(it.name) }
         beforeInit()
         files.forEach {
-            try {
-                val pair = initializer(it.absolutePathString())
-                map[pair.first] = pair.second
-            } catch (e: Exception) {
-                logger.error("Cannot execute `initializer` because an exception occurred.")
-                e.printStackTrace()
-            }
+            val pair = initializer(it.absolutePathString())
+            map[pair.first] = pair.second
         }
         afterInit?.invoke(this)
     }
