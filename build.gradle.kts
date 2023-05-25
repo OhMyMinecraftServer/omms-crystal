@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toUpperCaseAsciiOnly
 
 plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
@@ -20,7 +21,6 @@ tasks{
         archiveClassifier.set("full")
     }
 }
-
 dependencies {
     implementation("com.google.code.gson:gson:2.10")
     implementation("org.slf4j:slf4j-api:2.0.3")
@@ -49,3 +49,28 @@ tasks.withType<KotlinCompile> {
 application {
     mainClass.set("net.zhuruoling.omms.crystal.main.MainKt")
 }
+
+fun generateProperties(){
+    val propertiesFile = file("./src/main/resources/build.properties")
+    if (propertiesFile.exists()) {
+        propertiesFile.delete()
+    }
+    propertiesFile.createNewFile()
+    val m = mutableMapOf<String, String>()
+    propertiesFile.printWriter().use {writer ->
+        properties.forEach {
+            val str = it.value.toString()
+            if ("@" in str || "(" in str || ")" in str || "extension" in str || "null" == str || "\'" in str || "\\" in str || "/" in str)return@forEach
+            if ("PROJECT" in str.toUpperCaseAsciiOnly() || "PROJECT" in it.key.toUpperCaseAsciiOnly() || " " in str)return@forEach
+            if ("GRADLE" in it.key.toUpperCaseAsciiOnly() || "GRADLE" in str.toUpperCaseAsciiOnly() || "PROP" in it.key.toUpperCaseAsciiOnly())return@forEach
+            if("." in it.key || "TEST" in it.key.toUpperCaseAsciiOnly())return@forEach
+            m += it.key to str
+        }
+
+        m.toSortedMap().forEach{
+            writer.println("${it.key} = ${it.value}")
+        }
+    }
+}
+
+generateProperties()

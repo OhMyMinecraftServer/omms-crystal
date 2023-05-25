@@ -1,14 +1,8 @@
 package net.zhuruoling.omms.crystal.main
 
+import net.zhuruoling.omms.crystal.util.BuildProperties
+
 
 fun main() {
-   Foo::class.java.methods.forEach {
-       println(it.toGenericString())
-   }
-}
-
-class Foo{
-    fun method(){
-
-    }
+   println(BuildProperties.map.toString())
 }

@@ -5,6 +5,7 @@ import net.zhuruoling.omms.crystal.parser.ParserManager
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependency
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependencyRequirement
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginMetadata
+import net.zhuruoling.omms.crystal.util.BuildProperties
 import net.zhuruoling.omms.crystal.util.Manager
 import net.zhuruoling.omms.crystal.util.VERSION
 import net.zhuruoling.omms.crystal.util.joinFilePaths
@@ -20,7 +21,7 @@ object PluginManager : Manager<String, PluginInstance>(
     beforeInit = { pluginClassLoader = URLClassLoader.newInstance(pluginFileUrlList.toTypedArray()) },
     afterInit = {
         val dependencies = mutableListOf<PluginDependency>()
-        dependencies += PluginDependency(ModuleDescriptor.Version.parse(VERSION), "omms-crystal")
+        dependencies += PluginDependency(ModuleDescriptor.Version.parse(BuildProperties["version"]!!), BuildProperties["applicationName"]!!)
         map.forEach {
             dependencies += PluginDependency(ModuleDescriptor.Version.parse(it.value.metadata.version), it.key)
         }

@@ -16,6 +16,7 @@ import net.zhuruoling.omms.crystal.server.ServerController
 import net.zhuruoling.omms.crystal.text.Color
 import net.zhuruoling.omms.crystal.text.Text
 import net.zhuruoling.omms.crystal.text.TextGroup
+import net.zhuruoling.omms.crystal.util.BuildProperties
 import net.zhuruoling.omms.crystal.util.PRODUCT_NAME
 import net.zhuruoling.omms.crystal.util.createLogger
 import net.zhuruoling.omms.crystal.util.joinFilePaths
@@ -137,15 +138,7 @@ fun main(args: Array<String>) {
     logger.info("Hello World!")
     val os = ManagementFactory.getOperatingSystemMXBean()
     val runtime = ManagementFactory.getRuntimeMXBean()
-    logger.info(
-        String.format(
-            "$PRODUCT_NAME is running on %s %s %s at pid %d",
-            os.name,
-            os.arch,
-            os.version,
-            runtime.pid
-        )
-    )
+    logger.info("$PRODUCT_NAME ${BuildProperties["version"]} is running on ${os.name} ${os.arch} ${os.version} at pid ${runtime.pid}")
     if (Config.load()) {
         logger.warn("First startup detected.")
         logger.warn("You may fill the config file to continue.")
