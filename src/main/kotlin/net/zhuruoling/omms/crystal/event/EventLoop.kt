@@ -3,9 +3,7 @@ package net.zhuruoling.omms.crystal.event
 import net.zhuruoling.omms.crystal.main.DebugOptions
 import net.zhuruoling.omms.crystal.main.SharedConstants
 import net.zhuruoling.omms.crystal.util.createLogger
-import org.slf4j.LoggerFactory
 import java.util.concurrent.PriorityBlockingQueue
-import java.util.concurrent.atomic.AtomicInteger
 
 typealias EventHandler = ((EventArgs) -> Unit)
 

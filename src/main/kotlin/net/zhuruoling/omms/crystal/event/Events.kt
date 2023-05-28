@@ -191,7 +191,7 @@ fun registerEvents() {
     }
 }
 
-fun addEvent(id: String, event: Event){
+fun addEvent(id: String, event: Event) {
     eventMap[id] = event
 }
 

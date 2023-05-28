@@ -17,6 +17,7 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
     val feedbackText = mutableListOf<String>()
 
     fun sendFeedback(text: TextGroup) {
+
         when (from) {
             CommandSource.PLAYER -> {
                 assert(SharedConstants.serverController != null)

