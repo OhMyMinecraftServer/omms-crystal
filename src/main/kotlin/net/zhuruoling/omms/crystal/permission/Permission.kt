@@ -143,6 +143,6 @@ fun toIntegerPermissionLevel(permission: Permission): Int = when (permission) {
 }
 
 
-fun reslovePermissionLevel(name: String): Permission {
+fun resolvePermissionLevel(name: String): Permission {
     return Permission.valueOf(name.uppercase(Locale.getDefault()))
 }

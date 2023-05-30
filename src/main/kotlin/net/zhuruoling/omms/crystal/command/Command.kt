@@ -15,7 +15,7 @@ import net.zhuruoling.omms.crystal.main.SharedConstants
 import net.zhuruoling.omms.crystal.permission.Permission
 import net.zhuruoling.omms.crystal.permission.PermissionManager
 import net.zhuruoling.omms.crystal.permission.comparePermission
-import net.zhuruoling.omms.crystal.permission.reslovePermissionLevel
+import net.zhuruoling.omms.crystal.permission.resolvePermissionLevel
 import net.zhuruoling.omms.crystal.text.Color
 import net.zhuruoling.omms.crystal.text.Text
 import net.zhuruoling.omms.crystal.text.TextGroup
@@ -71,7 +71,7 @@ val permissionCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Conf
                 }.executes {
                     PermissionManager.setPermission(
                         getWord(it, "player"),
-                        reslovePermissionLevel(getWord(it, "permissionLevel"))
+                        resolvePermissionLevel(getWord(it, "permissionLevel"))
                     )
                     1
                 }

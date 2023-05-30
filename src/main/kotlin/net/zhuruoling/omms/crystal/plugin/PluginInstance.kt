@@ -8,6 +8,7 @@ import net.zhuruoling.omms.crystal.plugin.api.annotations.EventHandler
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependency
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependencyRequirement
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginMetadata
+import net.zhuruoling.omms.crystal.util.createLogger
 import java.io.File
 import java.io.IOException
 import java.lang.IllegalArgumentException
@@ -24,7 +25,7 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
     private lateinit var instance: PluginInitializer
     private var pluginState = PluginState.WAIT
     val eventListeners = mutableListOf<Pair<Event, (EventArgs) -> Unit>>()
-
+    private val logger = createLogger("PluginInstance")
     val pluginParsers = mutableMapOf<String, MinecraftParser>()
     fun loadPluginMetadata() {
         pluginState = PluginState.ERROR
@@ -93,7 +94,13 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
                         try {
                             m.isAccessible = true
                             val event = getEventById(s)
-                            eventListeners += event to { args -> m.invoke(p.first, args) }
+                            eventListeners += event to { args ->
+                                try{
+                                    m.invoke(p.first, args)
+                                }catch (e:Exception){
+                                    logger.error("Cannot invoke plugin(${metadata.id}) event listener ${m.toGenericString()}.", e)
+                                }
+                            }
                         } catch (e: IllegalArgumentException) {
                             throw PluginException("Cannot transform method ${m.toGenericString()} into EventHandler", e)
                         } catch (e: Exception) {

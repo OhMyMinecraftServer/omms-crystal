@@ -1,5 +1,8 @@
 package net.zhuruoling.omms.crystal.command
 
+import cn.hutool.core.date.DateTime
+import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 import net.zhuruoling.omms.crystal.main.SharedConstants
 import net.zhuruoling.omms.crystal.permission.Permission
 import net.zhuruoling.omms.crystal.text.Text
@@ -40,6 +43,26 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
                     logger.info(it.toRawString())
                 }
 
+            }
+        }
+    }
+
+    fun sendFeedback(text: TextComponent) {
+        when (from) {
+            CommandSource.PLAYER -> {
+                assert(SharedConstants.serverController != null)
+                SharedConstants.serverController!!.runCatching {
+                    this.input("tellraw $player ${GsonComponentSerializer.gson().serialize(text)}")
+                }
+                DateTime.of(0).toString("YYYY-MM-DD hh-mm-ss.SSS")
+            }
+
+            CommandSource.CENTRAL -> {
+                feedbackText.add(text.content())
+            }
+
+            else -> {
+                logger.info(text.content())
             }
         }
     }

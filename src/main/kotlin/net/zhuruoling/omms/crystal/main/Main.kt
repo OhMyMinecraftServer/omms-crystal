@@ -70,6 +70,10 @@ fun init() {
                 serverStatus = ServerStatus.STOPPING
             }
         }
+        registerHandler(ServerStartingEvent){
+            it as ServerStartingEventArgs
+            SharedConstants.serverVersion = it.version
+        }
         registerHandler(ServerStartEvent) {
             val args = (it as ServerStartEventArgs)
             if (serverController != null) {
@@ -170,19 +174,24 @@ fun main(args: Array<String>) {
         logger.info("\tServerType: ${Config.serverType}")
         logger.info("\tDebugOptions: $DebugOptions")
     }
-    eventDispatcher = EventDispatcher()
-    eventLoop = EventLoop()
-    eventLoop.start()
-    init()
-    ConfigManager.init()
-    PluginManager.init()
-    PluginManager.loadAll()
-    PermissionManager.init()
-    consoleHandler.reload()
-    if (args.contains("--noserver")) {
-        Thread.sleep(1500)
-        exit()
-        exitProcess(0)
+    try{
+        eventDispatcher = EventDispatcher()
+        eventLoop = EventLoop()
+        eventLoop.start()
+        init()
+        ConfigManager.init()
+        PluginManager.init()
+        PluginManager.loadAll()
+        PermissionManager.init()
+        consoleHandler.reload()
+        if (args.contains("--noserver")) {
+            Thread.sleep(1500)
+            exit()
+            exitProcess(0)
+        }
+        eventLoop.dispatch(ServerStartEvent, ServerStartEventArgs(Config.launchCommand, Config.serverWorkingDirectory))
+    }catch (e:Exception){
+        logger.error("Unexpected error occurred.",e)
+        exitProcess(1)
     }
-    eventLoop.dispatch(ServerStartEvent, ServerStartEventArgs(Config.launchCommand, Config.serverWorkingDirectory))
 }

@@ -21,6 +21,7 @@ tasks{
         archiveClassifier.set("full")
     }
 }
+
 dependencies {
     implementation("com.google.code.gson:gson:2.10")
     implementation("org.slf4j:slf4j-api:2.0.3")
@@ -30,11 +31,13 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.20")
     implementation("org.apache.groovy:groovy:4.0.2")
     implementation("org.jline:jline:3.21.0")
-    implementation("cn.hutool:hutool-all:5.8.10")
+    implementation("cn.hutool:hutool-all:5.8.11")
     implementation("commons-io:commons-io:2.11.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.22")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("com.alibaba.fastjson2:fastjson2:2.0.20.graal")
+    implementation("net.kyori:adventure-api:4.13.1")
+    implementation("net.kyori:adventure-text-serializer-gson:4.13.1")
     testImplementation(kotlin("test"))
 }
 

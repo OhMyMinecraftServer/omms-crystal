@@ -9,6 +9,7 @@ import net.zhuruoling.omms.crystal.event.EventHandler
 import net.zhuruoling.omms.crystal.event.EventLoop
 import net.zhuruoling.omms.crystal.parser.MinecraftParser
 import net.zhuruoling.omms.crystal.server.ServerController
+import java.lang.module.ModuleDescriptor.Version
 import java.lang.reflect.Method
 import java.util.*
 import kotlin.collections.HashMap
@@ -18,6 +19,7 @@ object SharedConstants {
     lateinit var eventDispatcher: EventDispatcher
     lateinit var eventLoop: EventLoop
     lateinit var consoleHandler: ConsoleHandler
+    lateinit var serverVersion: String
 
     val pluginRegisteredCommandTable: HashMap<String, ArrayList<LiteralArgumentBuilder<CommandSourceStack>>> = hashMapOf()
     val pluginRegisteredEventTable: HashMap<String, HashMap<String, Event>> = hashMapOf()
