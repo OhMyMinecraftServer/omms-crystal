@@ -194,6 +194,15 @@ val stopCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.com
         1
     }
 
+val executeCommand =
+    literal(Config.commandPrefix + "execute")
+        .requires { it.from == CommandSource.CONSOLE || it.from == CommandSource.CENTRAL }
+        .then(
+            literal("as").then(
+                wordArgument("player")//.
+            )
+        )
+
 val pluginCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.commandPrefix + "plugin")
 //    .then(literal("load").then(wordArgument("plugin").requires {
 //        if (it.from == CommandSource.PLAYER)

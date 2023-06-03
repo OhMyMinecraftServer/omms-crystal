@@ -7,6 +7,7 @@ abstract class MinecraftParser {
     abstract fun parseToBareInfo(raw: String): Info?
     abstract fun parseServerStartedInfo(raw: String): ServerStartedInfo?
     abstract fun parsePlayerInfo(raw: String): PlayerInfo?
+    abstract fun parseRconStartInfo(raw: String): RconInfo?
     abstract fun parseServerOverloadInfo(raw: String): ServerOverloadInfo?
     abstract fun parseServerStartingInfo(raw: String): ServerStartingInfo?
     abstract fun parsePlayerJoinInfo(raw: String): PlayerJoinInfo?

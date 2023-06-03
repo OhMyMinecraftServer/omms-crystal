@@ -15,6 +15,7 @@ version = properties["version"]!!
 repositories {
     mavenCentral()
     maven("https://libraries.minecraft.net")
+    maven("https://jitpack.io")
 }
 tasks{
     shadowJar {
@@ -38,6 +39,7 @@ dependencies {
     implementation("com.alibaba.fastjson2:fastjson2:2.0.20.graal")
     implementation("net.kyori:adventure-api:4.13.1")
     implementation("net.kyori:adventure-text-serializer-gson:4.13.1")
+    implementation("nl.vv32.rcon:rcon:1.2.0")
     testImplementation(kotlin("test"))
 }
 
@@ -50,7 +52,7 @@ tasks.withType<KotlinCompile> {
 }
 
 application {
-    mainClass.set("net.zhuruoling.omms.crystal.main.MainKt")
+    mainClass.set("net.zhuruoling.omms.crystal.main.FooKt")
 }
 
 fun generateProperties(){

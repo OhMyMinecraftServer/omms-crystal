@@ -16,6 +16,10 @@ data class PlayerJoinInfo(
     val player: String
 )
 
+data class RconInfo(
+    val port: Int
+)
+
 data class PlayerLeftInfo(
     val player: String
 )

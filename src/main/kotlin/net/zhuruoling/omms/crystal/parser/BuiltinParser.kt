@@ -33,6 +33,15 @@ open class BuiltinParser : MinecraftParser() {
         return PlayerInfo(player = player, content = content, isNotSecure = raw.contains("[Not Secure] "))
     }
 
+    private val regexRconInfo = Regex("RCON running on ([0-9.]+):([0-9]+)")
+
+    override fun parseRconStartInfo(raw: String): RconInfo? {
+        val matcher = regexRconInfo.toPattern().matcher(raw)
+        if (!matcher.matches()) return null
+        val rconPort = matcher.group(2)
+        return RconInfo(rconPort.toInt())
+    }
+
     private val regexServerOverload =
         Regex("Can't keep up! Is the server overloaded\\? Running ([0-9]*)ms or ([0-9]*) ticks behind")
 

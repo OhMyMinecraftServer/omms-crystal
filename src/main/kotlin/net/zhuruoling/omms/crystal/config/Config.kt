@@ -1,10 +1,15 @@
 package net.zhuruoling.omms.crystal.config
 
 import net.zhuruoling.omms.crystal.main.DebugOptions
+import net.zhuruoling.omms.crystal.server.ServerPropertiesAccess
+import net.zhuruoling.omms.crystal.util.createLogger
 import net.zhuruoling.omms.crystal.util.joinFilePaths
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.FileReader
 import java.io.FileWriter
+import java.lang.RuntimeException
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.text.SimpleDateFormat
 import java.util.*
@@ -23,6 +28,9 @@ val configContentBase: String
     #encoding used in parsing server output
     encoding=GBK
     commandPrefix=.
+    enableRcon=false
+    rconPort=25575
+    rconPassword=
     #debug options:
     #   N:None/Off
     #   A:All
@@ -34,6 +42,7 @@ val configContentBase: String
 """.trimIndent()
 
 object Config {
+    private val logger = createLogger("Config")
     var serverWorkingDirectory: String = "server"
     var launchCommand: String = ""
     var pluginDirectory = ""
@@ -41,7 +50,10 @@ object Config {
     var commandPrefix = "."
     var parserName = ""
     var encoding = "UTF-8"
-    fun load():Boolean {
+    var enableRcon = false
+    var rconPort = "25575"
+    var rconPassword = ""
+    fun load(): Boolean {
         var isInit = false
         val configPath = joinFilePaths("config.properties")
         if (!Files.exists(Path(configPath))) {
@@ -63,7 +75,33 @@ object Config {
         parserName = if (serverType == "vanilla") "builtin" else serverType
         encoding = properties["encoding"] as String
         DebugOptions.parse(properties["debugOptions"] as String)
+        enableRcon = (properties["enableRcon"] as String?).toBoolean()
+        val port = properties["rconPort"] as String? ?: ""
+        val password = properties["rconPassword"] as String? ?: ""
         reader.close()
+        if (enableRcon and (port.isBlank() || password.isBlank())) {
+            logger.error(
+                "Rcon is enabled and no ${
+                    if (port.isBlank() and password.isBlank())
+                        "rcon password or port"
+                    else
+                        if (password.isBlank())
+                            "password"
+                        else
+                            "port"
+                } provided!"
+            )
+            logger.info("Attempt to fill config with server.properties")
+            try{
+                val serverProperties = ServerPropertiesAccess.tryAccess()
+                enableRcon = (serverProperties["enable-rcon"] as String?).toBoolean()
+                rconPassword = serverProperties["rcon.password"] as String? ?: ""
+                rconPort = serverProperties["rcon.port"] as String? ?: "25575"
+            }catch (e:Exception){
+                throw RuntimeException("Bad config file, cannot fill config with detected environment.", e)
+            }
+        }
+
         return isInit
 
     }

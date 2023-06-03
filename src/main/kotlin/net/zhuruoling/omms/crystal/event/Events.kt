@@ -172,6 +172,28 @@ class ServerConsoleInputEventArgs(val content: String) : EventArgs() {
     }
 }
 
+object RconStartedEvent: Event("crystal.server.rcon.enable",1)
+
+class RconStartedEventArgs(val port: Int): EventArgs(){
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as RconStartedEventArgs
+
+        return port == other.port
+    }
+
+    override fun hashCode(): Int {
+        return port
+    }
+
+    override fun toString(): String {
+        return "RconStartedEventArgs(port=$port)"
+    }
+
+}
+
 val eventMap = hashMapOf<String, Event>()
 
 fun registerEvents() {
@@ -184,6 +206,7 @@ fun registerEvents() {
         this["crystal.server.stopping"] = ServerStoppingEvent
         this["crystal.server.stopped"] = ServerStoppedEvent
         this["crystal.server.overload"] = ServerOverloadEvent
+        this["crystal.server.rcon.enable"] = RconStartedEvent
         this["crystal.server.player.info"] = PlayerInfoEvent
         this["crystal.server.player.join"] = PlayerJoinEvent
         this["crystal.server.player.left"] = PlayerLeftEvent

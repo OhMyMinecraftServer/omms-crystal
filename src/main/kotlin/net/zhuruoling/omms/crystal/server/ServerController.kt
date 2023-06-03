@@ -173,6 +173,11 @@ class ServerOutputHandler(private val serverProcess: Process, vararg launchParam
             dispatchEvent(PlayerJoinEvent, PlayerJoinEventArgs(player = playerJoinInfo.player))
             return
         }
+        val rconInfo = parser.parseRconStartInfo(processedInfo)
+        if (rconInfo != null){
+            dispatchEvent(RconStartedEvent, RconStartedEventArgs(rconInfo.port))
+            return
+        }
         val playerInfo = parser.parsePlayerInfo(processedInfo)
         if (playerInfo != null) {
             dispatchEvent(

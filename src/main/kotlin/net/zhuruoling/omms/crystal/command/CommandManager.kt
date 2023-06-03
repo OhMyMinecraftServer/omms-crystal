@@ -6,42 +6,49 @@ import com.mojang.brigadier.tree.CommandNode
 import net.zhuruoling.omms.crystal.text.Color
 import net.zhuruoling.omms.crystal.text.Text
 import net.zhuruoling.omms.crystal.util.unregisterCommand
+import org.jline.reader.Completer
 import org.jline.reader.impl.completer.AggregateCompleter
 import org.jline.reader.impl.completer.ArgumentCompleter
 import org.jline.reader.impl.completer.NullCompleter
 import org.jline.reader.impl.completer.StringsCompleter
+import java.util.concurrent.atomic.AtomicInteger
 
 object CommandManager {
     private val dispatcher = CommandDispatcher<CommandSourceStack>()
 
-    fun register(node: LiteralArgumentBuilder<CommandSourceStack>){
+    fun register(node: LiteralArgumentBuilder<CommandSourceStack>) {
         dispatcher.register(node)
     }
 
-    fun unregister(node: LiteralArgumentBuilder<CommandSourceStack>){
+    fun unregister(node: LiteralArgumentBuilder<CommandSourceStack>) {
         unregisterCommand(node, dispatcher)
     }
 
-    fun execute(command:String, sourceStack: CommandSourceStack): Int {
-        val ret = dispatcher.execute(command,sourceStack)
+    fun execute(command: String, sourceStack: CommandSourceStack): Int {
+        val ret = dispatcher.execute(command, sourceStack)
         sourceStack.sendFeedback(Text("ao").withColor(Color.light_purple))
         return ret
     }
 
-    fun completer():AggregateCompleter{
-        val list = mutableListOf<ArgumentCompleter>()
+    fun completer(): AggregateCompleter {
+        val list = mutableListOf<Completer>()
         dispatcher.root.children.forEach {
-            list.add(parseTree(it))
+            list.add(parseTree(it, AtomicInteger(0)))
         }
-        return AggregateCompleter(*list.toTypedArray(),NullCompleter.INSTANCE)
+        return AggregateCompleter(*list.toTypedArray(), NullCompleter.INSTANCE)
     }
 
-    private fun parseTree(node: CommandNode<CommandSourceStack>):ArgumentCompleter{
-        val argList = mutableListOf<ArgumentCompleter>()
+    private fun parseTree(node: CommandNode<CommandSourceStack>, depth: AtomicInteger): Completer {
+        if (depth.get() > 64)return NullCompleter.INSTANCE
+        val argList = mutableListOf<Completer>()
         node.children.forEach {
-            argList.add(parseTree(it))
+            argList += StringsCompleter(it.name)
+            if (it.children.isNotEmpty()) {
+                argList.add(parseTree(it, AtomicInteger(depth.get())))
+            }
         }
-        return ArgumentCompleter(StringsCompleter(node.name), ArgumentCompleter(*argList.toTypedArray()))
+        depth.addAndGet(1)
+        return ArgumentCompleter(StringsCompleter(node.name), ArgumentCompleter(*argList.toTypedArray()), NullCompleter.INSTANCE)
     }
 
 }

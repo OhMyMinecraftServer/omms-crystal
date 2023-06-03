@@ -12,6 +12,7 @@ import net.zhuruoling.omms.crystal.main.SharedConstants.eventLoop
 import net.zhuruoling.omms.crystal.main.SharedConstants.serverController
 import net.zhuruoling.omms.crystal.permission.PermissionManager
 import net.zhuruoling.omms.crystal.plugin.PluginManager
+import net.zhuruoling.omms.crystal.rcon.RconClient
 import net.zhuruoling.omms.crystal.server.ServerController
 import net.zhuruoling.omms.crystal.server.ServerStatus
 import net.zhuruoling.omms.crystal.server.serverStatus
@@ -51,6 +52,11 @@ fun init() {
         register(pluginCommand)
     }
     eventDispatcher.run {
+        registerHandler(ServerStoppingEvent){
+            if (Config.enableRcon){
+                RconClient.close()
+            }
+        }
         registerHandler(ServerStoppedEvent) {
             it as ServerStoppedEventArgs
             logger.info("Server exited with return value ${it.retValue} (who=${it.who})")
@@ -70,7 +76,7 @@ fun init() {
                 serverStatus = ServerStatus.STOPPING
             }
         }
-        registerHandler(ServerStartingEvent){
+        registerHandler(ServerStartingEvent) {
             it as ServerStartingEventArgs
             SharedConstants.serverVersion = it.version
         }
@@ -96,6 +102,14 @@ fun init() {
                 PermissionManager.setPermission(it.player)
             }
         }
+        registerHandler(RconStartedEvent) {
+            it as RconStartedEventArgs
+            if (Config.enableRcon) {
+                logger.info("Attempt to init rcon connection.")
+                RconClient.connect()
+                logger.info("Rcon connected.")
+            }
+        }
         registerHandler(ServerStartedEvent) {
             it as ServerStartedEventArgs
             serverStatus = ServerStatus.RUNNING
@@ -118,7 +132,7 @@ fun init() {
                         commandSourceStack.sendFeedback(Text(e.message!!).withColor(Color.red))
                     }
                 } catch (e: Exception) {
-                    logger.error("An exception was thrown while processing command.",e)
+                    logger.error("An exception was thrown while processing command.", e)
                     commandSourceStack.sendFeedback(
                         TextGroup(
                             Text("Unexpected error occurred while executing command:\n").withColor(Color.red),
@@ -174,7 +188,7 @@ fun main(args: Array<String>) {
         logger.info("\tServerType: ${Config.serverType}")
         logger.info("\tDebugOptions: $DebugOptions")
     }
-    try{
+    try {
         eventDispatcher = EventDispatcher()
         eventLoop = EventLoop()
         eventLoop.start()
@@ -190,8 +204,8 @@ fun main(args: Array<String>) {
             exitProcess(0)
         }
         eventLoop.dispatch(ServerStartEvent, ServerStartEventArgs(Config.launchCommand, Config.serverWorkingDirectory))
-    }catch (e:Exception){
-        logger.error("Unexpected error occurred.",e)
+    } catch (e: Exception) {
+        logger.error("Unexpected error occurred.", e)
         exitProcess(1)
     }
 }
