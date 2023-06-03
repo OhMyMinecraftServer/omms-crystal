@@ -10,7 +10,7 @@ plugins {
 }
 
 
-group = "net.zhuruoling.omms"
+group = "com.github.ZhuRuoLing"
 version = properties["version"]!!
 
 repositories {
