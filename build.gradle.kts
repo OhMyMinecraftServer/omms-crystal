@@ -60,6 +60,11 @@ publishing{
     repositories {
         mavenLocal()
     }
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+        }
+    }
 }
 
 
