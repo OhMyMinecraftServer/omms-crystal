@@ -34,3 +34,4 @@ bin/
 ./logs/
 ./config/
 
+/backup/

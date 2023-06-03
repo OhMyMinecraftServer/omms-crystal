@@ -5,7 +5,7 @@ plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
     kotlin("jvm") version "1.7.10"
     java
-    `maven-publish`
+    id("maven-publish")
     application
 }
 
@@ -55,6 +55,13 @@ tasks.withType<KotlinCompile> {
 application {
     mainClass.set("net.zhuruoling.omms.crystal.main.MainKt")
 }
+
+publishing{
+    repositories {
+        mavenLocal()
+    }
+}
+
 
 fun generateProperties(){
     val propertiesFile = file("./src/main/resources/build.properties")
