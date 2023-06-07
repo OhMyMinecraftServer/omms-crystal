@@ -5,11 +5,8 @@ import net.zhuruoling.omms.crystal.server.ServerPropertiesAccess
 import net.zhuruoling.omms.crystal.util.createLogger
 import net.zhuruoling.omms.crystal.util.joinFilePaths
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.FileReader
 import java.io.FileWriter
-import java.lang.RuntimeException
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.text.SimpleDateFormat
 import java.util.*
@@ -84,11 +81,7 @@ object Config {
                 "Rcon is enabled and no ${
                     if (port.isBlank() and password.isBlank())
                         "rcon password or port"
-                    else
-                        if (password.isBlank())
-                            "password"
-                        else
-                            "port"
+                    else if (password.isBlank()) "password" else "port"
                 } provided!"
             )
             logger.info("Attempt to fill config with server.properties")

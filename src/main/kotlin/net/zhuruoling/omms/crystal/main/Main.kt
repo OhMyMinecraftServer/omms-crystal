@@ -122,7 +122,6 @@ fun init() {
                 try {
                     CommandManager.execute(it.content, commandSourceStack)
                 } catch (e: CommandSyntaxException) {
-                    //e.printStackTrace()
                     commandSourceStack.sendFeedback(
                         Text("Incomplete or invalid command${if (e.message != null) ", see errors below:" else ""}\n").withColor(
                             Color.red

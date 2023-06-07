@@ -124,7 +124,6 @@ class ServerOutputHandler(private val serverProcess: Process, vararg launchParam
                     if (info == null) {
                         println(string)
                     } else {
-
                         //dispatch a global info first
                         SharedConstants.eventLoop.dispatch(ServerInfoEvent, ServerInfoEventArgs(info))
                         //and then started to parse

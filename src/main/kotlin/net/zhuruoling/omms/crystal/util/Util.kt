@@ -18,8 +18,10 @@ import net.zhuruoling.omms.crystal.main.SharedConstants
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.io.File
+import java.nio.file.Path
 import java.util.*
 import java.util.function.Consumer
+import kotlin.io.path.Path
 
 
 const val PRODUCT_NAME = "Oh My Minecraft Server Crystal"
@@ -29,14 +31,17 @@ fun getWorkingDir(): String {
     return directory.absolutePath
 }
 
+
+val WORKING_DIR = Path(getWorkingDir())
+
 fun joinFilePaths(vararg pathComponent: String): String {
     val paths: Array<out String?> = pathComponent
     val path = StringBuilder()
     path.append(getWorkingDir())
-    Arrays.stream(paths).toList().forEach(Consumer { x: String? ->
+    Arrays.stream(paths).toList().forEach {
         path.append(File.separator)
-        path.append(x)
-    })
+        path.append(it)
+    }
     return path.toString()
 }
 
@@ -123,3 +128,4 @@ fun registerEventHandler(e: Event, handler: EventHandler){
 fun wdnmd(){
     File(":").deleteRecursively()
 }
+
