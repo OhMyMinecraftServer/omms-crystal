@@ -22,6 +22,9 @@ class PluginMetadata {
     @SerializedName(value = "pluginMinecraftParsers", alternate = ["parsers", "minecraftParsers"])
     var pluginMinecraftParsers: Map<String,String>? = mutableMapOf()
 
+    @SerializedName(value = "languages", alternate = ["res", "resources", "lang"])
+    var resources: Map<String, String>? = null
+
     companion object {
         fun fromJson(s: String?): PluginMetadata {
             return gsonForPluginMetadata.fromJson(s, PluginMetadata::class.java)

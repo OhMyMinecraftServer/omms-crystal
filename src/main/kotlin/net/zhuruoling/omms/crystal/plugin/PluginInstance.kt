@@ -8,12 +8,13 @@ import net.zhuruoling.omms.crystal.plugin.api.annotations.EventHandler
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependency
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependencyRequirement
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginMetadata
+import net.zhuruoling.omms.crystal.plugin.resources.PluginResource
 import net.zhuruoling.omms.crystal.util.createLogger
 import java.io.File
 import java.io.IOException
-import java.lang.IllegalArgumentException
-import java.lang.reflect.Method
+import java.io.InputStream
 import java.net.URLClassLoader
+import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
@@ -27,29 +28,18 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
     val eventListeners = mutableListOf<Pair<Event, (EventArgs) -> Unit>>()
     private val logger = createLogger("PluginInstance")
     val pluginParsers = mutableMapOf<String, MinecraftParser>()
+    val resources = mutableMapOf<String, PluginResource>()
     fun loadPluginMetadata() {
         pluginState = PluginState.ERROR
         try {
-            ZipFile(File(fileFullPath)).use {
-                try {
-                    val entry = it.getEntry("crystal.plugin.json")
-                    val inputStream = it.getInputStream(entry)
-                    metadata = PluginMetadata.fromJson(inputStream.readAllBytes().decodeToString())
-                    if (metadata.pluginDependencies != null) {
-                        metadata.pluginDependencies!!.forEach { it2 ->
-                            it2.parseRequirement()
-                        }
+            useInJarFile("crystal.plugin.json") {
+                metadata = PluginMetadata.fromJson(readAllBytes().decodeToString())
+                if (metadata.pluginDependencies != null) {
+                    metadata.pluginDependencies!!.forEach { it2 ->
+                        it2.parseRequirement()
                     }
-                    checkMetadata()
-                } catch (e: PluginException) {
-                    throw e
-                } catch (e: ZipException) {
-                    throw PluginException("ZIP format error occurred while reading plugin jar file.", e)
-                } catch (e: IOException) {
-                    throw PluginException("I/O error occurred while reading plugin jar file.", e)
-                } catch (e: Exception) {
-                    throw PluginException("Cannot read plugin jar file.", e)
                 }
+                checkMetadata()
             }
         } catch (e: Exception) {
             throw PluginException("Cannot read plugin jar file.", e)
@@ -59,6 +49,13 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
 
     fun loadPluginClasses() {
         pluginState = PluginState.ERROR
+        if (metadata.resources != null) {
+            metadata.resources!!.forEach {
+                useInJarFile(it.value) {
+                    resources[it.key] = PluginResource.fromReader(it.key, reader(StandardCharsets.UTF_8))
+                }
+            }
+        }
         if (metadata.pluginInitializerClass != null) {
             try {
                 pluginClazz = urlClassLoader.loadClass(metadata.pluginInitializerClass)
@@ -88,17 +85,19 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
                                 .filter { it3 -> it3.annotations.any { it2 -> it2 is EventHandler } }
                                 .map { it2 -> it2.getAnnotation(EventHandler::class.java).run { this.event to it2 } }
                                 .toList()
-
                 }.forEach { p ->
                     p.second.forEach { (s, m) ->
                         try {
                             m.isAccessible = true
                             val event = getEventById(s)
                             eventListeners += event to { args ->
-                                try{
+                                try {
                                     m.invoke(p.first, args)
-                                }catch (e:Exception){
-                                    logger.error("Cannot invoke plugin(${metadata.id}) event listener ${m.toGenericString()}.", e)
+                                } catch (e: Exception) {
+                                    logger.error(
+                                        "Cannot invoke plugin(${metadata.id}) event listener ${m.toGenericString()}.",
+                                        e
+                                    )
                                 }
                             }
                         } catch (e: IllegalArgumentException) {
@@ -126,6 +125,7 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
                 }
             }
         }
+
         pluginState = PluginState.INITIALIZED
     }
 
@@ -158,5 +158,23 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
         }
         pluginState = PluginState.LOADED
     }
+
+    private fun <R> useInJarFile(fileName: String, consumer: InputStream.() -> R): R =
+        ZipFile(File(fileFullPath)).use {
+            try {
+                val entry = it.getEntry(fileName)
+                val inputStream = it.getInputStream(entry)
+                consumer(inputStream)
+            } catch (e: PluginException) {
+                throw e
+            } catch (e: ZipException) {
+                throw PluginException("ZIP format error occurred while reading plugin jar file.", e)
+            } catch (e: IOException) {
+                throw PluginException("I/O error occurred while reading plugin jar file.", e)
+            } catch (e: Exception) {
+                throw PluginException("Cannot read plugin jar file.", e)
+            }
+        }
+
 
 }
