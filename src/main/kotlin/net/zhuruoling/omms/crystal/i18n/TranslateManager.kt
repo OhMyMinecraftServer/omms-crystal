@@ -18,6 +18,18 @@ object TranslateManager {
     fun addLanguageProvider(provider: LanguageProvider) {
         this.languageProviders[provider.getLanguageId()] = provider
     }
+
+    fun getOrCreateLanguageProvider(
+        lang: Identifier,
+        impl: Class<out LanguageProvider> = LanguageProviderImpl::class.java,
+        vararg args: Any
+    ): LanguageProvider {
+        if (lang in languageProviders) return languageProviders[lang]!!
+        return impl.getConstructor(*args.map { it.javaClass }.toTypedArray())
+            .apply { isAccessible = true }
+            .newInstance(*args)
+            .apply { languageProviders[lang] = this }
+    }
 }
 
 fun <R> withTranslateContext(namespace: String, func: TranslateContext.() -> R): R =

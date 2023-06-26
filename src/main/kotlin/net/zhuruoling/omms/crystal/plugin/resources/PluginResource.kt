@@ -1,17 +1,16 @@
 package net.zhuruoling.omms.crystal.plugin.resources
 
-import java.io.BufferedReader
 import java.io.InputStreamReader
 
 class PluginResource(val bundleId: String) {
 
-    var resStore = mutableMapOf<String, String>()
+    var resMap = mutableMapOf<String, String>()
         private set
     var resMeta = mutableMapOf<String, String>()
         private set
 
     fun getResValue(id: String): String? {
-        return resStore[id]
+        return resMap[id]
     }
 
     fun getResMetaValue(id: String): String? {
@@ -36,7 +35,7 @@ class PluginResource(val bundleId: String) {
                 }
                 resStore += key to value
             }
-            return PluginResource(id).run { this.resMeta = resMeta; this.resStore = resStore;this }
+            return PluginResource(id).run { this.resMeta = resMeta; this.resMap = resStore;this }
         }
     }
 }

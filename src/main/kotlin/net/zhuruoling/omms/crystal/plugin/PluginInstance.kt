@@ -3,6 +3,7 @@ package net.zhuruoling.omms.crystal.plugin
 import net.zhuruoling.omms.crystal.event.Event
 import net.zhuruoling.omms.crystal.event.EventArgs
 import net.zhuruoling.omms.crystal.event.getEventById
+import net.zhuruoling.omms.crystal.i18n.*
 import net.zhuruoling.omms.crystal.parser.MinecraftParser
 import net.zhuruoling.omms.crystal.plugin.api.annotations.EventHandler
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependency
@@ -49,13 +50,7 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
 
     fun loadPluginClasses() {
         pluginState = PluginState.ERROR
-        if (metadata.resources != null) {
-            metadata.resources!!.forEach {
-                useInJarFile(it.value) {
-                    resources[it.key] = PluginResource.fromReader(it.key, reader(StandardCharsets.UTF_8))
-                }
-            }
-        }
+
         if (metadata.pluginInitializerClass != null) {
             try {
                 pluginClazz = urlClassLoader.loadClass(metadata.pluginInitializerClass)
@@ -74,7 +69,6 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
                 metadata.pluginEventHandlers!!.forEach {
                     try {
                         classes += urlClassLoader.loadClass(it)
-
                     } catch (e: ClassNotFoundException) {
                         throw PluginException("Cannot load event handler class $it", e)
                     }
@@ -175,6 +169,34 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
                 throw PluginException("Cannot read plugin jar file.", e)
             }
         }
+
+    fun loadPluginResources() {
+        if (metadata.resources != null) {
+            metadata.resources!!.forEach {
+                useInJarFile(it.value) {
+                    resources[it.key] = PluginResource.fromReader(it.key, reader(StandardCharsets.UTF_8))
+                }
+            }
+        }
+        resources.forEach {
+            val resType = it.value.resMeta["type"] ?: return@forEach
+            val namespace = it.value.resMeta["namespace"] ?: return@forEach
+            if (resType == "lang") {
+                val lang = Identifier(it.key.replace("_", ":"))
+                TranslateManager.getOrCreateLanguageProvider(
+                    lang,
+                    impl = LanguageProviderImpl::class.java,
+                    lang,
+                    linkedMapOf<Identifier, TranslatableString>()
+                ).apply {
+                    it.value.resMap.forEach { (k, v) ->
+                        val translateKey = TranslateKey(lang, Identifier(namespace, k))
+                        addTranslateKey(translateKey, TranslatableString(translateKey, v))
+                    }
+                }
+            }
+        }
+    }
 
 
 }
