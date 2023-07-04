@@ -47,6 +47,7 @@ object Config {
     var commandPrefix = "."
     var parserName = ""
     var encoding = "UTF-8"
+    var lang = "en_us"
     var enableRcon = false
     var rconPort = "25575"
     var rconPassword = ""
@@ -71,6 +72,7 @@ object Config {
         commandPrefix = properties["commandPrefix"] as String
         parserName = if (serverType == "vanilla") "builtin" else serverType
         encoding = properties["encoding"] as String
+        lang = properties["lang"] as String? ?: "en_us"
         DebugOptions.parse(properties["debugOptions"] as String)
         enableRcon = (properties["enableRcon"] as String?).toBoolean()
         val port = properties["rconPort"] as String? ?: ""

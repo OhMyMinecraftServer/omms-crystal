@@ -1,11 +1,14 @@
 package net.zhuruoling.omms.crystal.main
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextComponent
 import net.zhuruoling.omms.crystal.command.*
 import net.zhuruoling.omms.crystal.config.Config
 import net.zhuruoling.omms.crystal.config.ConfigManager
 import net.zhuruoling.omms.crystal.console.ConsoleHandler
 import net.zhuruoling.omms.crystal.event.*
+import net.zhuruoling.omms.crystal.i18n.withTranslateContext
 import net.zhuruoling.omms.crystal.main.SharedConstants.consoleHandler
 import net.zhuruoling.omms.crystal.main.SharedConstants.eventDispatcher
 import net.zhuruoling.omms.crystal.main.SharedConstants.eventLoop
@@ -51,6 +54,14 @@ fun init() {
         register(stopCommand)
         register(pluginCommand)
     }
+    CommandHelpManager.run {
+        registerHelpMessage("${Config.commandPrefix}help"){
+            withTranslateContext("crystal"){
+                Component.text(tr("help.help"))
+            }
+        }
+    }
+
     eventDispatcher.run {
         registerHandler(ServerStoppingEvent){
             if (Config.enableRcon){

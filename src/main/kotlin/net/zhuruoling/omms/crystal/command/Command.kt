@@ -50,11 +50,16 @@ fun getInteger(context: CommandContext<CommandSourceStack>, name: String): Int {
 }
 
 val helpCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.commandPrefix + "help").then(
-    integerArgument("page")
+    greedyStringArgument("filter")
         .executes {
+            val filter = getWord(it, "filter")
+            CommandHelpManager.displayFiltered(it.source) {
+                filter in this
+            }
             1
         }
 ).executes {
+    CommandHelpManager.displayAll(it.source)
     1
 }
 
