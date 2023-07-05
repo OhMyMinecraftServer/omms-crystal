@@ -1,11 +1,10 @@
 package net.zhuruoling.omms.crystal.console
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException
 import net.zhuruoling.omms.crystal.command.CommandManager
 import net.zhuruoling.omms.crystal.command.CommandSource
 import net.zhuruoling.omms.crystal.command.CommandSourceStack
 import net.zhuruoling.omms.crystal.config.Config
-import net.zhuruoling.omms.crystal.main.SharedConstants.serverController
+import net.zhuruoling.omms.crystal.main.SharedConstants.serverThreadDaemon
 import net.zhuruoling.omms.crystal.util.createLogger
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
@@ -35,7 +34,7 @@ class ConsoleHandler : Thread("ConsoleHandler") {
                         logger.error(e.message)
                     }
                 } else {
-                    serverController?.input(str)
+                    serverThreadDaemon?.input(str)
                 }
             } catch (e: Exception) {
                 break

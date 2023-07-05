@@ -2,6 +2,7 @@ package net.zhuruoling.omms.crystal.event
 
 
 import net.zhuruoling.omms.crystal.main.DebugOptions
+import net.zhuruoling.omms.crystal.util.WorkerThreadFactory
 import net.zhuruoling.omms.crystal.util.createLogger
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -9,7 +10,7 @@ import java.util.concurrent.Executors
 
 class EventDispatcher {
     private val eventMap: ConcurrentHashMap<Event, ArrayList<(EventArgs) -> Unit>> = ConcurrentHashMap()
-    private val executor = Executors.newFixedThreadPool(4)
+    private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), WorkerThreadFactory())
     private val logger = createLogger("EventDispatcher", DebugOptions.eventDebug())
     fun dispatchEvent(e: Event, args: EventArgs) {
         if (DebugOptions.eventDebug()) logger.info("[DEBUG] Dispatching Event ${e.id} with args $args")
