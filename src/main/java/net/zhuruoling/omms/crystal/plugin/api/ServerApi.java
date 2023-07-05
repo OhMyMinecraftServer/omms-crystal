@@ -1,7 +1,7 @@
 package net.zhuruoling.omms.crystal.plugin.api;
 
 import net.zhuruoling.omms.crystal.main.SharedConstants;
-import net.zhuruoling.omms.crystal.server.ServerControllerKt;
+import net.zhuruoling.omms.crystal.server.ServerThreadDaemonKt;
 import net.zhuruoling.omms.crystal.server.ServerStatus;
 import net.zhuruoling.omms.crystal.text.Text;
 import net.zhuruoling.omms.crystal.text.TextGroup;
@@ -13,13 +13,13 @@ public class ServerApi {
     }
 
     private static void tellraw(String player, String serialize) {
-        if (ServerControllerKt.getServerStatus() != ServerStatus.RUNNING){
+        if (ServerThreadDaemonKt.getServerStatus() != ServerStatus.RUNNING){
             throw new IllegalStateException("Server is not running!");
         }
-        if (SharedConstants.INSTANCE.getServerController() == null){
+        if (SharedConstants.INSTANCE.getServerThreadDaemon() == null){
             throw new IllegalStateException("Server Controller is null.");
         }
-        SharedConstants.INSTANCE.getServerController().input("tellraw %s %s".formatted(player, serialize));
+        SharedConstants.INSTANCE.getServerThreadDaemon().input("tellraw %s %s".formatted(player, serialize));
     }
 
     public static void tell(String player, TextGroup textGroup){
@@ -27,9 +27,9 @@ public class ServerApi {
     }
 
     public static void executeCommand(String command){
-        if (SharedConstants.INSTANCE.getServerController() == null){
+        if (SharedConstants.INSTANCE.getServerThreadDaemon() == null){
             throw new IllegalStateException("Server Controller is null.");
         }
-        SharedConstants.INSTANCE.getServerController().input(command);
+        SharedConstants.INSTANCE.getServerThreadDaemon().input(command);
     }
 }

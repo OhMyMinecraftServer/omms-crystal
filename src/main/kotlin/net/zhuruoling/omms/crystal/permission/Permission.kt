@@ -38,7 +38,7 @@ enum class Permission {
 object PermissionManager {
     val gson = GsonBuilder().serializeNulls().create()
     val permissionMap: ConcurrentHashMap<String, Permission> = ConcurrentHashMap<String, Permission>()
-    private var defaultPermissionLevel = Permission.USER
+    var defaultPermissionLevel = Permission.USER
     val filePath = joinFilePaths("permissions.json")
 
     @Synchronized
@@ -69,6 +69,8 @@ object PermissionManager {
         permissionMap[player] = permissionLevel
     }
 
+    operator fun set(player: String, permissionLevel: Permission) = setPermission(player, permissionLevel)
+
     @Synchronized
     fun deletePlayer(player: String) {
         permissionMap.remove(player)
@@ -82,6 +84,10 @@ object PermissionManager {
     fun playerExists(player: String): Boolean {
         return permissionMap.containsKey(player)
     }
+
+    operator fun contains(player: String)= playerExists(player)
+
+    operator fun get(player: String) = getPermission(player)
 
     @Synchronized
     fun writePermission() {

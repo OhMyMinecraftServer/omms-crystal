@@ -5,7 +5,7 @@ import net.zhuruoling.omms.crystal.config.Config
 import net.zhuruoling.omms.crystal.event.*
 import net.zhuruoling.omms.crystal.main.DebugOptions
 import net.zhuruoling.omms.crystal.main.SharedConstants
-import net.zhuruoling.omms.crystal.main.SharedConstants.serverController
+import net.zhuruoling.omms.crystal.main.SharedConstants.serverThreadDaemon
 import net.zhuruoling.omms.crystal.parser.ParserManager
 import net.zhuruoling.omms.crystal.util.createLogger
 import net.zhuruoling.omms.crystal.util.createServerLogger
@@ -27,15 +27,15 @@ enum class ServerStatus{
     STOPPED, RUNNING, STOPPING,STARTING
 }
 
-class ServerController(
+class ServerThreadDaemon(
     private val launchCommand: String,
     private val workingDir: String,
     vararg launchParameters: LaunchParameter?
 ) :
-    Thread("ServerControllerThread") {
+    Thread("ServerThreadDaemon") {
 
     private val launchParameters: Array<out LaunchParameter?>
-    private val logger = createLogger("ServerHandler")
+    private val logger = createLogger("ServerThreadDaemon")
     private lateinit var out: OutputStream
     private lateinit var input: InputStream
     private val queue = ArrayBlockingQueue<String>(1024)
@@ -79,7 +79,7 @@ class ServerController(
         }
         val exitCode = process!!.exitValue()
         //logger.info("Server exited with exit code $exitCode.")
-        serverController = null
+        serverThreadDaemon = null
         SharedConstants.eventLoop.dispatch(ServerStoppedEvent, ServerStoppedEventArgs(exitCode, who))
     }
 

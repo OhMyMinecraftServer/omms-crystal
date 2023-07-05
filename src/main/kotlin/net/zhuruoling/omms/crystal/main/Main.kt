@@ -2,7 +2,6 @@ package net.zhuruoling.omms.crystal.main
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.TextComponent
 import net.zhuruoling.omms.crystal.command.*
 import net.zhuruoling.omms.crystal.config.Config
 import net.zhuruoling.omms.crystal.config.ConfigManager
@@ -12,11 +11,11 @@ import net.zhuruoling.omms.crystal.i18n.withTranslateContext
 import net.zhuruoling.omms.crystal.main.SharedConstants.consoleHandler
 import net.zhuruoling.omms.crystal.main.SharedConstants.eventDispatcher
 import net.zhuruoling.omms.crystal.main.SharedConstants.eventLoop
-import net.zhuruoling.omms.crystal.main.SharedConstants.serverController
+import net.zhuruoling.omms.crystal.main.SharedConstants.serverThreadDaemon
 import net.zhuruoling.omms.crystal.permission.PermissionManager
 import net.zhuruoling.omms.crystal.plugin.PluginManager
 import net.zhuruoling.omms.crystal.rcon.RconClient
-import net.zhuruoling.omms.crystal.server.ServerController
+import net.zhuruoling.omms.crystal.server.ServerThreadDaemon
 import net.zhuruoling.omms.crystal.server.ServerStatus
 import net.zhuruoling.omms.crystal.server.serverStatus
 import net.zhuruoling.omms.crystal.text.Color
@@ -70,8 +69,8 @@ fun init() {
         }
         registerHandler(ServerStoppedEvent) {
             it as ServerStoppedEventArgs
-            logger.info("Server exited with return value ${it.retValue} (who=${it.who})")
-            serverController = null
+            logger.info("Server exited with return value ${it.retValue}")
+            serverThreadDaemon = null
             serverStatus = ServerStatus.STOPPED
             if (it.who == "crystal") {
                 logger.info("Bye.")
@@ -80,10 +79,10 @@ fun init() {
         }
         registerHandler(ServerStopEvent) {
             it as ServerStopEventArgs
-            if (serverController == null) {
+            if (serverThreadDaemon == null) {
                 logger.warn("Server is not running!")
             } else {
-                serverController!!.stopServer(who = it.id, force = it.force)
+                serverThreadDaemon!!.stopServer(who = it.id, force = it.force)
                 serverStatus = ServerStatus.STOPPING
             }
         }
@@ -93,14 +92,14 @@ fun init() {
         }
         registerHandler(ServerStartEvent) {
             val args = (it as ServerStartEventArgs)
-            if (serverController != null) {
+            if (serverThreadDaemon != null) {
                 logger.warn("Server already running!")
             }
             logger.info("Starting server using command ${args.startupCmd} at dir: ${args.workingDir}")
 
-            serverController =
-                ServerController(args.startupCmd, args.workingDir)
-            serverController!!.start()
+            serverThreadDaemon =
+                ServerThreadDaemon(args.startupCmd, args.workingDir)
+            serverThreadDaemon!!.start()
         }
         registerHandler(ServerStartingEvent) {
             it as ServerStartingEventArgs
@@ -109,8 +108,8 @@ fun init() {
         }
         registerHandler(PlayerJoinEvent) {
             it as PlayerJoinEventArgs
-            if (!PermissionManager.playerExists(it.player)) {
-                PermissionManager.setPermission(it.player)
+            if (it.player !in PermissionManager) {
+                PermissionManager[it.player] = PermissionManager.defaultPermissionLevel
             }
         }
         registerHandler(RconStartedEvent) {
@@ -154,8 +153,8 @@ fun init() {
         }
         registerHandler(ServerConsoleInputEvent) {
             it as ServerConsoleInputEventArgs
-            if (serverController != null) {
-                serverController!!.input(it.content)
+            if (serverThreadDaemon != null) {
+                serverThreadDaemon!!.input(it.content)
             } else {
                 logger.warn("Server is NOT running!")
             }
@@ -167,9 +166,9 @@ fun main(args: Array<String>) {
     println("Starting net.zhuruoling.omms.crystal.main.MainKt.main()")
     Runtime.getRuntime().run {
         val thread = thread(name = "ShutdownThread\$Finalize", start = false) {
-            if (serverController != null) {
+            if (serverThreadDaemon != null) {
                 println("Stopping server because jvm is shutting down.")
-                serverController!!.stopServer(true)
+                serverThreadDaemon!!.stopServer(true)
             }
         }
         this.addShutdownHook(thread)
@@ -182,23 +181,24 @@ fun main(args: Array<String>) {
     val os = ManagementFactory.getOperatingSystemMXBean()
     val runtime = ManagementFactory.getRuntimeMXBean()
     logger.info("$PRODUCT_NAME ${BuildProperties["version"]} is running on ${os.name} ${os.arch} ${os.version} at pid ${runtime.pid}")
-    if (Config.load()) {
-        logger.warn("First startup detected.")
-        logger.warn("You may fill the config file to continue.")
-        if (Files.exists(Path(joinFilePaths("server"))) || !Files.isDirectory(Path(joinFilePaths("server")))) {
-            Files.createDirectory(Path(joinFilePaths("server")))
-        }
-        exitProcess(1)
-    }
-    if (DebugOptions.mainDebug()) {
-        logger.info("Config:")
-        logger.info("\tServerWorkingDirectory: ${Config.serverWorkingDirectory}")
-        logger.info("\tLaunchCommand: ${Config.launchCommand}")
-        logger.info("\tPluginDirectory: ${Config.pluginDirectory}")
-        logger.info("\tServerType: ${Config.serverType}")
-        logger.info("\tDebugOptions: $DebugOptions")
-    }
     try {
+        if (Config.load()) {
+            logger.warn("First startup detected.")
+            logger.warn("You may fill the config file to continue.")
+            if (Files.exists(Path(joinFilePaths("server"))) || !Files.isDirectory(Path(joinFilePaths("server")))) {
+                Files.createDirectory(Path(joinFilePaths("server")))
+            }
+            exitProcess(1)
+        }
+        if (DebugOptions.mainDebug()) {
+            logger.info("Config:")
+            logger.info("\tServerWorkingDirectory: ${Config.serverWorkingDirectory}")
+            logger.info("\tLaunchCommand: ${Config.launchCommand}")
+            logger.info("\tPluginDirectory: ${Config.pluginDirectory}")
+            logger.info("\tServerType: ${Config.serverType}")
+            logger.info("\tDebugOptions: $DebugOptions")
+        }
+
         eventDispatcher = EventDispatcher()
         eventLoop = EventLoop()
         eventLoop.start()

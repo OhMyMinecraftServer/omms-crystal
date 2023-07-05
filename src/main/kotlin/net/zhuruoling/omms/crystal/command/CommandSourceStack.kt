@@ -23,8 +23,8 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
 
         when (from) {
             CommandSource.PLAYER -> {
-                assert(SharedConstants.serverController != null)
-                SharedConstants.serverController!!.runCatching {
+                assert(SharedConstants.serverThreadDaemon != null)
+                SharedConstants.serverThreadDaemon!!.runCatching {
                     text.getTexts().forEach {
                         this.input("tellraw $player ${TextSerializer.serialize(it)}")
                     }
@@ -50,8 +50,8 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
     fun sendFeedback(text: TextComponent) {
         when (from) {
             CommandSource.PLAYER -> {
-                assert(SharedConstants.serverController != null)
-                SharedConstants.serverController!!.runCatching {
+                assert(SharedConstants.serverThreadDaemon != null)
+                SharedConstants.serverThreadDaemon!!.runCatching {
                     this.input("tellraw $player ${GsonComponentSerializer.gson().serialize(text)}")
                 }
                 DateTime.of(0).toString("YYYY-MM-DD hh-mm-ss.SSS")
@@ -70,8 +70,8 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
     fun sendFeedback(text: Text) {
         when (from) {
             CommandSource.PLAYER -> {
-                assert(SharedConstants.serverController != null)
-                SharedConstants.serverController!!.run {
+                assert(SharedConstants.serverThreadDaemon != null)
+                SharedConstants.serverThreadDaemon!!.run {
                     this.input("tellraw $player ${TextSerializer.serialize(text)}")
                 }
             }

@@ -9,14 +9,13 @@ import net.zhuruoling.omms.crystal.event.EventHandler
 import net.zhuruoling.omms.crystal.event.EventLoop
 import net.zhuruoling.omms.crystal.i18n.Identifier
 import net.zhuruoling.omms.crystal.parser.MinecraftParser
-import net.zhuruoling.omms.crystal.server.ServerController
-import java.lang.module.ModuleDescriptor.Version
+import net.zhuruoling.omms.crystal.server.ServerThreadDaemon
 import java.lang.reflect.Method
 import java.util.*
 import kotlin.collections.HashMap
 
 object SharedConstants {
-    var serverController: ServerController? = null
+    var serverThreadDaemon: ServerThreadDaemon? = null
     lateinit var eventDispatcher: EventDispatcher
     lateinit var eventLoop: EventLoop
     lateinit var consoleHandler: ConsoleHandler
