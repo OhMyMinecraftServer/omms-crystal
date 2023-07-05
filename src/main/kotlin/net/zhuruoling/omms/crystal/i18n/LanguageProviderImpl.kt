@@ -36,4 +36,10 @@ class LanguageProviderImpl(
     override fun addTranslateKey(key: TranslateKey, value: TranslatableString) {
         this.translates[key.key] = value
     }
+
+    override fun toString(): String {
+        return "LanguageProviderImpl(languageId=$languageId, translates=$translates)"
+    }
+
+
 }

@@ -37,7 +37,7 @@ fun <R> withTranslateContext(namespace: String, func: TranslateContext.() -> R):
 
 class TranslateContext(private val language: Identifier, private val namespace: String) {
 
-    fun tr(t: String, vararg element: Any) = translate(t, element)
+    fun tr(t: String, vararg element: Any) = translate(t, *element)
     fun translate(t: String, vararg element: Any): String =
         TranslateManager.translateFormatString(TranslateKey(language, Identifier(namespace, t)), *element).translate
 

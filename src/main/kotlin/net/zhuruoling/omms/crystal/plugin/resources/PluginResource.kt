@@ -27,7 +27,7 @@ class PluginResource(val bundleId: String) {
                 val key = s.first()
                 var value = ""
                 if (s.size > 1) {
-                    value = s.subList(1, s.size - 1).joinToString("=")
+                    value = s.subList(1, s.size).joinToString("=")
                 }
                 if (key.startsWith("res?")) {
                     resMeta += key.removePrefix("res?") to value

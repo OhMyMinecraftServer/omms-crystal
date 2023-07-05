@@ -4,6 +4,7 @@ import net.zhuruoling.omms.crystal.event.Event
 import net.zhuruoling.omms.crystal.event.EventArgs
 import net.zhuruoling.omms.crystal.event.getEventById
 import net.zhuruoling.omms.crystal.i18n.*
+import net.zhuruoling.omms.crystal.main.DebugOptions
 import net.zhuruoling.omms.crystal.parser.MinecraftParser
 import net.zhuruoling.omms.crystal.plugin.api.annotations.EventHandler
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependency
@@ -171,8 +172,10 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
         }
 
     fun loadPluginResources() {
+        if (DebugOptions.pluginDebug()) logger.info("Loading plugin ${metadata.id} resources.")
         if (metadata.resources != null) {
             metadata.resources!!.forEach {
+                logger.info("${metadata.id}: ${it.key} <- ${it.value}")
                 useInJarFile(it.value) {
                     resources[it.key] = PluginResource.fromReader(it.key, reader(StandardCharsets.UTF_8))
                 }
@@ -191,6 +194,7 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
                 ).apply {
                     it.value.resMap.forEach { (k, v) ->
                         val translateKey = TranslateKey(lang, Identifier(namespace, k))
+                        if (DebugOptions.pluginDebug()) logger.info("$k -> $v")
                         addTranslateKey(translateKey, TranslatableString(translateKey, v))
                     }
                 }

@@ -41,6 +41,7 @@ object PluginManager : Manager<String, PluginInstance>(
         PluginInstance(pluginClassLoader, it).run {
             loadPluginMetadata()
             loadPluginClasses()
+            loadPluginResources()
             metadata.id!! to this
         }
     }

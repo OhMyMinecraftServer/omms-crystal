@@ -2,12 +2,13 @@ package net.zhuruoling.omms.crystal.main
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.TextComponent
 import net.zhuruoling.omms.crystal.command.*
 import net.zhuruoling.omms.crystal.config.Config
 import net.zhuruoling.omms.crystal.config.ConfigManager
 import net.zhuruoling.omms.crystal.console.ConsoleHandler
 import net.zhuruoling.omms.crystal.event.*
+import net.zhuruoling.omms.crystal.i18n.Identifier
+import net.zhuruoling.omms.crystal.i18n.addBuiltinTranslations
 import net.zhuruoling.omms.crystal.i18n.withTranslateContext
 import net.zhuruoling.omms.crystal.main.SharedConstants.consoleHandler
 import net.zhuruoling.omms.crystal.main.SharedConstants.eventDispatcher
@@ -61,7 +62,6 @@ fun init() {
             }
         }
     }
-
     eventDispatcher.run {
         registerHandler(ServerStoppingEvent){
             if (Config.enableRcon){
@@ -177,6 +177,7 @@ fun main(args: Array<String>) {
     consoleHandler = ConsoleHandler()
     consoleHandler.start()
     registerEvents()
+    addBuiltinTranslations()
     val logger = createLogger("Main")
     logger.info("Hello World!")
     val os = ManagementFactory.getOperatingSystemMXBean()
@@ -189,6 +190,7 @@ fun main(args: Array<String>) {
             Files.createDirectory(Path(joinFilePaths("server")))
         }
         exitProcess(1)
+
     }
     if (DebugOptions.mainDebug()) {
         logger.info("Config:")
@@ -199,6 +201,7 @@ fun main(args: Array<String>) {
         logger.info("\tDebugOptions: $DebugOptions")
     }
     try {
+        SharedConstants.language = Identifier(Config.lang.replace("_",":"))
         eventDispatcher = EventDispatcher()
         eventLoop = EventLoop()
         eventLoop.start()

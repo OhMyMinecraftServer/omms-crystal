@@ -27,6 +27,7 @@ val configContentBase: String
     commandPrefix=.
     enableRcon=false
     rconPort=25575
+    lang=en_us
     rconPassword=
     #debug options:
     #   N:None/Off
