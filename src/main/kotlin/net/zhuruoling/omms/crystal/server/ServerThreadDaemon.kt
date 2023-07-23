@@ -18,6 +18,7 @@ import java.io.OutputStream
 import java.nio.charset.Charset
 import java.util.ConcurrentModificationException
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.locks.LockSupport
 
 var serverStatus = ServerStatus.STOPPED
 
@@ -117,7 +118,7 @@ class ServerOutputHandler(private val serverProcess: Process, vararg launchParam
             input = serverProcess.inputStream
             val reader = input.bufferedReader(Charset.forName(Config.encoding))
             while (serverProcess.isAlive) {
-                sleep(10)
+                LockSupport.parkNanos(10)
                 val string = reader.readLine()
                 if (string != null) {
                     val info = parser.parseToBareInfo(string)

@@ -4,6 +4,7 @@ import net.zhuruoling.omms.crystal.main.DebugOptions
 import net.zhuruoling.omms.crystal.main.SharedConstants
 import net.zhuruoling.omms.crystal.util.createLogger
 import java.util.concurrent.PriorityBlockingQueue
+import java.util.concurrent.locks.LockSupport
 
 typealias EventHandler = ((EventArgs) -> Unit)
 
@@ -19,7 +20,7 @@ class EventLoop : Thread("EventLoop") {
                 val pair = queue.poll()
                 SharedConstants.eventDispatcher.dispatchEvent(pair.first, pair.second)
             }
-            yield()
+            LockSupport.parkNanos(10)
         }
         SharedConstants.eventDispatcher.shutdown()
         logger.info("EventLoop stopped.")

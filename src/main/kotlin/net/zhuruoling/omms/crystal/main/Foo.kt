@@ -5,11 +5,7 @@ import net.zhuruoling.omms.crystal.event.EventDispatcher
 import net.zhuruoling.omms.crystal.event.EventLoop
 import net.zhuruoling.omms.crystal.event.registerEvents
 import net.zhuruoling.omms.crystal.i18n.*
-import net.zhuruoling.omms.crystal.plugin.PluginManager
-import net.zhuruoling.omms.crystal.util.WORKING_DIR
-import net.zhuruoling.omms.crystal.util.getWorkingDir
-import java.text.MessageFormat
-import kotlin.io.path.div
+
 
 
 fun main(args: Array<String>) {

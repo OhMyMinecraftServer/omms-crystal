@@ -69,7 +69,6 @@ private fun Manager<String, PluginInstance>.checkRequirements() {
         unsatisfied += it.value.metadata to it.value.checkPluginDependencyRequirements(dependencies)
     }
     if (unsatisfied.any { it.value.isNotEmpty() }) {
-        println("not empty")
         val dependencyMap = mutableMapOf<String, String>()
         dependencies.forEach {
             dependencyMap += it.id to it.version.toString()
