@@ -1,40 +1,31 @@
 package net.zhuruoling.omms.crystal.i18n
 
-import java.lang.IllegalArgumentException
 import java.text.MessageFormat
+import java.util.concurrent.ConcurrentHashMap
 
 class LanguageProviderImpl(
-    private val languageId: Identifier,
-    private val translates: LinkedHashMap<Identifier, TranslatableString>
+    private val languageId: String,
+    private val translates: ConcurrentHashMap<TranslateKey, String>
 ) : LanguageProvider(languageId) {
 
-    override fun translate(key: String) =
-        Identifier(key).run {
-            translates[this] ?: TranslatableString(TranslateKey(getLanguageId(), this), this.toString())
-        }
+    constructor(languageId: String):this(languageId, ConcurrentHashMap())
 
-    override fun translate(key: Identifier) =
-        translates[key] ?: TranslatableString(TranslateKey(getLanguageId(), key), key.toString())
-
-    override fun translate(key: TranslateKey): TranslatableString {
-        if (this.languageId != key.lang) throw IllegalArgumentException("languageId not match!")
-        return translates[key.key] ?: TranslatableString(TranslateKey(getLanguageId(), key.key), key.key.toString())
+    override fun translate(key: TranslateKey): String {
+        if (!translates.containsKey(key)) return key.toString()
+        return translates[key]!!
     }
 
-    override fun translateFormatString(key: String, vararg element: Any) = translate(key).run {
-        TranslatableString(this.translateKey, MessageFormat.format(translate, *element))
+    override fun translateFormatString(key: TranslateKey, vararg element: Any): String {
+        if (!translates.containsKey(key)) return key.toString()
+        return MessageFormat.format(translates[key]!!, *element)
     }
 
-    override fun translateFormatString(key: Identifier, vararg element: Any) = translate(key).run {
-        TranslatableString(this.translateKey, MessageFormat.format(translate, *element))
+    override fun addTranslateKey(key: TranslateKey, value: String) {
+        translates += key to value
     }
 
-    override fun translateFormatString(key: TranslateKey, vararg element: Any) = translate(key).run {
-        TranslatableString(this.translateKey, MessageFormat.format(translate, *element))
-    }
-
-    override fun addTranslateKey(key: TranslateKey, value: TranslatableString) {
-        this.translates[key.key] = value
+    override fun getAllTranslates(): Map<TranslateKey, String> {
+        return translates
     }
 
     override fun toString(): String {

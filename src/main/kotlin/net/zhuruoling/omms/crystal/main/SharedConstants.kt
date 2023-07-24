@@ -7,7 +7,6 @@ import net.zhuruoling.omms.crystal.event.Event
 import net.zhuruoling.omms.crystal.event.EventDispatcher
 import net.zhuruoling.omms.crystal.event.EventHandler
 import net.zhuruoling.omms.crystal.event.EventLoop
-import net.zhuruoling.omms.crystal.i18n.Identifier
 import net.zhuruoling.omms.crystal.parser.MinecraftParser
 import net.zhuruoling.omms.crystal.server.ServerThreadDaemon
 import java.lang.reflect.Method
@@ -20,7 +19,7 @@ object SharedConstants {
     lateinit var eventLoop: EventLoop
     lateinit var consoleHandler: ConsoleHandler
     lateinit var serverVersion: String
-    lateinit var language:Identifier
+    lateinit var language:String
 
     val pluginRegisteredCommandTable: HashMap<String, ArrayList<LiteralArgumentBuilder<CommandSourceStack>>> = hashMapOf()
     val pluginRegisteredEventTable: HashMap<String, HashMap<String, Event>> = hashMapOf()

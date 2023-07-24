@@ -3,6 +3,7 @@ package net.zhuruoling.omms.crystal.text
 
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
+import net.kyori.adventure.text.Component
 
 enum class Color {
     black, dark_blue, dark_green, dark_aqua, dark_red, dark_purple, gold, gray, dark_gray, blue, green, aqua, red, light_purple, yellow, white, reset
@@ -25,6 +26,7 @@ data class ClickEvent(val action: ClickAction, val value: String)
 data class HoverEvent(val action: HoverAction, val contents: Any? = null, val value: Any? = null)
 
 
+@Deprecated("Replace Text with Adventure API", replaceWith = ReplaceWith("net.kyori.adventure.Component.text()"))
 class Text constructor(
     private var text: String,
     private var extra: MutableList<Text>? = null,
@@ -101,6 +103,7 @@ class Text constructor(
     fun toRawString():String = text
 }
 
+@Deprecated("Replace TextGroup with Adventure API")
 class TextGroup private constructor(){
     private var texts: MutableList<Text> = mutableListOf()
     fun getTexts():MutableList<Text> = texts

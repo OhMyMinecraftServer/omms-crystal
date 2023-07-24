@@ -3,8 +3,10 @@ package net.zhuruoling.omms.crystal.command
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.tree.CommandNode
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
 import net.zhuruoling.omms.crystal.text.Color
-import net.zhuruoling.omms.crystal.text.Text
 import net.zhuruoling.omms.crystal.util.unregisterCommand
 import org.jline.reader.Completer
 import org.jline.reader.impl.completer.AggregateCompleter
@@ -26,7 +28,7 @@ object CommandManager {
 
     fun execute(command: String, sourceStack: CommandSourceStack): Int {
         val ret = dispatcher.execute(command, sourceStack)
-        sourceStack.sendFeedback(Text("ao").withColor(Color.light_purple))
+        sourceStack.sendFeedback(Component.text("ao").color(NamedTextColor.LIGHT_PURPLE))
         return ret
     }
 

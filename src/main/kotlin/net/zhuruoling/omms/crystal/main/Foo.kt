@@ -7,32 +7,31 @@ import net.zhuruoling.omms.crystal.event.registerEvents
 import net.zhuruoling.omms.crystal.i18n.*
 import net.zhuruoling.omms.crystal.plugin.PluginManager
 import net.zhuruoling.omms.crystal.util.WORKING_DIR
+import net.zhuruoling.omms.crystal.util.getWorkingDir
 import java.text.MessageFormat
 import kotlin.io.path.div
 
+
 fun main(args: Array<String>) {
-    addBuiltinTranslations()
+
+    TranslateManager.addBuiltinTranslations()
     Config.load()
     SharedConstants.eventDispatcher = EventDispatcher()
     SharedConstants.eventLoop = EventLoop()
     SharedConstants.eventLoop.start()
     registerEvents()
-    PluginManager.init()
-    //PluginManager.loadAll()
-    val langEn = Identifier("en:us")
-    val langZh = Identifier("zh:cn")
-    SharedConstants.language = langEn
-    val key = Identifier("crystal:test")
-    val mgr = TranslateManager
-    println(mgr.translate(TranslateKey(langEn, key)).translate)
-    println(mgr.translate(TranslateKey(langZh, key)).translate)
-    SharedConstants.language = langEn
-    withTranslateContext("simple_op"){
-        println(tr("set_op", "ZhuRuoLing"))
-    }
-    SharedConstants.language = langZh
-    withTranslateContext("simple_op"){
-        println(tr("set_op", "WDNMD"))
+    for (lang in builtinTranslationLanguages) {
+        println("use lang $lang")
+        SharedConstants.language = lang
+        withTranslateContext("crystal") {
+            println("no fmt test: " + tr("test"))
+            println("fmt test: " + tr("fmt_test", "arg1", "arg2"))
+            println("key not exist: " + tr("not_exist"))
+        }
+        println("translate keys:")
+        TranslateManager.getOrCreateDefaultLanguageProvider(lang).getAllTranslates().forEach { (t, u) ->
+            println("($t=$u)")
+        }
     }
     SharedConstants.eventLoop.exit()
 }

@@ -4,17 +4,17 @@ import java.io.InputStreamReader
 
 class PluginResource(val bundleId: String) {
 
-    var resMap = mutableMapOf<String, String>()
+    var resDataMap = mutableMapOf<String, String>()
         private set
-    var resMeta = mutableMapOf<String, String>()
+    var resMetaDataMap = mutableMapOf<String, String>()
         private set
 
     fun getResValue(id: String): String? {
-        return resMap[id]
+        return resDataMap[id]
     }
 
     fun getResMetaValue(id: String): String? {
-        return resMeta[id]
+        return resMetaDataMap[id]
     }
 
     companion object {
@@ -35,7 +35,7 @@ class PluginResource(val bundleId: String) {
                 }
                 resStore += key to value
             }
-            return PluginResource(id).run { this.resMeta = resMeta; this.resMap = resStore;this }
+            return PluginResource(id).run { this.resMetaDataMap = resMeta; this.resDataMap = resStore;this }
         }
     }
 }

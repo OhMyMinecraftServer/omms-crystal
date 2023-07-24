@@ -75,7 +75,7 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
                     }
                 }
                 classes.map {
-                    it.getDeclaredConstructor().run { isAccessible = true;this }.newInstance() to
+                    it.getDeclaredConstructor().apply { isAccessible = true }.newInstance() to
                             Arrays.stream(it.declaredMethods)
                                 .filter { it3 -> it3.annotations.any { it2 -> it2 is EventHandler } }
                                 .map { it2 -> it2.getAnnotation(EventHandler::class.java).run { this.event to it2 } }
@@ -182,20 +182,15 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
             }
         }
         resources.forEach {
-            val resType = it.value.resMeta["type"] ?: return@forEach
-            val namespace = it.value.resMeta["namespace"] ?: return@forEach
+            val resType = it.value.resMetaDataMap["type"] ?: return@forEach
+            val namespace = it.value.resMetaDataMap["namespace"] ?: return@forEach
             if (resType == "lang") {
-                val lang = Identifier(it.key.replace("_", ":"))
-                TranslateManager.getOrCreateLanguageProvider(
-                    lang,
-                    impl = LanguageProviderImpl::class.java,
-                    lang,
-                    linkedMapOf<Identifier, TranslatableString>()
-                ).apply {
-                    it.value.resMap.forEach { (k, v) ->
-                        val translateKey = TranslateKey(lang, Identifier(namespace, k))
+                val lang = it.key
+                TranslateManager.getOrCreateDefaultLanguageProvider(lang).apply {
+                    it.value.resDataMap.forEach { (k, v) ->
+                        val translateKey = TranslateKey(lang, namespace, k)
                         if (DebugOptions.pluginDebug()) logger.info("$k -> $v")
-                        addTranslateKey(translateKey, TranslatableString(translateKey, v))
+                        this.addTranslateKey(translateKey, v)
                     }
                 }
             }

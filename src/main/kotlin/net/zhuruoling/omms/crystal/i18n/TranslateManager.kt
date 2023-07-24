@@ -1,17 +1,22 @@
 package net.zhuruoling.omms.crystal.i18n
 
 import net.zhuruoling.omms.crystal.main.SharedConstants
+import java.util.*
+
+val builtinTranslationLanguages = listOf("en_us","zh_cn")
 
 object TranslateManager {
-    private val languageProviders = mutableMapOf<Identifier, LanguageProvider>()
-
-    fun translate(key: TranslateKey): TranslatableString {
-        val provider = languageProviders[key.lang] ?: return TranslatableString(key, key.key.toString())
+    private val languageProviders = mutableMapOf<String, LanguageProvider>()
+    fun init(){
+        addBuiltinTranslations()
+    }
+    fun translate(key: TranslateKey): String {
+        val provider = languageProviders[key.lang] ?: return key.toString()
         return provider.translate(key)
     }
 
-    fun translateFormatString(key: TranslateKey, vararg element: Any): TranslatableString {
-        val provider = languageProviders[key.lang] ?: return TranslatableString(key, key.key.toString())
+    fun translateFormatString(key: TranslateKey, vararg element: Any): String {
+        val provider = languageProviders[key.lang] ?: return key.toString()
         return provider.translateFormatString(key, *element)
     }
 
@@ -19,27 +24,31 @@ object TranslateManager {
         this.languageProviders[provider.getLanguageId()] = provider
     }
 
-    fun getOrCreateLanguageProvider(
-        lang: Identifier,
-        impl: Class<out LanguageProvider> = LanguageProviderImpl::class.java,
-        vararg args: Any
-    ): LanguageProvider {
+    fun getOrCreateDefaultLanguageProvider(lang: String): LanguageProvider {
         if (lang in languageProviders) return languageProviders[lang]!!
-        return impl.getConstructor(*args.map { it.javaClass }.toTypedArray())
-            .apply { isAccessible = true }
-            .newInstance(*args)
-            .apply { languageProviders[lang] = this }
+        val provider = LanguageProviderImpl(lang)
+        languageProviders += lang to provider
+        return provider
+    }
+
+    fun addBuiltinTranslations() {
+        for (lang in builtinTranslationLanguages){
+            ResourceBundle.getBundle(lang).run {
+                for (key in this.keys) {
+                    val value = this.getString(key)
+                    val trKey = TranslateKey(lang,"crystal", key)
+                    getOrCreateDefaultLanguageProvider(lang).addTranslateKey(trKey, value)
+                }
+            }
+        }
     }
 }
 
-fun <R> withTranslateContext(namespace: String, func: TranslateContext.() -> R): R =
+inline fun <R> withTranslateContext(namespace: String, func: TranslateContext.() -> R): R =
     func(TranslateContext(SharedConstants.language, namespace))
 
-class TranslateContext(private val language: Identifier, private val namespace: String) {
-
+class TranslateContext(private val language: String, private val namespace: String) {
     fun tr(t: String, vararg element: Any) = translate(t, *element)
-    fun translate(t: String, vararg element: Any): String =
-        TranslateManager.translateFormatString(TranslateKey(language, Identifier(namespace, t)), *element).translate
-
+    fun translate(k: String, vararg element: Any) =
+        TranslateManager.translateFormatString(TranslateKey(language, namespace, k), *element)
 }
-

@@ -7,8 +7,7 @@ import net.zhuruoling.omms.crystal.config.Config
 import net.zhuruoling.omms.crystal.config.ConfigManager
 import net.zhuruoling.omms.crystal.console.ConsoleHandler
 import net.zhuruoling.omms.crystal.event.*
-import net.zhuruoling.omms.crystal.i18n.Identifier
-import net.zhuruoling.omms.crystal.i18n.addBuiltinTranslations
+import net.zhuruoling.omms.crystal.i18n.TranslateManager
 import net.zhuruoling.omms.crystal.i18n.withTranslateContext
 import net.zhuruoling.omms.crystal.main.SharedConstants.consoleHandler
 import net.zhuruoling.omms.crystal.main.SharedConstants.eventDispatcher
@@ -17,8 +16,8 @@ import net.zhuruoling.omms.crystal.main.SharedConstants.serverThreadDaemon
 import net.zhuruoling.omms.crystal.permission.PermissionManager
 import net.zhuruoling.omms.crystal.plugin.PluginManager
 import net.zhuruoling.omms.crystal.rcon.RconClient
-import net.zhuruoling.omms.crystal.server.ServerThreadDaemon
 import net.zhuruoling.omms.crystal.server.ServerStatus
+import net.zhuruoling.omms.crystal.server.ServerThreadDaemon
 import net.zhuruoling.omms.crystal.server.serverStatus
 import net.zhuruoling.omms.crystal.text.Color
 import net.zhuruoling.omms.crystal.text.Text
@@ -178,7 +177,7 @@ fun main(args: Array<String>) {
     consoleHandler = ConsoleHandler()
     consoleHandler.start()
     registerEvents()
-    addBuiltinTranslations()
+    TranslateManager.init()
     val logger = createLogger("Main")
     logger.info("Hello World!")
     val os = ManagementFactory.getOperatingSystemMXBean()
