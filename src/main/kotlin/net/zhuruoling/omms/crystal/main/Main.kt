@@ -54,13 +54,6 @@ fun init() {
         register(stopCommand)
         register(pluginCommand)
     }
-    CommandHelpManager.run {
-        registerHelpMessage("${Config.commandPrefix}help"){
-            withTranslateContext("crystal"){
-                Component.text(tr("help.help"))
-            }
-        }
-    }
 
     eventDispatcher.run {
         registerHandler(ServerStoppingEvent){
@@ -177,7 +170,6 @@ fun main(args: Array<String>) {
     consoleHandler = ConsoleHandler()
     consoleHandler.start()
     registerEvents()
-    TranslateManager.init()
     val logger = createLogger("Main")
     logger.info("Hello World!")
     val os = ManagementFactory.getOperatingSystemMXBean()
@@ -200,7 +192,9 @@ fun main(args: Array<String>) {
             logger.info("\tServerType: ${Config.serverType}")
             logger.info("\tDebugOptions: $DebugOptions")
         }
-
+        SharedConstants.language = Config.lang
+        TranslateManager.init()
+        CommandHelpManager.init()
         eventDispatcher = EventDispatcher()
         eventLoop = EventLoop()
         eventLoop.start()

@@ -21,18 +21,29 @@ import java.util.*
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
 
-class PluginInstance(private val urlClassLoader: URLClassLoader, private val fileFullPath: String) {
-
-    lateinit var metadata: PluginMetadata
+class PluginInstance(
+    private val urlClassLoader: URLClassLoader,
+    private val fileFullPath: String,
+    private val pluginStateChangeListener: PluginInstance.(PluginState, PluginState) -> Unit = { _, _ -> }
+) {
+    var metadata: PluginMetadata = PluginMetadata()
     private lateinit var pluginClazz: Class<*>
     private lateinit var instance: PluginInitializer
-    private var pluginState = PluginState.WAIT
+    private var _pluginState = PluginState.WAIT
+    private var pluginState
+        set(value) {
+            pluginStateChangeListener(_pluginState, value)
+            _pluginState = value
+        }
+        get() = _pluginState
+
     val eventListeners = mutableListOf<Pair<Event, (EventArgs) -> Unit>>()
     private val logger = createLogger("PluginInstance")
     val pluginParsers = mutableMapOf<String, MinecraftParser>()
     val resources = mutableMapOf<String, PluginResource>()
     fun loadPluginMetadata() {
         pluginState = PluginState.ERROR
+
         try {
             useInJarFile("crystal.plugin.json") {
                 metadata = PluginMetadata.fromJson(readAllBytes().decodeToString())
@@ -75,7 +86,7 @@ class PluginInstance(private val urlClassLoader: URLClassLoader, private val fil
                     }
                 }
                 classes.map {
-                    it.getDeclaredConstructor().apply { isAccessible = true }.newInstance() to
+                    return@map it.getDeclaredConstructor().apply { isAccessible = true }.newInstance() to
                             Arrays.stream(it.declaredMethods)
                                 .filter { it3 -> it3.annotations.any { it2 -> it2 is EventHandler } }
                                 .map { it2 -> it2.getAnnotation(EventHandler::class.java).run { this.event to it2 } }

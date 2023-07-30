@@ -97,8 +97,6 @@ object Config {
                 throw RuntimeException("Bad config file, cannot fill config with detected environment.", e)
             }
         }
-
         return isInit
-
     }
 }

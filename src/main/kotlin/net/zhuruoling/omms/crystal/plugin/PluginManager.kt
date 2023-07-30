@@ -1,14 +1,12 @@
 package net.zhuruoling.omms.crystal.plugin
 
+import net.zhuruoling.omms.crystal.main.DebugOptions
 import net.zhuruoling.omms.crystal.main.SharedConstants
 import net.zhuruoling.omms.crystal.parser.ParserManager
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependency
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependencyRequirement
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginMetadata
-import net.zhuruoling.omms.crystal.util.BuildProperties
-import net.zhuruoling.omms.crystal.util.Manager
-import net.zhuruoling.omms.crystal.util.VERSION
-import net.zhuruoling.omms.crystal.util.joinFilePaths
+import net.zhuruoling.omms.crystal.util.*
 import java.io.File
 import java.lang.module.ModuleDescriptor
 import java.net.URL
@@ -16,7 +14,7 @@ import java.net.URLClassLoader
 
 private lateinit var pluginClassLoader: URLClassLoader
 private val pluginFileUrlList = mutableListOf<URL>()
-
+private val logger = createLogger("PluginManager")
 object PluginManager : Manager<String, PluginInstance>(
     beforeInit = { pluginClassLoader = URLClassLoader(pluginFileUrlList.toTypedArray()) },
     afterInit = {
@@ -38,7 +36,11 @@ object PluginManager : Manager<String, PluginInstance>(
     },
     scanFolder = "plugins",
     initializer = {
-        PluginInstance(pluginClassLoader, it).run {
+        PluginInstance(pluginClassLoader, it){before,after ->
+            if (DebugOptions.pluginDebug()){
+                logger.info("Plugin ${this.metadata.id} state changed from $before to $after")
+            }
+        }.run {
             loadPluginMetadata()
             loadPluginClasses()
             loadPluginResources()

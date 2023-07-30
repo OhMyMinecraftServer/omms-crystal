@@ -9,7 +9,6 @@ import net.zhuruoling.omms.crystal.i18n.*
 
 
 fun main(args: Array<String>) {
-
     TranslateManager.addBuiltinTranslations()
     Config.load()
     SharedConstants.eventDispatcher = EventDispatcher()

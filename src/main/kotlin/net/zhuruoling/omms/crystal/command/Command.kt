@@ -1,16 +1,19 @@
 package net.zhuruoling.omms.crystal.command
 
+import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.ArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.builder.RequiredArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
+import net.kyori.adventure.text.Component
 import net.zhuruoling.omms.crystal.config.Config
 import net.zhuruoling.omms.crystal.event.ServerStartEvent
 import net.zhuruoling.omms.crystal.event.ServerStartEventArgs
 import net.zhuruoling.omms.crystal.event.ServerStopEvent
 import net.zhuruoling.omms.crystal.event.ServerStopEventArgs
+import net.zhuruoling.omms.crystal.i18n.withTranslateContext
 import net.zhuruoling.omms.crystal.main.SharedConstants
 import net.zhuruoling.omms.crystal.permission.Permission
 import net.zhuruoling.omms.crystal.permission.PermissionManager
@@ -199,12 +202,12 @@ val stopCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.com
         1
     }
 
-val executeCommand =
+val executeCommand: LiteralArgumentBuilder<CommandSourceStack> =
     literal(Config.commandPrefix + "execute")
         .requires { it.from == CommandSource.CONSOLE || it.from == CommandSource.CENTRAL }
         .then(
             literal("as").then(
-                wordArgument("player")//.
+                wordArgument("player")
             )
         )
 
@@ -242,3 +245,27 @@ val pluginCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.c
 //
 //
 
+private val commands = listOf(helpCommand, permissionCommand, startCommand, stopCommand, executeCommand, pluginCommand)
+
+
+fun registerBuiltinCommandHelp() {
+    val dispatcher = CommandDispatcher<CommandSourceStack>()
+    commands.forEach(dispatcher::register)
+    val usage = dispatcher.getAllUsage(
+        dispatcher.root,
+        CommandSourceStack(from = CommandSource.PLAYER, player = "", permissionLevel = Permission.OWNER),
+        false
+    ).toList()
+    val help = usage.map {
+        it to it.removePrefix(Config.commandPrefix).split(" ")
+            .joinToString(separator = ".")
+            .run { "help.$this" }
+    }
+    help.forEach { (cmd, help) ->
+        CommandHelpManager.registerHelpMessage(cmd) {
+            withTranslateContext("crystal") {
+                tr(help)
+            }
+        }
+    }
+}

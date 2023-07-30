@@ -2,17 +2,22 @@ package net.zhuruoling.omms.crystal.command
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
-import org.w3c.dom.Text
+
 
 object CommandHelpManager {
 
-    val map = mutableMapOf<String,  () -> TextComponent>()
+    val map = mutableMapOf<String,  CommandHelpProvider>()
     fun init() {
         map.clear()
+        registerBuiltinCommandHelp()
     }
 
-    fun registerHelpMessage(command: String, textProvider: () -> TextComponent){
-        map[command] = textProvider
+    fun registerHelpMessage(command: String, textProvider: () -> String){
+        map[command] = CommandHelpProvider { textProvider() }
+    }
+
+    fun registerHelpMessage(command: String, helpProvider: CommandHelpProvider){
+        map[command] = helpProvider
     }
 
     fun displayAll(commandSourceStack: CommandSourceStack,) {
@@ -25,7 +30,7 @@ object CommandHelpManager {
     ) {
         map.forEach{ (k, v) ->
             if (predicate(k)){
-                commandSourceStack.sendFeedback(Component.text("$k -> ").append(v()))
+                commandSourceStack.sendFeedback(Component.text("$k -> ${v()}"))
             }
         }
     }
