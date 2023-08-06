@@ -711,17 +711,6 @@ fun matchVersion(s: String): MinecraftVersions?{
     return null
 }
 
-fun main() {
-    val a = matchVersion("1.19.2 Release Candidate 1")!!
-    val b = matchVersion("1.18.2")!!
-    println(a > b)
-    println(a.ordinal)
-    println(b.ordinal)
-    println(a.version > b.version)
-    println(a.version.versionId)
-    println(b.version.versionId)
-}
-
 data class MinecraftVersion(
     val versionId: Int,
     val versionDisplayName: String,
