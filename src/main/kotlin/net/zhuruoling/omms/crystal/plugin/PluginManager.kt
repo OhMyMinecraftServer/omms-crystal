@@ -39,6 +39,12 @@ object PluginManager : Manager<String, PluginInstance>(
         PluginInstance(pluginClassLoader, it){before,after ->
             if (DebugOptions.pluginDebug()){
                 logger.info("Plugin ${this.pluginMetadata.id} state changed from $before to $after")
+                ///Users/zhuruoling/IdeaProjects/omms-crystal/plugins/crystal-backup-0.0.1.jar
+                logger.info("[DEBUG] Plugin ${
+                    if ((this.pluginMetadata.id == null) or (this.pluginMetadata.version == null))
+                         "...${it.subSequence(it.length-40, it.length)}"
+                    else "${pluginMetadata.id}@${pluginMetadata.version}"
+                } state changed from $before to $after")
             }
         }.run {
             loadPluginMetadata()
@@ -82,7 +88,12 @@ private fun Manager<String, PluginInstance>.checkRequirements() {
         unsatisfied.forEach {
             it.value.forEach { requirement ->
                 builder.append(
-                    "\t${it.key.id} ${it.key.version} requires ${requirement.id} ${requirement.requirement}, ${if (requirement.id !in dependencyMap) "which is missing!" else "but only the wrong version are present: ${dependencyMap[requirement.id]}!"}\n"
+                    "\t${it.key.id} ${it.key.version} requires ${requirement.id} ${requirement.requirement}, ${
+                        if (requirement.id !in dependencyMap)
+                            "which is missing!"
+                        else
+                            "but only the wrong version are present: ${dependencyMap[requirement.id]}!"
+                    }\n"
                 )
             }
         }

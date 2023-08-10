@@ -24,8 +24,8 @@ var serverStatus = ServerStatus.STOPPED
 
 enum class LaunchParameter
 
-enum class ServerStatus{
-    STOPPED, RUNNING, STOPPING,STARTING
+enum class ServerStatus {
+    STOPPED, RUNNING, STOPPING, STARTING
 }
 
 class ServerThreadDaemon(
@@ -42,6 +42,7 @@ class ServerThreadDaemon(
     private val queue = ArrayBlockingQueue<String>(1024)
     private var who = "crystal"
     private var process: Process? = null
+    lateinit var outputHandler: ServerOutputHandler
 
     init {
         this.launchParameters = launchParameters
@@ -58,8 +59,8 @@ class ServerThreadDaemon(
             SharedConstants.eventLoop.dispatch(ServerStoppedEvent, ServerStoppedEventArgs(Integer.MIN_VALUE, who))
             return
         }
-        val handler = ServerOutputHandler(process!!, *launchParameters)
-        handler.start()
+        outputHandler = ServerOutputHandler(process!!, *launchParameters)
+        outputHandler.start()
         val writer = out.writer(Charset.defaultCharset())
         while (process!!.isAlive) {
             try {
@@ -85,7 +86,7 @@ class ServerThreadDaemon(
     }
 
     fun input(str: String) {
-        synchronized(queue){
+        synchronized(queue) {
             queue.add(str)
         }
     }
@@ -104,7 +105,8 @@ class ServerThreadDaemon(
 class ServerOutputHandler(private val serverProcess: Process, vararg launchParameters: LaunchParameter?) :
     Thread("ServerOutputHandler") {
     private val launchParameters: Array<out LaunchParameter?>
-    private val logger = createServerLogger()
+    private val serverLogger = createServerLogger()
+    private val logger = createLogger("ServerOutputHandler")
     private lateinit var input: InputStream
     private val parser = ParserManager.getParser(Config.parserName)
         ?: throw IllegalArgumentException("Specified parser ${Config.parserName} does not exist.")
@@ -118,24 +120,30 @@ class ServerOutputHandler(private val serverProcess: Process, vararg launchParam
             input = serverProcess.inputStream
             val reader = input.bufferedReader(Charset.forName(Config.encoding))
             while (serverProcess.isAlive) {
-                LockSupport.parkNanos(10)
-                val string = reader.readLine()
-                if (string != null) {
-                    val info = parser.parseToBareInfo(string)
-                    if (info == null) {
-                        println(string)
-                    } else {
-                        //dispatch a global info first
-                        SharedConstants.eventLoop.dispatch(ServerInfoEvent, ServerInfoEventArgs(info))
-                        //and then started to parse
-                        parseAndDispatch(info.info)
-                        when (info.level) {
-                            Level.DEBUG -> logger.debug(MarkerFactory.getMarker(info.thread), info.info)
-                            Level.ERROR -> logger.error(MarkerFactory.getMarker(info.thread), info.info)
-                            Level.INFO -> logger.info(MarkerFactory.getMarker(info.thread), info.info)
-                            Level.TRACE -> logger.trace(MarkerFactory.getMarker(info.thread), info.info)
-                            Level.WARN -> logger.warn(MarkerFactory.getMarker(info.thread), info.info)
+                try {
+                    LockSupport.parkNanos(10)
+                    val string = reader.readLine()
+                    if (string != null) {
+                        val info = parser.parseToBareInfo(string)
+                        if (info == null) {
+                            println(string)
+                        } else {
+                            //dispatch a global info first
+                            SharedConstants.eventLoop.dispatch(ServerInfoEvent, ServerInfoEventArgs(info))
+                            //and then started to parse
+                            parseAndDispatch(info.info)
+                            when (info.level) {
+                                Level.DEBUG -> serverLogger.debug(MarkerFactory.getMarker(info.thread), info.info)
+                                Level.ERROR -> serverLogger.error(MarkerFactory.getMarker(info.thread), info.info)
+                                Level.INFO -> serverLogger.info(MarkerFactory.getMarker(info.thread), info.info)
+                                Level.TRACE -> serverLogger.trace(MarkerFactory.getMarker(info.thread), info.info)
+                                Level.WARN -> serverLogger.warn(MarkerFactory.getMarker(info.thread), info.info)
+                            }
                         }
+                    }
+                } catch (e: Exception) {
+                    if (e !is InterruptedException) {
+                        logger.error("Error occurred while reading server output.", e)
                     }
                 }
             }
@@ -174,7 +182,7 @@ class ServerOutputHandler(private val serverProcess: Process, vararg launchParam
             return
         }
         val rconInfo = parser.parseRconStartInfo(processedInfo)
-        if (rconInfo != null){
+        if (rconInfo != null) {
             dispatchEvent(RconStartedEvent, RconStartedEventArgs(rconInfo.port))
             return
         }

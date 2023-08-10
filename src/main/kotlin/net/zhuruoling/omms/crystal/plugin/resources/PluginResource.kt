@@ -1,5 +1,6 @@
 package net.zhuruoling.omms.crystal.plugin.resources
 
+import net.zhuruoling.omms.crystal.main.DebugOptions
 import java.io.InputStreamReader
 
 class PluginResource(val bundleId: String) {
@@ -15,6 +16,10 @@ class PluginResource(val bundleId: String) {
 
     fun getResMetaValue(id: String): String? {
         return resMetaDataMap[id]
+    }
+
+    override fun toString(): String {
+        return "meta = $resMetaDataMap, data = $resDataMap "
     }
 
     companion object {

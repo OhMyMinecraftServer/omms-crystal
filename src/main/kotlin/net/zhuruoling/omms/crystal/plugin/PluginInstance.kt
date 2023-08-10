@@ -48,9 +48,8 @@ class PluginInstance(
     val pluginResources = mutableMapOf<String, PluginResource>()
     fun loadPluginMetadata() {
         pluginState = PluginState.ERROR
-
         try {
-            useInJarFile("crystal.plugin.json") {
+            useFileInJar("crystal.plugin.json") {
                 pluginMetadata = PluginMetadata.fromJson(readAllBytes().decodeToString())
                 if (pluginMetadata.pluginDependencies != null) {
                     pluginMetadata.pluginDependencies!!.forEach { it2 ->
@@ -173,8 +172,9 @@ class PluginInstance(
         pluginState = PluginState.ERROR
         var result = mutableListOf<PluginDependencyRequirement>()
         if (pluginMetadata.pluginDependencies != null) {
-            result = pluginMetadata.pluginDependencies!!.filter { dependencies.none { it2 -> it.requirementMatches(it2) } }
-                .toMutableList()
+            result =
+                pluginMetadata.pluginDependencies!!.filter { dependencies.none { it2 -> it.requirementMatches(it2) } }
+                    .toMutableList()
         }
         pluginState = PluginState.INITIALIZED
         return result
@@ -190,7 +190,7 @@ class PluginInstance(
         pluginState = PluginState.LOADED
     }
 
-    private fun <R> useInJarFile(fileName: String, consumer: InputStream.() -> R): R =
+    private fun <R> useFileInJar(fileName: String, consumer: InputStream.() -> R): R =
         ZipFile(File(fileFullPath)).use {
             try {
                 val entry = it.getEntry(fileName)
@@ -212,12 +212,18 @@ class PluginInstance(
         if (pluginMetadata.resources != null) {
             pluginMetadata.resources!!.forEach {
                 logger.info("${pluginMetadata.id}: ${it.key} <- ${it.value}")
-                useInJarFile(it.value) {
+                useFileInJar(it.value) {
                     pluginResources[it.key] = PluginResource.fromReader(it.key, reader(StandardCharsets.UTF_8))
                 }
             }
         }
+
+        if (pluginResources.isEmpty() and DebugOptions.pluginDebug()) {
+            logger.info("[DEBUG] Plugin ${pluginMetadata.id} has no resources.")
+        }
         pluginResources.forEach {
+            if (DebugOptions.pluginDebug())
+                logger.info("[DEBUG] Resource ${it.value}")
             val resType = it.value.resMetaDataMap["type"] ?: return@forEach
             val namespace = it.value.resMetaDataMap["namespace"] ?: return@forEach
             if (resType == "lang") {
@@ -225,13 +231,11 @@ class PluginInstance(
                 TranslateManager.getOrCreateDefaultLanguageProvider(lang).apply {
                     it.value.resDataMap.forEach { (k, v) ->
                         val translateKey = TranslateKey(lang, namespace, k)
-                        if (DebugOptions.pluginDebug()) logger.info("$k -> $v")
+                        if (DebugOptions.pluginDebug()) logger.info("[DEBUG] Translation: $k -> $v")
                         this.addTranslateKey(translateKey, v)
                     }
                 }
             }
         }
     }
-
-
 }
