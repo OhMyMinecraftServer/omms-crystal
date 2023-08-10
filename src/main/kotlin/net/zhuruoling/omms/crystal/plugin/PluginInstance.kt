@@ -141,12 +141,14 @@ class PluginInstance(
     }
 
     fun injectArguments() {
+        pluginState = PluginState.ERROR
+        if (DebugOptions.pluginDebug())logger.info("[DEBUG] Injecting argument")
         for (field in pluginClazz.declaredFields) {
             field.isAccessible = true
-            if (field.annotations.any { it::class.java == InjectArgument::class.java }) {
-                val name = field.getAnnotation(InjectArgument::class.java).name
-                when (name) {
+            if (field.isAnnotationPresent(InjectArgument::class.java)) {
+                when (val name = field.getAnnotation(InjectArgument::class.java).name) {
                     "pluginConfig" -> {
+                        if (DebugOptions.pluginDebug())logger.info("[DEBUG] Injecting pluginConfig into $field")
                         if (field.type != Path::class.java) {
                             throw IllegalArgumentException("Illegal field type of pluginConfig injection.(Require java.nio.file.Path, but found ${field.type.name}) ")
                         }
@@ -157,6 +159,7 @@ class PluginInstance(
                 }
             }
         }
+        pluginState = PluginState.INITIALIZED
     }
 
     private fun checkMetadata() {
