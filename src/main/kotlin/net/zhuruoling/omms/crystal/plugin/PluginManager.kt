@@ -38,13 +38,14 @@ object PluginManager : Manager<String, PluginInstance>(
     initializer = {
         PluginInstance(pluginClassLoader, it){before,after ->
             if (DebugOptions.pluginDebug()){
-                logger.info("Plugin ${this.metadata.id} state changed from $before to $after")
+                logger.info("Plugin ${this.pluginMetadata.id} state changed from $before to $after")
             }
         }.run {
             loadPluginMetadata()
             loadPluginClasses()
+            injectArguments()
             loadPluginResources()
-            metadata.id!! to this
+            pluginMetadata.id!! to this
         }
     }
 ) {
@@ -64,11 +65,11 @@ private fun Manager<String, PluginInstance>.checkRequirements() {
         BuildProperties["applicationName"]!!
     )
     map.forEach {
-        dependencies += PluginDependency(ModuleDescriptor.Version.parse(it.value.metadata.version), it.key)
+        dependencies += PluginDependency(ModuleDescriptor.Version.parse(it.value.pluginMetadata.version), it.key)
     }
     val unsatisfied = mutableMapOf<PluginMetadata, List<PluginDependencyRequirement>>()
     map.forEach {
-        unsatisfied += it.value.metadata to it.value.checkPluginDependencyRequirements(dependencies)
+        unsatisfied += it.value.pluginMetadata to it.value.checkPluginDependencyRequirements(dependencies)
     }
     if (unsatisfied.any { it.value.isNotEmpty() }) {
         val dependencyMap = mutableMapOf<String, String>()
