@@ -6,6 +6,7 @@ import net.zhuruoling.omms.crystal.event.getEventById
 import net.zhuruoling.omms.crystal.i18n.*
 import net.zhuruoling.omms.crystal.main.DebugOptions
 import net.zhuruoling.omms.crystal.parser.MinecraftParser
+import net.zhuruoling.omms.crystal.plugin.api.annotations.Config
 import net.zhuruoling.omms.crystal.plugin.api.annotations.EventHandler
 import net.zhuruoling.omms.crystal.plugin.api.annotations.InjectArgument
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependency
@@ -14,9 +15,11 @@ import net.zhuruoling.omms.crystal.plugin.metadata.PluginMetadata
 import net.zhuruoling.omms.crystal.plugin.resources.PluginResource
 import net.zhuruoling.omms.crystal.util.createLogger
 import net.zhuruoling.omms.crystal.util.joinFilePaths
+import sun.misc.Unsafe
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.lang.reflect.Modifier
 import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
@@ -24,6 +27,7 @@ import java.util.*
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
 import kotlin.io.path.Path
+import kotlin.io.path.div
 
 class PluginInstance(
     private val urlClassLoader: URLClassLoader,
@@ -35,6 +39,7 @@ class PluginInstance(
     private lateinit var instance: PluginInitializer
     private var _pluginState = PluginState.WAIT
     private lateinit var pluginConfigPath: Path
+    private lateinit var pluginConfigFile: File
     private var pluginState
         set(value) {
             pluginStateChangeListener(_pluginState, value)
@@ -142,13 +147,13 @@ class PluginInstance(
 
     fun injectArguments() {
         pluginState = PluginState.ERROR
-        if (DebugOptions.pluginDebug())logger.info("[DEBUG] Injecting argument")
+        if (DebugOptions.pluginDebug()) logger.info("[DEBUG] Injecting argument")
         for (field in pluginClazz.declaredFields) {
             field.isAccessible = true
             if (field.isAnnotationPresent(InjectArgument::class.java)) {
                 when (val name = field.getAnnotation(InjectArgument::class.java).name) {
                     "pluginConfig" -> {
-                        if (DebugOptions.pluginDebug())logger.info("[DEBUG] Injecting pluginConfig into $field")
+                        if (DebugOptions.pluginDebug()) logger.info("[DEBUG] Injecting pluginConfig into $field")
                         if (field.type != Path::class.java) {
                             throw IllegalArgumentException("Illegal field type of pluginConfig injection.(Require java.nio.file.Path, but found ${field.type.name}) ")
                         }
@@ -157,9 +162,48 @@ class PluginInstance(
 
                     else -> throw IllegalArgumentException("Illegal injection type $name")
                 }
+                continue
+            }
+            if (field.isAnnotationPresent(Config::class.java) and field.isAnnotationPresent(InjectArgument::class.java)) {
+                throw IllegalArgumentException("@Config cannot be used simultaneously with @InjectArgument (at field $field in class $pluginClazz).")
+            }
+            if (field.isAnnotationPresent(Config::class.java)) {
+                val configClass = field.type
+                val defaultConfig = try {
+                    configClass.getDeclaredField("DEFAULT").get(null)
+                } catch (_: NoSuchFieldException) {
+                    try{
+                        configClass.getDeclaredConstructor().apply { isAccessible = true }.newInstance()
+                    }catch (e:Exception){
+                        throw PluginException("Cannot create default config.",e)
+                    }
+                }
+                pluginConfigFile = (pluginConfigPath / "${pluginMetadata.id}.json").toFile()
+                if (!pluginConfigFile.exists()){
+                    pluginConfigFile.createNewFile()
+                    pluginConfigFile.writer().use {
+                        gsonForPluginMetadata.toJson(defaultConfig, it)
+                    }
+                }
+                if (pluginConfigFile.exists()){
+                    val configInstance = pluginConfigFile.reader().use {
+                       fillFieldsUseDefault(gsonForPluginMetadata.fromJson(it, configClass), defaultConfig)
+                    }
+                    field.set(instance, configInstance)
+                }
             }
         }
         pluginState = PluginState.INITIALIZED
+    }
+
+    private fun <T> fillFieldsUseDefault(t: T, default: T): T{
+        t!!::class.java.declaredFields.forEach {
+            if (Modifier.isStatic(it.modifiers))return@forEach
+            if (it.get(t) == null){
+                it.set(t, it.get(default))
+            }
+        }
+        return t
     }
 
     private fun checkMetadata() {
