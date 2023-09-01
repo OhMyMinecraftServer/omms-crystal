@@ -2,6 +2,7 @@ package net.zhuruoling.omms.crystal.i18n
 
 import net.zhuruoling.omms.crystal.main.SharedConstants
 import java.util.*
+import java.util.function.Function
 
 val builtinTranslationLanguages = listOf("en_us","zh_cn")
 
@@ -44,7 +45,10 @@ object TranslateManager {
     }
 }
 
-inline fun <R> withTranslateContext(namespace: String, func: TranslateContext.() -> R): R =
+fun <R> withTranslateContext(namespace: String, func: Function<TranslateContext,R>): R =
+    func.apply(TranslateContext(SharedConstants.language, namespace))
+
+fun <R> withTranslateContext(namespace: String, func: TranslateContext.() -> R): R =
     func(TranslateContext(SharedConstants.language, namespace))
 
 class TranslateContext(private val language: String, private val namespace: String) {
