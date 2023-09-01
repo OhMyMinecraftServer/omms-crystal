@@ -12,18 +12,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 
 public class PluginUtil {
-    @NotNull
-    public static HashMap<String, Method> getPluginDeclaredEventHandlerMethod(@NotNull Class<? extends PluginInitializer> clazz) {
-        var map = new HashMap<String, Method>();
-        for (Method declaredMethod : clazz.getDeclaredMethods()) {
-            var annotation = declaredMethod.getAnnotation(EventHandler.class);
-            if (annotation != null) {
-                String e = annotation.event();
-                map.put(e, declaredMethod);
-            }
-        }
-        return map;
-    }
 
     @NotNull
     @Contract(pure = true)

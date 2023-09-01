@@ -85,7 +85,7 @@ object PermissionManager {
         return permissionMap.containsKey(player)
     }
 
-    operator fun contains(player: String)= playerExists(player)
+    operator fun contains(player: String) = playerExists(player)
 
     operator fun get(player: String) = getPermission(player)
 

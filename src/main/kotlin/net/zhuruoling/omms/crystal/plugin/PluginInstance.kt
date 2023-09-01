@@ -2,7 +2,6 @@ package net.zhuruoling.omms.crystal.plugin
 
 import net.zhuruoling.omms.crystal.event.Event
 import net.zhuruoling.omms.crystal.event.EventArgs
-import net.zhuruoling.omms.crystal.event.getEventById
 import net.zhuruoling.omms.crystal.i18n.*
 import net.zhuruoling.omms.crystal.main.DebugOptions
 import net.zhuruoling.omms.crystal.parser.MinecraftParser
@@ -15,7 +14,6 @@ import net.zhuruoling.omms.crystal.plugin.metadata.PluginMetadata
 import net.zhuruoling.omms.crystal.plugin.resources.PluginResource
 import net.zhuruoling.omms.crystal.util.createLogger
 import net.zhuruoling.omms.crystal.util.joinFilePaths
-import sun.misc.Unsafe
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -54,7 +52,7 @@ class PluginInstance(
     fun loadPluginMetadata() {
         pluginState = PluginState.ERROR
         try {
-            useFileInJar("crystal.plugin.json") {
+            useInJarFile("crystal.plugin.json") {
                 pluginMetadata = PluginMetadata.fromJson(readAllBytes().decodeToString())
                 if (pluginMetadata.pluginDependencies != null) {
                     pluginMetadata.pluginDependencies!!.forEach { it2 ->
@@ -99,13 +97,15 @@ class PluginInstance(
                     return@map it.getDeclaredConstructor().apply { isAccessible = true }.newInstance() to
                             Arrays.stream(it.declaredMethods)
                                 .filter { it3 -> it3.annotations.any { it2 -> it2 is EventHandler } }
-                                .map { it2 -> it2.getAnnotation(EventHandler::class.java).run { this.event to it2 } }
+                                .map { it2 ->
+                                    it2.getAnnotation(EventHandler::class.java).run { this.event.java to it2 }
+                                }
                                 .toList()
                 }.forEach { p ->
                     p.second.forEach { (s, m) ->
                         try {
                             m.isAccessible = true
-                            val event = getEventById(s)
+                            val event = findPluginEventInstance(s)
                             eventListeners += event to { args ->
                                 try {
                                     m.invoke(p.first, args)
@@ -145,6 +145,14 @@ class PluginInstance(
         pluginState = PluginState.INITIALIZED
     }
 
+    private fun findPluginEventInstance(clazz: Class<out Event>) =
+        if (clazz.declaredFields.any { it.name == "INSTANCE" && it.type == clazz }) {
+            clazz.getDeclaredField("INSTANCE").apply { isAccessible = true }.get(null)
+        } else {
+            clazz.getDeclaredConstructor().apply { isAccessible = true }.newInstance()
+        } as Event
+
+
     fun injectArguments() {
         pluginState = PluginState.ERROR
         if (DebugOptions.pluginDebug()) logger.info("[DEBUG] Injecting argument")
@@ -159,7 +167,6 @@ class PluginInstance(
                         }
                         field.set(instance, pluginConfigPath)
                     }
-
                     else -> throw IllegalArgumentException("Illegal injection type $name")
                 }
                 continue
@@ -172,22 +179,22 @@ class PluginInstance(
                 val defaultConfig = try {
                     configClass.getDeclaredField("DEFAULT").get(null)
                 } catch (_: NoSuchFieldException) {
-                    try{
+                    try {
                         configClass.getDeclaredConstructor().apply { isAccessible = true }.newInstance()
-                    }catch (e:Exception){
-                        throw PluginException("Cannot create default config.",e)
+                    } catch (e: Exception) {
+                        throw PluginException("Cannot create default config.", e)
                     }
                 }
                 pluginConfigFile = (pluginConfigPath / "${pluginMetadata.id}.json").toFile()
-                if (!pluginConfigFile.exists()){
+                if (!pluginConfigFile.exists()) {
                     pluginConfigFile.createNewFile()
                     pluginConfigFile.writer().use {
                         gsonForPluginMetadata.toJson(defaultConfig, it)
                     }
                 }
-                if (pluginConfigFile.exists()){
+                if (pluginConfigFile.exists()) {
                     val configInstance = pluginConfigFile.reader().use {
-                       fillFieldsUseDefault(gsonForPluginMetadata.fromJson(it, configClass), defaultConfig)
+                        fillFieldsUseDefault(gsonForPluginMetadata.fromJson(it, configClass), defaultConfig)
                     }
                     field.set(instance, configInstance)
                 }
@@ -196,10 +203,10 @@ class PluginInstance(
         pluginState = PluginState.INITIALIZED
     }
 
-    private fun <T> fillFieldsUseDefault(t: T, default: T): T{
+    private fun <T> fillFieldsUseDefault(t: T, default: T): T {
         t!!::class.java.declaredFields.forEach {
-            if (Modifier.isStatic(it.modifiers))return@forEach
-            if (it.get(t) == null){
+            if (Modifier.isStatic(it.modifiers)) return@forEach
+            if (it.get(t) == null) {
                 it.set(t, it.get(default))
             }
         }
@@ -237,12 +244,14 @@ class PluginInstance(
         pluginState = PluginState.LOADED
     }
 
-    private fun <R> useFileInJar(fileName: String, consumer: InputStream.() -> R): R =
+    fun <R> useInJarFile(fileName: String, consumer: InputStream.() -> R): R =
         ZipFile(File(fileFullPath)).use {
             try {
                 val entry = it.getEntry(fileName)
                 val inputStream = it.getInputStream(entry)
-                consumer(inputStream)
+                val r = consumer(inputStream)
+                inputStream.close()
+                r
             } catch (e: PluginException) {
                 throw e
             } catch (e: ZipException) {
@@ -254,12 +263,17 @@ class PluginInstance(
             }
         }
 
+    fun getInJarFileStream(path: String) = ZipFile(File(fileFullPath)).use {
+        val entry = it.getEntry(path)
+        it.getInputStream(entry)
+    }
+
     fun loadPluginResources() {
         if (DebugOptions.pluginDebug()) logger.info("Loading plugin ${pluginMetadata.id} resources.")
         if (pluginMetadata.resources != null) {
             pluginMetadata.resources!!.forEach {
                 logger.info("${pluginMetadata.id}: ${it.key} <- ${it.value}")
-                useFileInJar(it.value) {
+                useInJarFile(it.value) {
                     pluginResources[it.key] = PluginResource.fromReader(it.key, reader(StandardCharsets.UTF_8))
                 }
             }

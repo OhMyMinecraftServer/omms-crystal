@@ -19,9 +19,10 @@ object SharedConstants {
     lateinit var eventLoop: EventLoop
     lateinit var consoleHandler: ConsoleHandler
     lateinit var serverVersion: String
-    lateinit var language:String
+    lateinit var language: String
 
-    val pluginRegisteredCommandTable: HashMap<String, ArrayList<LiteralArgumentBuilder<CommandSourceStack>>> = hashMapOf()
+    val pluginRegisteredCommandTable: HashMap<String, ArrayList<LiteralArgumentBuilder<CommandSourceStack>>> =
+        hashMapOf()
     val pluginRegisteredEventTable: HashMap<String, HashMap<String, Event>> = hashMapOf()
     val pluginDeclaredApiMethodMap: HashMap<String, HashMap<Pair<String, MutableList<Class<*>>>, Method>> = hashMapOf()
     val pluginDeclaredEventHandlerMap: HashMap<String, HashMap<Event, EventHandler>> = hashMapOf()
@@ -61,6 +62,18 @@ object DebugOptions {
     fun serverDebug() = !off and (all or server)
 
     override fun toString(): String {
-        return if (off) "OFF " else (if (allDebug()) "ALL " else ((if (eventDebug()) "EVENT " else "") + (if (mainDebug()) "MAIN " else "") + (if (pluginDebug()) "PLUGIN " else "") + (if (serverDebug()) "SERVER " else "")))
+        return if (off)
+            "OFF "
+        else (
+                if (allDebug())
+                    "ALL "
+                else (
+                        (if (eventDebug()) "EVENT " else "")
+                                + (if (mainDebug()) "MAIN " else "")
+                                + (if (pluginDebug()) "PLUGIN " else "")
+                                + (if (serverDebug()) "SERVER " else "")
+                        )
+                )
+
     }
 }

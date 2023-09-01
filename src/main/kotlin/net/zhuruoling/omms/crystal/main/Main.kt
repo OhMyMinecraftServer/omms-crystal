@@ -1,15 +1,11 @@
 package net.zhuruoling.omms.crystal.main
 
-import ch.qos.logback.core.util.TimeUtil
 import com.mojang.brigadier.exceptions.CommandSyntaxException
-import net.kyori.adventure.text.Component
 import net.zhuruoling.omms.crystal.command.*
 import net.zhuruoling.omms.crystal.config.Config
-import net.zhuruoling.omms.crystal.config.ConfigManager
 import net.zhuruoling.omms.crystal.console.ConsoleHandler
 import net.zhuruoling.omms.crystal.event.*
 import net.zhuruoling.omms.crystal.i18n.TranslateManager
-import net.zhuruoling.omms.crystal.i18n.withTranslateContext
 import net.zhuruoling.omms.crystal.main.SharedConstants.consoleHandler
 import net.zhuruoling.omms.crystal.main.SharedConstants.eventDispatcher
 import net.zhuruoling.omms.crystal.main.SharedConstants.eventLoop
@@ -161,7 +157,7 @@ fun main(args: Array<String>) {
     val start = System.currentTimeMillis()
     println("Starting net.zhuruoling.omms.crystal.main.MainKt.main()")
     Runtime.getRuntime().run {
-        val thread = thread(name = "ShutdownThread\$Finalize", start = false) {
+        val thread = thread(name = "ShutdownThread", start = false) {
             if (serverThreadDaemon != null) {
                 println("Stopping server because jvm is shutting down.")
                 serverThreadDaemon!!.outputHandler.interrupt()
@@ -172,7 +168,7 @@ fun main(args: Array<String>) {
     }
     consoleHandler = ConsoleHandler()
     consoleHandler.start()
-    registerEvents()
+    //registerEvents()
     val logger = createLogger("Main")
     logger.info("Hello World!")
     val os = ManagementFactory.getOperatingSystemMXBean()
@@ -202,7 +198,6 @@ fun main(args: Array<String>) {
         eventLoop = EventLoop()
         eventLoop.start()
         init()
-        ConfigManager.init()
         PluginManager.init()
         PluginManager.loadAll()
         PermissionManager.init()

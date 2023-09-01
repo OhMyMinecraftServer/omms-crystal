@@ -147,21 +147,21 @@ class PlayerLeftEventArgs(val player: String) : EventArgs() {
 //    }
 //}
 
-class PluginCustomEvent(pluginId: String, override val id: String) : PluginEvent(id, pluginId, 10)
-class PluginCustomEventArgs : EventArgs() {
-    private val hashMap: HashMap<String, Any> = hashMapOf()
-    fun insert(key: String, value: Any) {
-        hashMap[key] = value
-    }
-
-    fun get(key: String): Any? {
-        return if (hashMap.containsKey(key)) hashMap[key] else throw NoSuchElementException("")
-    }
-
-    override fun toString(): String {
-        return "PluginEventArgs(hashMap=$hashMap)"
-    }
-}
+//class PluginCustomEvent(pluginId: String, override val id: String) : PluginEvent(id, pluginId, 10)
+//class PluginCustomEventArgs : EventArgs() {
+//    private val hashMap: HashMap<String, Any> = hashMapOf()
+//    fun insert(key: String, value: Any) {
+//        hashMap[key] = value
+//    }
+//
+//    fun get(key: String): Any? {
+//        return if (hashMap.containsKey(key)) hashMap[key] else throw NoSuchElementException("")
+//    }
+//
+//    override fun toString(): String {
+//        return "PluginEventArgs(hashMap=$hashMap)"
+//    }
+//}
 
 //misc
 
@@ -194,41 +194,41 @@ class RconStartedEventArgs(val port: Int): EventArgs(){
 
 }
 
-val eventMap = hashMapOf<String, Event>()
-
-fun registerEvents() {
-    eventMap.run {
-        this["crystal.server.info"] = ServerInfoEvent
-        this["crystal.server.start"] = ServerStartEvent
-        this["crystal.server.starting"] = ServerStartingEvent
-        this["crystal.server.started"] = ServerStartedEvent
-        this["crystal.server.stop"] = ServerStopEvent
-        this["crystal.server.stopping"] = ServerStoppingEvent
-        this["crystal.server.stopped"] = ServerStoppedEvent
-        this["crystal.server.overload"] = ServerOverloadEvent
-        this["crystal.server.rcon.enable"] = RconStartedEvent
-        this["crystal.server.player.info"] = PlayerInfoEvent
-        this["crystal.server.player.join"] = PlayerJoinEvent
-        this["crystal.server.player.left"] = PlayerLeftEvent
-        this["crystal.server.console.input"] = ServerConsoleInputEvent
-    }
-}
-
-fun addEvent(id: String, event: Event) {
-    eventMap[id] = event
-}
-
-fun getEventById(id: String): Event {
-    if (eventMap.containsKey(id)) {
-        return eventMap[id]!!
-    } else {
-        var event: Event
-        SharedConstants.pluginRegisteredEventTable.values.forEach {
-            if (it.containsKey(id)) {
-                event = it[id]!!
-                return event
-            }
-        }
-        throw IllegalArgumentException("Illegal event id!")
-    }
-}
+//val eventMap = hashMapOf<String, Event>()
+//
+//fun registerEvents() {
+//    eventMap.run {
+//        this["crystal.server.info"] = ServerInfoEvent
+//        this["crystal.server.start"] = ServerStartEvent
+//        this["crystal.server.starting"] = ServerStartingEvent
+//        this["crystal.server.started"] = ServerStartedEvent
+//        this["crystal.server.stop"] = ServerStopEvent
+//        this["crystal.server.stopping"] = ServerStoppingEvent
+//        this["crystal.server.stopped"] = ServerStoppedEvent
+//        this["crystal.server.overload"] = ServerOverloadEvent
+//        this["crystal.server.rcon.enable"] = RconStartedEvent
+//        this["crystal.server.player.info"] = PlayerInfoEvent
+//        this["crystal.server.player.join"] = PlayerJoinEvent
+//        this["crystal.server.player.left"] = PlayerLeftEvent
+//        this["crystal.server.console.input"] = ServerConsoleInputEvent
+//    }
+//}
+//
+//fun addEvent(id: String, event: Event) {
+//    eventMap[id] = event
+//}
+//
+//fun getEventById(id: String): Event {
+//    if (eventMap.containsKey(id)) {
+//        return eventMap[id]!!
+//    } else {
+//        var event: Event
+//        SharedConstants.pluginRegisteredEventTable.values.forEach {
+//            if (it.containsKey(id)) {
+//                event = it[id]!!
+//                return event
+//            }
+//        }
+//        throw IllegalArgumentException("Illegal event id!")
+//    }
+//}

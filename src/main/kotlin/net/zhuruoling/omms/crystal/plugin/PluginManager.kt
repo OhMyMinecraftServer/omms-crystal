@@ -8,13 +8,16 @@ import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependencyRequirement
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginMetadata
 import net.zhuruoling.omms.crystal.util.*
 import java.io.File
+import java.io.InputStream
 import java.lang.module.ModuleDescriptor
 import java.net.URL
 import java.net.URLClassLoader
+import java.util.function.Function
 
 private lateinit var pluginClassLoader: URLClassLoader
 private val pluginFileUrlList = mutableListOf<URL>()
 private val logger = createLogger("PluginManager")
+
 object PluginManager : Manager<String, PluginInstance>(
     beforeInit = { pluginClassLoader = URLClassLoader(pluginFileUrlList.toTypedArray()) },
     afterInit = {
@@ -36,15 +39,16 @@ object PluginManager : Manager<String, PluginInstance>(
     },
     scanFolder = "plugins",
     initializer = {
-        PluginInstance(pluginClassLoader, it){before,after ->
-            if (DebugOptions.pluginDebug()){
+        PluginInstance(pluginClassLoader, it) { before, after ->
+            if (DebugOptions.pluginDebug()) {
                 logger.info("Plugin ${this.pluginMetadata.id} state changed from $before to $after")
-                ///Users/zhuruoling/IdeaProjects/omms-crystal/plugins/crystal-backup-0.0.1.jar
-                logger.info("[DEBUG] Plugin ${
-                    if ((this.pluginMetadata.id == null) or (this.pluginMetadata.version == null))
-                         "...${it.subSequence(it.length-40, it.length)}"
-                    else "${pluginMetadata.id}@${pluginMetadata.version}"
-                } state changed from $before to $after")
+                logger.info(
+                    "[DEBUG] Plugin ${
+                        if ((this.pluginMetadata.id == null) or (this.pluginMetadata.version == null))
+                            "...${it.subSequence(it.length - 40, it.length)}"
+                        else "${pluginMetadata.id}@${pluginMetadata.version}"
+                    } state changed from $before to $after"
+                )
             }
         }.run {
             loadPluginMetadata()
@@ -62,6 +66,16 @@ object PluginManager : Manager<String, PluginInstance>(
             entry.value.onInitialize()
         }
     }
+
+    fun getPluginInJarFileStream(id: String, resourceLocation: String): InputStream {
+        val instance = this.map[id] ?: throw PluginException("Plugin $id not found.")
+        return instance.getInJarFileStream(resourceLocation)
+    }
+
+    fun <R> usePluginInJarFile(id: String, resourceLocation: String, func: Function<InputStream, R>): R =
+        (this.map[id] ?: throw PluginException("Plugin $id not found.")).useInJarFile(resourceLocation) {
+            func.apply(this)
+        }
 }
 
 private fun Manager<String, PluginInstance>.checkRequirements() {

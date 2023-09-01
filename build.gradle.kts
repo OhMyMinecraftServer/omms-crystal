@@ -31,7 +31,6 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.4.4")
     implementation("com.mojang:brigadier:1.0.18")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.20")
-    implementation("org.apache.groovy:groovy:4.0.2")
     implementation("org.jline:jline:3.21.0")
     implementation("cn.hutool:hutool-all:5.8.11")
     implementation("commons-io:commons-io:2.11.0")
