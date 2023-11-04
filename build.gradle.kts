@@ -22,6 +22,7 @@ tasks{
     shadowJar {
         archiveClassifier.set("full")
     }
+    
 }
 
 dependencies {

@@ -1,5 +1,7 @@
 package net.zhuruoling.omms.crystal.plugin.api;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.zhuruoling.omms.crystal.main.SharedConstants;
 import net.zhuruoling.omms.crystal.server.ServerThreadDaemonKt;
 import net.zhuruoling.omms.crystal.server.ServerStatus;
@@ -10,6 +12,10 @@ import net.zhuruoling.omms.crystal.text.TextSerializer;
 public class ServerApi {
     public static void tell(String player, Text text){
         tellraw(player, TextSerializer.INSTANCE.serialize(text));
+    }
+
+    public static void tell(String player, Component component){
+        tellraw(player, GsonComponentSerializer.gson().serialize(component));
     }
 
     private static void tellraw(String player, String serialize) {

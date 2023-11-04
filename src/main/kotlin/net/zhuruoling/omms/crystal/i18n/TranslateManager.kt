@@ -45,9 +45,6 @@ object TranslateManager {
     }
 }
 
-fun <R> withTranslateContext(namespace: String, func: Function<TranslateContext,R>): R =
-    func.apply(TranslateContext(SharedConstants.language, namespace))
-
 fun <R> withTranslateContext(namespace: String, func: TranslateContext.() -> R): R =
     func(TranslateContext(SharedConstants.language, namespace))
 

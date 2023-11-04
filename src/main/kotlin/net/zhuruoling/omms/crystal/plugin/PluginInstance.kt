@@ -26,6 +26,7 @@ import java.util.zip.ZipException
 import java.util.zip.ZipFile
 import kotlin.io.path.Path
 import kotlin.io.path.div
+import kotlin.properties.Delegates
 
 class PluginInstance(
     private val urlClassLoader: URLClassLoader,
@@ -38,12 +39,9 @@ class PluginInstance(
     private var _pluginState = PluginState.WAIT
     private lateinit var pluginConfigPath: Path
     private lateinit var pluginConfigFile: File
-    private var pluginState
-        set(value) {
-            pluginStateChangeListener(_pluginState, value)
-            _pluginState = value
-        }
-        get() = _pluginState
+    private var pluginState by Delegates.observable(PluginState.ERROR) { _, before, after ->
+        pluginStateChangeListener(this, before, after)
+    }
 
     val eventListeners = mutableListOf<Pair<Event, (EventArgs) -> Unit>>()
     private val logger = createLogger("PluginInstance")
@@ -167,6 +165,7 @@ class PluginInstance(
                         }
                         field.set(instance, pluginConfigPath)
                     }
+
                     else -> throw IllegalArgumentException("Illegal injection type $name")
                 }
                 continue
@@ -272,7 +271,10 @@ class PluginInstance(
         if (DebugOptions.pluginDebug()) logger.info("Loading plugin ${pluginMetadata.id} resources.")
         if (pluginMetadata.resources != null) {
             pluginMetadata.resources!!.forEach {
-                logger.info("${pluginMetadata.id}: ${it.key} <- ${it.value}")
+                if (DebugOptions.pluginDebug()) {
+                    logger.info("[DEBUG] ${pluginMetadata.id}: ${it.key} <- ${it.value}")
+                }
+
                 useInJarFile(it.value) {
                     pluginResources[it.key] = PluginResource.fromReader(it.key, reader(StandardCharsets.UTF_8))
                 }
@@ -298,5 +300,14 @@ class PluginInstance(
                 }
             }
         }
+    }
+}
+
+var greetCounter = 0;
+
+fun main() {
+//    greetCounter = if (greetCounter in 1 downTo 0) greetCounter++ else 0
+    for (i in 0..1) {
+        println(i)
     }
 }
