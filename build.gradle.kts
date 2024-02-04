@@ -10,7 +10,7 @@ plugins {
 }
 
 
-group = "com.github.ZhuRuoLing"
+group = "icu.takeneko"
 version = properties["version"]!!
 
 repositories {
@@ -22,7 +22,6 @@ tasks{
     shadowJar {
         archiveClassifier.set("full")
     }
-    
 }
 
 dependencies {
@@ -54,20 +53,51 @@ tasks.withType<KotlinCompile> {
 }
 
 application {
-    mainClass.set("net.zhuruoling.omms.crystal.main.MainKt")
+    mainClass.set("icu.takeneko.omms.crystal.main.MainKt")
 }
 
-publishing{
+getComponents().withType(AdhocComponentWithVariants::class.java).forEach { c ->
+    c.withVariantsFromConfiguration(project.configurations.shadowRuntimeElements.get()) {
+        skip()
+    }
+}
+
+publishing {
     repositories {
         mavenLocal()
+        maven {
+            name = "NekoMavenRelease"
+            url = uri("https://maven.takeneko.icu/releases")
+            credentials {
+                username = project.findProperty("nekomaven.user") as String? ?: System.getenv("NEKO_USERNAME")
+                password = project.findProperty("nekomaven.password") as String? ?: System.getenv("NEKO_TOKEN")
+            }
+        }
     }
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
+            versionMapping {
+                usage("java-api") {
+                    fromResolutionOf("runtimeClasspath")
+                }
+                usage("java-runtime") {
+                    fromResolutionResult()
+                }
+            }
         }
     }
 }
 
+tasks.register("generateProperties"){
+    doLast{
+        generateProperties()
+    }
+}
+
+tasks.getByName("processResources") {
+    dependsOn("generateProperties")
+}
 
 fun generateProperties(){
     val propertiesFile = file("./src/main/resources/build.properties")
@@ -91,5 +121,3 @@ fun generateProperties(){
         }
     }
 }
-
-generateProperties()

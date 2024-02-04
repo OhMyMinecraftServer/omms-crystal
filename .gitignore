@@ -30,8 +30,9 @@ bin/
 /.nb-gradle/
 .vscode/
 .DS_Store
-./server/
-./logs/
-./config/
+/server/
+/logs/
+/config/
 
 /backup/
+/.idea
