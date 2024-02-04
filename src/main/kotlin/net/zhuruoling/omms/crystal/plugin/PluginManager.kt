@@ -11,15 +11,14 @@ import java.io.File
 import java.io.InputStream
 import java.lang.module.ModuleDescriptor
 import java.net.URL
-import java.net.URLClassLoader
 import java.util.function.Function
 
-private lateinit var pluginClassLoader: URLClassLoader
+private lateinit var pluginClassLoader: JarClassLoader
 private val pluginFileUrlList = mutableListOf<URL>()
 private val logger = createLogger("PluginManager")
 
 object PluginManager : Manager<String, PluginInstance>(
-    beforeInit = { pluginClassLoader = URLClassLoader(pluginFileUrlList.toTypedArray()) },
+    beforeInit = { pluginClassLoader = JarClassLoader(ClassLoader.getSystemClassLoader()) },
     afterInit = {
         checkRequirements()
         map.forEach { entry ->
@@ -39,6 +38,7 @@ object PluginManager : Manager<String, PluginInstance>(
     },
     scanFolder = "plugins",
     initializer = {
+        pluginClassLoader.loadJar(File(it))
         PluginInstance(pluginClassLoader, it) { before, after ->
             if (DebugOptions.pluginDebug()) {
                 logger.info("Plugin ${this.pluginMetadata.id} state changed from $before to $after")
@@ -60,6 +60,28 @@ object PluginManager : Manager<String, PluginInstance>(
     }
 ) {
 
+    fun reload(id: String) {
+        this.map[id]!!.apply {
+            try {
+                onFinalize()
+                pluginClassLoader.reloadAllClasses()
+                loadPluginMetadata()
+                loadPluginClasses()
+                injectArguments()
+                loadPluginResources()
+                onInitialize()
+            } catch (e: Throwable) {
+                logger.error("Exception was thrown while processing plugin reloading.", e)
+            }
+        }
+    }
+
+    fun reloadAllPlugins() {
+        logger.warn("Plugin reloading is highly experimental, in some cases it can cause severe problems.")
+        this.map.keys.forEach { entry ->
+            reload(entry)
+        }
+    }
 
     fun loadAll() {
         this.map.forEach { entry ->

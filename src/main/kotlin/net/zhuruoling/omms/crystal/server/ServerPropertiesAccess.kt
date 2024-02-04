@@ -13,21 +13,25 @@ object ServerPropertiesAccess {
 
     fun tryAccess(): Properties {
         return if (properties == null) {
-            File(joinFilePaths(Config.serverWorkingDirectory, "server.properties")).run {
-                if (exists()) {
-                    reader(StandardCharsets.UTF_8).use {
-                        properties = Properties()
-                        synchronized(properties!!) {
-                            properties!!.load(it)
-                        }
-                    }
-                } else {
-                    throw FileNotFoundException("${this.absolutePath} not exist.")
-                }
-            }
+            load()
             properties!!
         } else {
             properties!!
+        }
+    }
+
+    fun load(){
+        File(joinFilePaths(Config.serverWorkingDirectory, "server.properties")).run {
+            if (exists()) {
+                reader(StandardCharsets.UTF_8).use {
+                    properties = Properties()
+                    synchronized(properties!!) {
+                        properties!!.load(it)
+                    }
+                }
+            } else {
+                throw FileNotFoundException("${this.absolutePath} not exist.")
+            }
         }
     }
 }

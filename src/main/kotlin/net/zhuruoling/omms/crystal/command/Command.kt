@@ -19,10 +19,13 @@ import net.zhuruoling.omms.crystal.permission.Permission
 import net.zhuruoling.omms.crystal.permission.PermissionManager
 import net.zhuruoling.omms.crystal.permission.comparePermission
 import net.zhuruoling.omms.crystal.permission.resolvePermissionLevel
+import net.zhuruoling.omms.crystal.plugin.PluginManager
 import net.zhuruoling.omms.crystal.text.Color
 import net.zhuruoling.omms.crystal.text.Text
 import net.zhuruoling.omms.crystal.text.TextGroup
+import net.zhuruoling.omms.crystal.util.createLogger
 
+private val logger = createLogger("Command")
 
 fun literal(literal: String): LiteralArgumentBuilder<CommandSourceStack> {
     return LiteralArgumentBuilder.literal(literal)
@@ -230,18 +233,28 @@ val pluginCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.c
 //        PluginManager.unload(getWord(it,"plugin"))
 //        1
 //    }))
-//    .then(literal("reload").then(wordArgument("plugin").requires {
-//        if (it.from == CommandSource.PLAYER)
-//            comparePermission(it.permissionLevel!!, Permission.ADMIN)
-//        else
-//            true
-//    }.executes {
-//        PluginManager.reload(getWord(it,"plugin"))
-//        1
-//    }))
-//    .executes {
-//        1
-//    }
+    .then(literal("reload").then(wordArgument("plugin").requires {
+        if (it.from == CommandSource.PLAYER)
+            comparePermission(it.permissionLevel!!, Permission.ADMIN)
+        else
+            true
+    }.executes {
+        logger.warn("Plugin reloading is highly experimental, in some cases it can cause severe problems.")
+        logger.warn("Reloading plugin ${getWord(it,"plugin")}!")
+        PluginManager.reload(getWord(it,"plugin"))
+        1
+    }))
+    .then(literal("reloadAll").requires {
+        if (it.from == CommandSource.PLAYER)
+            comparePermission(it.permissionLevel!!, Permission.ADMIN)
+        else
+            true
+    }.executes {
+        logger.warn("Plugin reloading is highly experimental, in some cases it can cause severe problems.")
+        logger.warn("Reloading all plugins!")
+        PluginManager.reloadAllPlugins()
+        1
+    })
 //
 //
 

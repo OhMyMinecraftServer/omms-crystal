@@ -18,7 +18,6 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.lang.reflect.Modifier
-import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.util.*
@@ -29,7 +28,7 @@ import kotlin.io.path.div
 import kotlin.properties.Delegates
 
 class PluginInstance(
-    private val urlClassLoader: URLClassLoader,
+    private val classLoader: JarClassLoader,
     private val fileFullPath: String,
     private val pluginStateChangeListener: PluginInstance.(PluginState, PluginState) -> Unit = { _, _ -> }
 ) {
@@ -68,10 +67,9 @@ class PluginInstance(
 
     fun loadPluginClasses() {
         pluginState = PluginState.ERROR
-
         if (pluginMetadata.pluginInitializerClass != null) {
             try {
-                pluginClazz = urlClassLoader.loadClass(pluginMetadata.pluginInitializerClass)
+                pluginClazz = classLoader.loadClass(pluginMetadata.pluginInitializerClass)
                 val ins = pluginClazz.getConstructor().newInstance()
                 if (ins !is PluginInitializer) {
                     throw PluginException("Plugin initializer class did not implement PluginInitializer.")
@@ -86,7 +84,7 @@ class PluginInstance(
                 val classes = mutableListOf<Class<out Any>>()
                 pluginMetadata.pluginEventHandlers!!.forEach {
                     try {
-                        classes += urlClassLoader.loadClass(it)
+                        classes += classLoader.loadClass(it)
                     } catch (e: ClassNotFoundException) {
                         throw PluginException("Cannot load event handler class $it", e)
                     }
@@ -126,7 +124,7 @@ class PluginInstance(
         if (pluginMetadata.pluginMinecraftParsers != null && pluginMetadata.pluginMinecraftParsers!!.isNotEmpty()) {
             pluginMetadata.pluginMinecraftParsers!!.forEach {
                 try {
-                    val clazz = urlClassLoader.loadClass(it.value)
+                    val clazz = classLoader.loadClass(it.value)
                     val instance = clazz.getConstructor().newInstance()
                     if (instance !is MinecraftParser) {
                         throw PluginException("Plugin declared Minecraft parser class is not derived from MinecraftParser.")
@@ -267,6 +265,16 @@ class PluginInstance(
         it.getInputStream(entry)
     }
 
+    fun onFinalize() {
+        pluginState = PluginState.ERROR
+        try {
+            instance.onFinalize()
+        } catch (e: Exception) {
+            throw PluginException("onFinalize", e)
+        }
+        pluginState = PluginState.LOADED
+    }
+
     fun loadPluginResources() {
         if (DebugOptions.pluginDebug()) logger.info("Loading plugin ${pluginMetadata.id} resources.")
         if (pluginMetadata.resources != null) {
@@ -300,14 +308,5 @@ class PluginInstance(
                 }
             }
         }
-    }
-}
-
-var greetCounter = 0;
-
-fun main() {
-//    greetCounter = if (greetCounter in 1 downTo 0) greetCounter++ else 0
-    for (i in 0..1) {
-        println(i)
     }
 }

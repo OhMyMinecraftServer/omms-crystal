@@ -41,6 +41,7 @@ dependencies {
     implementation("net.kyori:adventure-api:4.13.1")
     implementation("net.kyori:adventure-text-serializer-gson:4.13.1")
     implementation("nl.vv32.rcon:rcon:1.2.0")
+    implementation("net.bytebuddy:byte-buddy-agent:1.14.0")
     testImplementation(kotlin("test"))
 }
 

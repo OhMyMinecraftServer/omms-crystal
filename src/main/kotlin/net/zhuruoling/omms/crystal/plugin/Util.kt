@@ -2,9 +2,11 @@ package net.zhuruoling.omms.crystal.plugin
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import net.bytebuddy.agent.ByteBuddyAgent
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependency
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginDependencyRequirement
 import net.zhuruoling.omms.crystal.plugin.metadata.PluginMetadataExclusionStrategy
+import java.lang.instrument.Instrumentation
 import java.util.regex.Pattern
 
 val gsonForPluginMetadata: Gson = GsonBuilder()
@@ -24,5 +26,11 @@ fun pluginRequirementMatches(self: PluginDependencyRequirement, dependency: Plug
         "<" -> dependency.version < self.parsedVersion
         "==" -> self.parsedVersion == dependency.version
         else -> throw IllegalStateException("${self.symbol} is not a valid version comparator.")
+    }
+}
+
+object InstrumentationAccess {
+    val instrumentation: Instrumentation by lazy {
+        ByteBuddyAgent.install()
     }
 }
