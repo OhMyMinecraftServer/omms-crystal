@@ -14,11 +14,17 @@ plugins {
 group = "icu.takeneko"
 version = properties["version"]!!
 
+java{
+    withJavadocJar()
+    withSourcesJar()
+}
+
 repositories {
     mavenCentral()
     maven("https://libraries.minecraft.net")
     maven("https://jitpack.io")
 }
+
 tasks{
     shadowJar {
         archiveClassifier.set("full")
