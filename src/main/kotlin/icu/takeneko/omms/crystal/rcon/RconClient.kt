@@ -10,14 +10,14 @@ object RconClient {
 
     private lateinit var rcon:Rcon
     fun connect(){
-        val socketChannel = SocketChannel.open(InetSocketAddress(Config.rconPort.toInt()))
+        val socketChannel = SocketChannel.open(InetSocketAddress(Config.config.rconPort.toInt()))
         rcon = Rcon.newBuilder()
             .withChannel(socketChannel)
             .withCharset(StandardCharsets.UTF_8)
             .withReadBufferCapacity(8192)
             .withWriteBufferCapacity(8192)
             .build()
-        rcon.tryAuthenticate(Config.rconPassword)
+        rcon.tryAuthenticate(Config.config.rconPassword)
     }
 
     fun close(){

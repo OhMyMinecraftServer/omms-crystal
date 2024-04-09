@@ -27,7 +27,7 @@ class ConsoleHandler : Thread("ConsoleHandler") {
             try {
                 reload()
                 val str = lineReader.readLine()
-                if (str.startsWith(Config.commandPrefix)) {
+                if (str.startsWith(Config.config.commandPrefix)) {
                     try {
                         CommandManager.execute(str, CommandSourceStack(CommandSource.CONSOLE))
                     } catch (e: Exception) {

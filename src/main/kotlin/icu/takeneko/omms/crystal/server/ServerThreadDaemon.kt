@@ -108,8 +108,8 @@ class ServerOutputHandler(private val serverProcess: Process, vararg launchParam
     private val serverLogger = createServerLogger()
     private val logger = createLogger("ServerOutputHandler")
     private lateinit var input: InputStream
-    private val parser = ParserManager.getParser(Config.parserName)
-        ?: throw IllegalArgumentException("Specified parser ${Config.parserName} does not exist.")
+    private val parser = ParserManager.getParser(Config.config.serverType)
+        ?: throw IllegalArgumentException("Specified parser ${Config.config.serverType} does not exist.")
 
     init {
         this.launchParameters = launchParameters
@@ -118,7 +118,7 @@ class ServerOutputHandler(private val serverProcess: Process, vararg launchParam
     override fun run() {
         try {
             input = serverProcess.inputStream
-            val reader = input.bufferedReader(Charset.forName(Config.encoding))
+            val reader = input.bufferedReader(Charset.forName(Config.config.encoding))
             while (serverProcess.isAlive) {
                 try {
                     LockSupport.parkNanos(10)

@@ -39,6 +39,6 @@ object ParserManager {
     }
 
     init {
-        parser["builtin"] = BuiltinParser()
+        parser["vanilla"] = BuiltinParser()
     }
 }

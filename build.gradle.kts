@@ -3,7 +3,8 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toUpperCaseAsciiOnly
 
 plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
-    kotlin("jvm") version "1.7.10"
+    kotlin("jvm") version "1.9.21"
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.21"
     java
     id("maven-publish")
     application
@@ -25,6 +26,7 @@ tasks{
 }
 
 dependencies {
+
     implementation("com.google.code.gson:gson:2.10")
     implementation("org.slf4j:slf4j-api:2.0.3")
     implementation("ch.qos.logback:logback-core:1.4.4")
@@ -41,6 +43,7 @@ dependencies {
     implementation("net.kyori:adventure-text-serializer-gson:4.13.1")
     implementation("nl.vv32.rcon:rcon:1.2.0")
     implementation("net.bytebuddy:byte-buddy-agent:1.14.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
     testImplementation(kotlin("test"))
 }
 

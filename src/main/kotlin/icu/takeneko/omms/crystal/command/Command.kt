@@ -55,7 +55,7 @@ fun getInteger(context: CommandContext<CommandSourceStack>, name: String): Int {
     return IntegerArgumentType.getInteger(context, name)
 }
 
-val helpCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.commandPrefix + "help").then(
+val helpCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.config.commandPrefix + "help").then(
     greedyStringArgument("filter")
         .executes {
             val filter = getWord(it, "filter")
@@ -70,7 +70,7 @@ val helpCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.com
 }
 
 
-val permissionCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.commandPrefix + "permission").then(
+val permissionCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.config.commandPrefix + "permission").then(
     literal("set").then(
         wordArgument("player")
             .then(
@@ -149,7 +149,7 @@ val permissionCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Conf
     }
 )
 
-val startCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.commandPrefix + "start").requires {
+val startCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.config.commandPrefix + "start").requires {
     if (it.from == CommandSource.PLAYER)
         comparePermission(it.permissionLevel!!, Permission.ADMIN)
     else
@@ -157,12 +157,12 @@ val startCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.co
 }.executes {
     SharedConstants.eventLoop.dispatch(
         ServerStartEvent,
-        ServerStartEventArgs(Config.launchCommand, Config.serverWorkingDirectory)
+        ServerStartEventArgs(Config.config.launchCommand, Config.config.workingDir)
     )
     1
 }
 
-val stopCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.commandPrefix + "stop").then(
+val stopCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.config.commandPrefix + "stop").then(
     literal("force").requires {
         if (it.from == CommandSource.PLAYER)
             comparePermission(it.permissionLevel!!, Permission.ADMIN)
@@ -206,7 +206,7 @@ val stopCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.com
     }
 
 val executeCommand: LiteralArgumentBuilder<CommandSourceStack> =
-    literal(Config.commandPrefix + "execute")
+    literal(Config.config.commandPrefix + "execute")
         .requires { it.from == CommandSource.CONSOLE || it.from == CommandSource.CENTRAL }
         .then(
             literal("as").then(
@@ -214,7 +214,7 @@ val executeCommand: LiteralArgumentBuilder<CommandSourceStack> =
             )
         )
 
-val pluginCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.commandPrefix + "plugin")
+val pluginCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.config.commandPrefix + "plugin")
 //    .then(literal("load").then(wordArgument("plugin").requires {
 //        if (it.from == CommandSource.PLAYER)
 //            comparePermission(it.permissionLevel!!, Permission.ADMIN)
@@ -270,7 +270,7 @@ fun registerBuiltinCommandHelp() {
         false
     ).toList()
     val help = usage.map {
-        it to it.removePrefix(Config.commandPrefix).split(" ")
+        it to it.removePrefix(Config.config.commandPrefix).split(" ")
             .joinToString(separator = ".")
             .run { "help.$this" }
     }

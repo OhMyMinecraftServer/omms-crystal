@@ -54,7 +54,7 @@ fun init() {
 
     eventDispatcher.run {
         registerHandler(ServerStoppingEvent){
-            if (Config.enableRcon){
+            if (Config.config.enableRcon){
                 RconClient.close()
             }
         }
@@ -105,7 +105,7 @@ fun init() {
         }
         registerHandler(RconStartedEvent) {
             it as RconStartedEventArgs
-            if (Config.enableRcon) {
+            if (Config.config.enableRcon) {
                 logger.info("Attempt to init rcon connection.")
                 RconClient.connect()
                 logger.info("Rcon connected.")
@@ -117,7 +117,7 @@ fun init() {
         }
         registerHandler(PlayerInfoEvent) {
             it as PlayerInfoEventArgs
-            if (it.content.startsWith(Config.commandPrefix)) {
+            if (it.content.startsWith(Config.config.commandPrefix)) {
                 val commandSourceStack =
                     CommandSourceStack(CommandSource.PLAYER, it.player, PermissionManager.getPermission(it.player))
                 try {
@@ -176,22 +176,20 @@ fun main(args: Array<String>) {
     logger.info("$PRODUCT_NAME ${BuildProperties["version"]} is running on ${os.name} ${os.arch} ${os.version} at pid ${runtime.pid}")
     try {
         if (Config.load()) {
-            logger.warn("First startup detected.")
-            logger.warn("You may fill the config file to continue.")
-            if (Files.exists(Path(joinFilePaths("server"))) || !Files.isDirectory(Path(joinFilePaths("server")))) {
+            if (!Files.exists(Path(joinFilePaths("server"))) || !Files.isDirectory(Path(joinFilePaths("server")))) {
                 Files.createDirectory(Path(joinFilePaths("server")))
             }
             exitProcess(1)
         }
         if (DebugOptions.mainDebug()) {
             logger.info("Config:")
-            logger.info("\tServerWorkingDirectory: ${Config.serverWorkingDirectory}")
-            logger.info("\tLaunchCommand: ${Config.launchCommand}")
-            logger.info("\tPluginDirectory: ${Config.pluginDirectory}")
-            logger.info("\tServerType: ${Config.serverType}")
+            logger.info("\tServerWorkingDirectory: ${Config.config.workingDir}")
+            logger.info("\tLaunchCommand: ${Config.config.launchCommand}")
+            logger.info("\tPluginDirectory: ${Config.config.pluginDirectory}")
+            logger.info("\tServerType: ${Config.config.serverType}")
             logger.info("\tDebugOptions: $DebugOptions")
         }
-        SharedConstants.language = Config.lang
+        SharedConstants.language = Config.config.lang
         TranslateManager.init()
         CommandHelpManager.init()
         eventDispatcher = EventDispatcher()
@@ -209,7 +207,7 @@ fun main(args: Array<String>) {
             exit()
             exitProcess(0)
         }
-        eventLoop.dispatch(ServerStartEvent, ServerStartEventArgs(Config.launchCommand, Config.serverWorkingDirectory))
+        eventLoop.dispatch(ServerStartEvent, ServerStartEventArgs(Config.config.launchCommand, Config.config.workingDir))
     } catch (e: Exception) {
         logger.error("Unexpected error occurred.", e)
         exitProcess(1)

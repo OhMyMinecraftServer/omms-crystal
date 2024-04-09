@@ -21,7 +21,7 @@ object ServerPropertiesAccess {
     }
 
     fun load(){
-        File(joinFilePaths(Config.serverWorkingDirectory, "server.properties")).run {
+        File(joinFilePaths(Config.config.workingDir, "server.properties")).run {
             if (exists()) {
                 reader(StandardCharsets.UTF_8).use {
                     properties = Properties()

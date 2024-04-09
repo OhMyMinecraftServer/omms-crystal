@@ -33,6 +33,7 @@ bin/
 /server/
 /logs/
 /config/
-
+/plugins
 /backup/
 /.idea
+/*.json
