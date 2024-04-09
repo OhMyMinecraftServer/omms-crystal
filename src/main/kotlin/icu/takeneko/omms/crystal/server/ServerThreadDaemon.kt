@@ -22,8 +22,6 @@ import java.util.concurrent.locks.LockSupport
 
 var serverStatus = ServerStatus.STOPPED
 
-enum class LaunchParameter
-
 enum class ServerStatus {
     STOPPED, RUNNING, STOPPING, STARTING
 }
@@ -31,11 +29,9 @@ enum class ServerStatus {
 class ServerThreadDaemon(
     private val launchCommand: String,
     private val workingDir: String,
-    vararg launchParameters: LaunchParameter?
 ) :
     Thread("ServerThreadDaemon") {
 
-    private val launchParameters: Array<out LaunchParameter?>
     private val logger = createLogger("ServerThreadDaemon")
     private lateinit var out: OutputStream
     private lateinit var input: InputStream
@@ -43,10 +39,6 @@ class ServerThreadDaemon(
     private var who = "crystal"
     private var process: Process? = null
     lateinit var outputHandler: ServerOutputHandler
-
-    init {
-        this.launchParameters = launchParameters
-    }
 
 
     override fun run() {
@@ -59,7 +51,7 @@ class ServerThreadDaemon(
             SharedConstants.eventLoop.dispatch(ServerStoppedEvent, ServerStoppedEventArgs(Integer.MIN_VALUE, who))
             return
         }
-        outputHandler = ServerOutputHandler(process!!, *launchParameters)
+        outputHandler = ServerOutputHandler(process!!)
         outputHandler.start()
         val writer = out.writer(Charset.defaultCharset())
         while (process!!.isAlive) {
@@ -102,18 +94,13 @@ class ServerThreadDaemon(
 }
 
 
-class ServerOutputHandler(private val serverProcess: Process, vararg launchParameters: LaunchParameter?) :
+class ServerOutputHandler(private val serverProcess: Process) :
     Thread("ServerOutputHandler") {
-    private val launchParameters: Array<out LaunchParameter?>
     private val serverLogger = createServerLogger()
     private val logger = createLogger("ServerOutputHandler")
     private lateinit var input: InputStream
     private val parser = ParserManager.getParser(Config.config.serverType)
         ?: throw IllegalArgumentException("Specified parser ${Config.config.serverType} does not exist.")
-
-    init {
-        this.launchParameters = launchParameters
-    }
 
     override fun run() {
         try {
