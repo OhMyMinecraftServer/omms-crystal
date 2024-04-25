@@ -3,6 +3,7 @@ package icu.takeneko.omms.crystal.main
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import icu.takeneko.omms.crystal.command.*
 import icu.takeneko.omms.crystal.config.Config
+import icu.takeneko.omms.crystal.config.Config.config
 import icu.takeneko.omms.crystal.console.ConsoleHandler
 import icu.takeneko.omms.crystal.event.*
 import icu.takeneko.omms.crystal.i18n.TranslateManager
@@ -13,6 +14,8 @@ import icu.takeneko.omms.crystal.main.SharedConstants.serverThreadDaemon
 import icu.takeneko.omms.crystal.permission.PermissionManager
 import icu.takeneko.omms.crystal.plugin.PluginManager
 import icu.takeneko.omms.crystal.rcon.RconClient
+import icu.takeneko.omms.crystal.rcon.RconListener
+import icu.takeneko.omms.crystal.rcon.RconServer
 import icu.takeneko.omms.crystal.server.ServerStatus
 import icu.takeneko.omms.crystal.server.ServerThreadDaemon
 import icu.takeneko.omms.crystal.server.serverStatus
@@ -33,13 +36,15 @@ import kotlin.system.exitProcess
 fun exit() {
     thread(start = true, name = "ShutdownThread") {
         //PluginManager.unloadAll()
+        rconListener?.stop()
         PermissionManager.writePermission()
         eventLoop.exit()
         eventDispatcher.shutdown()
         consoleHandler.interrupt()
     }
-
 }
+
+var rconListener:RconListener? = null
 
 
 fun init() {
@@ -200,6 +205,9 @@ fun main(args: Array<String>) {
         PluginManager.loadAll()
         PermissionManager.init()
         consoleHandler.reload()
+        if (config.enableRconServer) {
+            rconListener = RconListener.create()
+        }
         val end = System.currentTimeMillis()
         logger.info("Startup preparations finished in ${end - start} milliseconds.")
         if (args.contains("--noserver")) {

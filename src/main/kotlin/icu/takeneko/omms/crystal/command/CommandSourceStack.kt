@@ -11,7 +11,7 @@ import icu.takeneko.omms.crystal.text.TextSerializer
 import icu.takeneko.omms.crystal.util.createLogger
 
 enum class CommandSource {
-    CONSOLE, CENTRAL, PLAYER, PLUGIN
+    CONSOLE, REMOTE, PLAYER, PLUGIN
 }
 
 private val logger = createLogger("CommandSourceStack")
@@ -31,7 +31,7 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
                 }
             }
 
-            CommandSource.CENTRAL -> {
+            CommandSource.REMOTE -> {
                 text.getTexts().forEach {
                     feedbackText.add(it.toRawString())
                 }
@@ -57,7 +57,7 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
                 DateTime.of(0).toString("YYYY-MM-DD hh-mm-ss.SSS")
             }
 
-            CommandSource.CENTRAL -> {
+            CommandSource.REMOTE -> {
                 feedbackText.add(text.content())
             }
 
@@ -81,7 +81,7 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
                 feedbackText.add(text.toRawString())
             }
 
-            CommandSource.CENTRAL -> {
+            CommandSource.REMOTE -> {
                 feedbackText.add(text.toRawString())
             }
 

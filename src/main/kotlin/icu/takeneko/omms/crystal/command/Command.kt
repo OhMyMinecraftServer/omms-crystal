@@ -7,7 +7,6 @@ import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.builder.RequiredArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
-import net.kyori.adventure.text.Component
 import icu.takeneko.omms.crystal.config.Config
 import icu.takeneko.omms.crystal.event.ServerStartEvent
 import icu.takeneko.omms.crystal.event.ServerStartEventArgs
@@ -175,7 +174,7 @@ val stopCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.con
                 when (it.source.from) {
                     CommandSource.PLAYER -> it.source.player!!
                     CommandSource.PLUGIN -> "plugin"
-                    CommandSource.CENTRAL -> "central"
+                    CommandSource.REMOTE -> "central"
                     CommandSource.CONSOLE -> "console"
                 },
                 true
@@ -196,7 +195,7 @@ val stopCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.con
                 when (it.source.from) {
                     CommandSource.PLAYER -> it.source.player!!
                     CommandSource.PLUGIN -> "plugin"
-                    CommandSource.CENTRAL -> "central"
+                    CommandSource.REMOTE -> "central"
                     CommandSource.CONSOLE -> "console"
                 },
                 false
@@ -207,7 +206,7 @@ val stopCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.con
 
 val executeCommand: LiteralArgumentBuilder<CommandSourceStack> =
     literal(Config.config.commandPrefix + "execute")
-        .requires { it.from == CommandSource.CONSOLE || it.from == CommandSource.CENTRAL }
+        .requires { it.from == CommandSource.CONSOLE || it.from == CommandSource.REMOTE }
         .then(
             literal("as").then(
                 wordArgument("player")

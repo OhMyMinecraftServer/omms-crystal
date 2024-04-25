@@ -8,7 +8,12 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
+import icu.takeneko.omms.crystal.command.CommandManager;
+import icu.takeneko.omms.crystal.command.CommandSource;
+import icu.takeneko.omms.crystal.command.CommandSourceStack;
+import icu.takeneko.omms.crystal.permission.Permission;
 import icu.takeneko.omms.crystal.util.UtilKt;
+import kotlin.collections.CollectionsKt;
 import org.slf4j.Logger;
 
 public class RconServer extends RconBase {
@@ -129,8 +134,10 @@ public class RconServer extends RconBase {
         super.stop();
     }
 
-    private String executeCommand(String command){
-        return null;
+    private String executeCommand(String command) {
+        var src = new CommandSourceStack(CommandSource.REMOTE, null, Permission.OWNER);
+        CommandManager.INSTANCE.execute(command, src);
+        return CollectionsKt.joinToString(src.getFeedbackText(), "\n", "", "", Integer.MAX_VALUE, "", (it) -> it);
     }
 
     private void close() {
