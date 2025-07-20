@@ -3,23 +3,22 @@ package icu.takeneko.omms.crystal.text
 
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
-import net.kyori.adventure.text.Component
 
 enum class Color {
-    black, dark_blue, dark_green, dark_aqua, dark_red, dark_purple, gold, gray, dark_gray, blue, green, aqua, red, light_purple, yellow, white, reset
+    BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, RESET
 }
 
 enum class ClickAction {
-    open_url, open_file, run_command, suggest_command, change_page, copy_to_clipboard
+    OPEN_URL, OPEN_FILE, RUN_COMMAND, SUGGEST_COMMAND, CHANGE_PAGE, COPY_TO_CLIPBOARD
 }
 
 enum class HoverAction {
-    show_text, show_item, show_entity
+    SHOW_TEXT, SHOW_ITEM, SHOW_ENTITY
 }
 
-data class Entity(val name:String, val type:String, val uuid: String)
+data class Entity(val name: String, val type: String, val uuid: String)
 
-data class Item(val id:String, val count:Int, val tag: String)
+data class Item(val id: String, val count: Int, val tag: String)
 
 data class ClickEvent(val action: ClickAction, val value: String)
 
@@ -43,72 +42,72 @@ class Text constructor(
     @SerializedName("hoverEvent")
     private var hoverEvent: HoverEvent? = null,
 ) {
-    constructor(text: String) : this(text,null)
+    constructor(text: String) : this(text, null)
 
-    fun withColor(color: Color):Text {
+    fun withColor(color: Color): Text {
         this.color = color
         return this
     }
 
-    fun withFont(font: String?):Text {
+    fun withFont(font: String?): Text {
         this.font = font
         return this
     }
 
-    fun withbold(bold: Boolean?):Text {
+    fun withBold(bold: Boolean?): Text {
         this.bold = bold
         return this
     }
 
-    fun withItalic(italic: Boolean?):Text {
+    fun withItalic(italic: Boolean?): Text {
         this.italic = italic
         return this
     }
 
-    fun withUnderlined(underlined: Boolean?):Text {
+    fun withUnderlined(underlined: Boolean?): Text {
         this.underlined = underlined
         return this
     }
 
-    fun withStrikethrough(strikethrough: Boolean?):Text {
+    fun withStrikethrough(strikethrough: Boolean?): Text {
         this.strikethrough = strikethrough
         return this
     }
 
-    fun withObfuscated(obfuscated: Boolean?):Text {
+    fun withObfuscated(obfuscated: Boolean?): Text {
         this.obfuscated = obfuscated
         return this
     }
 
-    fun withInsertion(insertion: String?):Text {
+    fun withInsertion(insertion: String?): Text {
         this.insertion = insertion
         return this
     }
 
-    fun withClickEvent(clickEvent: ClickEvent?):Text {
+    fun withClickEvent(clickEvent: ClickEvent?): Text {
         this.clickEvent = clickEvent
         return this
     }
 
-    fun withHoverEvent(hoverEvent: HoverEvent?):Text {
+    fun withHoverEvent(hoverEvent: HoverEvent?): Text {
         this.hoverEvent = hoverEvent
         return this
     }
 
-    fun withExtra(extra: MutableList<Text>?):Text{
+    fun withExtra(extra: MutableList<Text>?): Text {
         this.extra = extra
         return this
     }
 
-    fun toRawString():String = text
+    fun toRawString(): String = text
 }
 
 @Deprecated("Replace TextGroup with Adventure API")
-class TextGroup private constructor(){
+class TextGroup private constructor() {
     private var texts: MutableList<Text> = mutableListOf()
-    fun getTexts():MutableList<Text> = texts
+    fun getTexts(): MutableList<Text> = texts
 
-    fun toRawString():String{
+    fun toRawString(): String {
         val res = StringBuilder()
         texts.forEach {
             res.append(it.toRawString())
@@ -129,7 +128,7 @@ object TextSerializer {
         return gson.toJson(text)
     }
 
-    fun serialize(textGroup: TextGroup):String{
+    fun serialize(textGroup: TextGroup): String {
         return gson.toJson(textGroup.getTexts())
     }
 }

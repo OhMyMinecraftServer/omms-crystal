@@ -31,7 +31,7 @@ public class RconListener extends RconBase {
 
     public void run() {
         try {
-            while(this.running) {
+            while (this.running) {
                 try {
                     Socket socket = this.listener.accept();
                     RconServer rconServer = new RconServer(this.password, socket);
@@ -49,7 +49,6 @@ public class RconListener extends RconBase {
         } finally {
             this.closeSocket(this.listener);
         }
-
     }
 
     @Nullable

@@ -1,14 +1,15 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.time.Instant
+import java.util.Properties
 
 plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
     kotlin("jvm") version "2.2.0"
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.0"
+    kotlin("plugin.serialization") version "2.2.0"
     java
     id("maven-publish")
     application
 }
-
 
 group = "icu.takeneko"
 version = properties["version"]!!
@@ -24,43 +25,51 @@ repositories {
     maven("https://jitpack.io")
 }
 
-tasks{
+tasks {
     shadowJar {
-        archiveClassifier.set("full")
+        archiveClassifier = "full"
+    }
+    test {
+        useJUnitPlatform()
+    }
+    compileJava {
+        targetCompatibility = "17"
+    }
+    compileKotlin {
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_17
+        }
+    }
+    register("generateProperties") {
+        doLast {
+            generateProperties()
+        }
+    }
+    processResources {
+        dependsOn("generateProperties")
     }
 }
 
 dependencies {
     api(kotlin("stdlib"))
-    api("com.google.code.gson:gson:2.10")
-    api("org.slf4j:slf4j-api:2.0.3")
-    api("ch.qos.logback:logback-core:1.4.4")
-    api("ch.qos.logback:logback-classic:1.4.4")
+    api("com.google.code.gson:gson:2.13.1")
+    api("org.slf4j:slf4j-api:2.0.17")
+    api("ch.qos.logback:logback-core:1.5.18")
+    api("ch.qos.logback:logback-classic:1.5.18")
     api("com.mojang:brigadier:1.0.18")
-    api("org.jline:jline:3.21.0")
-    api("commons-io:commons-io:2.11.0")
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-    api("com.alibaba.fastjson2:fastjson2:2.0.20.graal")
-    api("net.kyori:adventure-api:4.13.1")
-    api("net.kyori:adventure-text-serializer-gson:4.13.1")
+    api("org.jline:jline:3.30.4")
+    api("commons-io:commons-io:2.20.0")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    api("net.kyori:adventure-api:4.23.0")
+    api("net.kyori:adventure-text-serializer-gson:4.23.0")
     api("nl.vv32.rcon:rcon:1.2.0")
-    api("net.bytebuddy:byte-buddy-agent:1.14.0")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    api("net.bytebuddy:byte-buddy-agent:1.17.6")
+    api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     testImplementation(kotlin("test"))
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
-
-tasks.withType<KotlinCompile> {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-    }
-}
-
 application {
-    mainClass.set("icu.takeneko.omms.crystal.main.MainKt")
+    mainClass = "icu.takeneko.omms.crystal.main.MainKt"
 }
 
 getComponents().withType(AdhocComponentWithVariants::class.java).forEach { c ->
@@ -72,9 +81,8 @@ getComponents().withType(AdhocComponentWithVariants::class.java).forEach { c ->
 publishing {
     repositories {
         mavenLocal()
-        maven {
+        maven("https://maven.takeneko.icu/releases") {
             name = "NekoMavenRelease"
-            url = uri("https://maven.takeneko.icu/releases")
             credentials {
                 username = project.findProperty("nekomaven.user") as String? ?: System.getenv("NEKO_USERNAME")
                 password = project.findProperty("nekomaven.password") as String? ?: System.getenv("NEKO_TOKEN")
@@ -96,36 +104,29 @@ publishing {
     }
 }
 
-tasks.register("generateProperties"){
-    doLast{
-        generateProperties()
-    }
-}
-
-tasks.getByName("processResources") {
-    dependsOn("generateProperties")
-}
-
-fun generateProperties(){
+fun generateProperties() {
     val propertiesFile = file("./src/main/resources/build.properties")
-    if (propertiesFile.exists()) {
-        propertiesFile.delete()
-    }
-    propertiesFile.createNewFile()
-    val m = mutableMapOf<String, String>()
-    propertiesFile.printWriter().use {writer ->
-        properties.forEach {
-            val str = it.value.toString()
-            if("MAVEN" in it.key) return@forEach
-            if ("@" in str || "(" in str || ")" in str || "extension" in str || "null" == str || "\'" in str || "\\" in str || "/" in str)return@forEach
-            if ("PROJECT" in str.uppercase() || "PROJECT" in it.key.uppercase() || " " in str)return@forEach
-            if ("GRADLE" in it.key.uppercase() || "GRADLE" in str.uppercase() || "PROP" in it.key.uppercase())return@forEach
-            if("." in it.key || "TEST" in it.key.uppercase())return@forEach
-            m += it.key to str
-        }
 
-        m.toSortedMap().forEach{
-            writer.println("${it.key} = ${it.value}")
-        }
+    propertiesFile.delete()
+    propertiesFile.createNewFile()
+
+    val shouldSkip: (Pair<String, *>) -> Boolean = { (k, v) ->
+        val s = v.toString()
+        "MAVEN" in k ||
+                "@" in s || "(" in s || ")" in s || "extension" in s || s == "null" ||
+                '\'' in s || '\\' in s || '/' in s ||
+                "PROJECT" in s.uppercase() || "PROJECT" in k.uppercase() || ' ' in s ||
+                "GRADLE" in k.uppercase() || "GRADLE" in s.uppercase() || "PROP" in k.uppercase() ||
+                '.' in k || "TEST" in k.uppercase()
+    }
+
+    val props = Properties().apply {
+        properties.filterKeys { !shouldSkip(it to properties[it]) }
+            .toSortedMap()
+            .forEach { (k, v) -> setProperty(k, v.toString()) }
+    }
+
+    propertiesFile.outputStream().use { out ->
+        props.store(out, "Auto-generated at ${Instant.now()}")
     }
 }

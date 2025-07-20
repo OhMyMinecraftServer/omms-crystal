@@ -1,9 +1,10 @@
 package icu.takeneko.omms.crystal.util
 
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
 
@@ -21,11 +22,11 @@ open class Manager<T, K>(
         map.clear()
         fileList.clear()
 
-        val folder = File(joinFilePaths(scanFolder))
-        if (!folder.isDirectory || !folder.exists()) {
-            Files.createDirectories(folder.toPath())
+        val folder = Path.of(joinFilePaths(scanFolder))
+        if (!folder.isDirectory() || !folder.exists()) {
+            Files.createDirectories(folder)
         }
-        val files = (Files.list(Path.of(joinFilePaths(scanFolder)))).filter { fileNameFilter(it.name) }.toList()
+        val files = Files.list(folder).filter { fileNameFilter(it.name) }.toList()
         beforeInit()
         files.forEach {
             val pair = initializer(it.absolutePathString())

@@ -15,8 +15,10 @@ open class BuiltinParser : MinecraftParser() {
         return Info(matcher.group(4), matcher.group(2), level)
     }
 
-    //Done (6.343s)! For help, type "help"
+
+    // Done (6.343s)! For help, type "help"
     private val regexServerStarted = Regex("Done \\(([0-9.]*)s\\)\\! For help\\, type \\\"help\\\"")
+
     override fun parseServerStartedInfo(raw: String): ServerStartedInfo? {
         val matcher = regexServerStarted.toPattern().matcher(raw)
         if (!matcher.matches()) return null
@@ -24,7 +26,9 @@ open class BuiltinParser : MinecraftParser() {
         return ServerStartedInfo(time)
     }
 
+
     private val regexPlayerInfo = Regex("<([0-9A-Za-z_]*)> ([^\\n\\r]*)")
+
     override fun parsePlayerInfo(raw: String): PlayerInfo? {
         val matcher = regexPlayerInfo.toPattern().matcher(raw.removePrefix("[Not Secure] "))
         if (!matcher.matches()) return null
@@ -32,6 +36,7 @@ open class BuiltinParser : MinecraftParser() {
         val content = matcher.group(2)
         return PlayerInfo(player = player, content = content, isNotSecure = raw.contains("[Not Secure] "))
     }
+
 
     private val regexRconInfo = Regex("RCON running on ([0-9.]+):([0-9]+)")
 
@@ -41,6 +46,7 @@ open class BuiltinParser : MinecraftParser() {
         val rconPort = matcher.group(2)
         return RconInfo(rconPort.toInt())
     }
+
 
     private val regexServerOverload =
         Regex("Can't keep up! Is the server overloaded\\? Running ([0-9]*)ms or ([0-9]*) ticks behind")
@@ -53,7 +59,9 @@ open class BuiltinParser : MinecraftParser() {
         return ServerOverloadInfo(ticks, timeMillis)
     }
 
+
     private val regexServerStarting = Regex("Starting minecraft server version ([a-zA-Z0-9_.-]*)")
+
     override fun parseServerStartingInfo(raw: String): ServerStartingInfo? {
         val matcher = regexServerStarting.toPattern().matcher(raw)
         if (!matcher.matches()) return null
@@ -61,8 +69,10 @@ open class BuiltinParser : MinecraftParser() {
         return ServerStartingInfo(version)
     }
 
-    //ZhuRuoLing joined the game
+
+    // ZhuRuoLing joined the game
     private val regexPlayerJoin = Regex("([0-9A-Za-z_]*) joined the game")
+
     override fun parsePlayerJoinInfo(raw: String): PlayerJoinInfo? {
         val m = regexPlayerJoin.toPattern().matcher(raw)
         if (!m.matches()) return null
@@ -70,8 +80,10 @@ open class BuiltinParser : MinecraftParser() {
         return PlayerJoinInfo(player)
     }
 
-    //ZhuRuoLing left the game
+
+    // ZhuRuoLing left the game
     private val regexPlayerLeft = Regex("([0-9A-Za-z_]*) left the game")
+
     override fun parsePlayerLeftInfo(raw: String): PlayerLeftInfo? {
         val matcher = regexPlayerLeft.toPattern().matcher(raw)
         if (!matcher.matches()) return null
@@ -79,13 +91,7 @@ open class BuiltinParser : MinecraftParser() {
         return PlayerLeftInfo(player)
     }
 
-    override fun parseServerStoppingInfo(raw: String): ServerStoppingInfo? {
-        return (
-                if (raw == "Stopping server")
-                    ServerStoppingInfo()
-                else
-                    null
-                )
-    }
+    override fun parseServerStoppingInfo(raw: String): ServerStoppingInfo? =
+        if (raw == "Stopping server") ServerStoppingInfo() else null
 
 }

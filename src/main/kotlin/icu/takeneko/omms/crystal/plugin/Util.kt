@@ -2,6 +2,7 @@ package icu.takeneko.omms.crystal.plugin
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import icu.takeneko.omms.crystal.main.DebugOptions
 import net.bytebuddy.agent.ByteBuddyAgent
 import icu.takeneko.omms.crystal.plugin.metadata.PluginDependency
 import icu.takeneko.omms.crystal.plugin.metadata.PluginDependencyRequirement
@@ -18,14 +19,14 @@ val versionNamePattern: Pattern = Pattern.compile("([><=]=?)([0-9A-Za-z.]+)")
 
 fun pluginRequirementMatches(self: PluginDependencyRequirement, dependency: PluginDependency): Boolean {
     if (self.id != dependency.id) return false
-    if (self.symbol == "*")return true
+    if (self.symbol == "*") return true
     return when (self.symbol) {
         ">=" -> dependency.version >= self.parsedVersion
         "<=" -> dependency.version <= self.parsedVersion
-        ">" ->  dependency.version > self.parsedVersion
+        ">" -> dependency.version > self.parsedVersion
         "<" -> dependency.version < self.parsedVersion
         "==" -> self.parsedVersion == dependency.version
-        else -> throw IllegalStateException("${self.symbol} is not a valid version comparator.")
+        else -> error("${self.symbol} is not a valid version comparator.")
     }
 }
 
@@ -33,4 +34,8 @@ object InstrumentationAccess {
     val instrumentation: Instrumentation by lazy {
         ByteBuddyAgent.install()
     }
+}
+
+inline fun ifPluginDebug(block: () -> Unit) {
+    if (DebugOptions.pluginDebug()) block()
 }

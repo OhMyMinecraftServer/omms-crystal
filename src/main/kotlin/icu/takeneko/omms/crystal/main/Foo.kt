@@ -3,15 +3,10 @@ package icu.takeneko.omms.crystal.main
 import icu.takeneko.omms.crystal.plugin.PluginException
 import java.io.IOException
 import java.io.InputStream
-import java.lang.module.ModuleDescriptor.Version
 import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ForkJoinPool
-import java.util.concurrent.Future
-import java.util.concurrent.FutureTask
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
 import kotlin.io.path.isDirectory
@@ -79,9 +74,6 @@ class JarServerLauncher(
 
     fun runMain() {
         val clazz = classLoader.loadClass(mainClass)
-        clazz.declaredMethods.forEach {
-            println(it)
-        }
         clazz.getDeclaredMethod("main", Array<String>::class.java)
             .invoke(null, arrayOf(""))
     }

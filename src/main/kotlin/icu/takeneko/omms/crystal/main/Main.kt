@@ -15,7 +15,6 @@ import icu.takeneko.omms.crystal.permission.PermissionManager
 import icu.takeneko.omms.crystal.plugin.PluginManager
 import icu.takeneko.omms.crystal.rcon.RconClient
 import icu.takeneko.omms.crystal.rcon.RconListener
-import icu.takeneko.omms.crystal.rcon.RconServer
 import icu.takeneko.omms.crystal.server.ServerStatus
 import icu.takeneko.omms.crystal.server.ServerThreadDaemon
 import icu.takeneko.omms.crystal.server.serverStatus
@@ -30,6 +29,8 @@ import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import kotlin.concurrent.thread
 import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 import kotlin.system.exitProcess
 
 
@@ -49,13 +50,14 @@ var rconListener: RconListener? = null
 
 fun init() {
     val logger = createLogger("EventHandler")
-    CommandManager.run {
-        register(helpCommand)
-        register(permissionCommand)
-        register(startCommand)
-        register(stopCommand)
-        register(pluginCommand)
-    }
+    CommandManager.register(
+        helpCommand,
+        permissionCommand,
+        startCommand,
+        startCommand,
+        stopCommand,
+        pluginCommand
+    )
 
     eventDispatcher.run {
         registerHandler(ServerStoppingEvent) {
@@ -130,18 +132,18 @@ fun init() {
                 } catch (e: CommandSyntaxException) {
                     commandSourceStack.sendFeedback(
                         Text("Incomplete or invalid command${if (e.message != null) ", see errors below:" else ""}\n").withColor(
-                            Color.red
+                            Color.RED
                         )
                     )
                     if (e.message != null) {
-                        commandSourceStack.sendFeedback(Text(e.message!!).withColor(Color.red))
+                        commandSourceStack.sendFeedback(Text(e.message!!).withColor(Color.RED))
                     }
                 } catch (e: Exception) {
                     logger.error("An exception was thrown while processing command.", e)
                     commandSourceStack.sendFeedback(
                         TextGroup(
-                            Text("Unexpected error occurred while executing command:\n").withColor(Color.red),
-                            Text(e.message!!).withColor(Color.red)
+                            Text("Unexpected error occurred while executing command:\n").withColor(Color.RED),
+                            Text(e.message!!).withColor(Color.RED)
                         )
                     )
                 }
@@ -160,16 +162,15 @@ fun init() {
 
 fun main(args: Array<String>) {
     println("Starting icu.takeneko.omms.crystal.main.MainKt.main()")
-    Runtime.getRuntime().run {
-        val thread = thread(name = "ShutdownThread", start = false) {
+    Runtime.getRuntime().addShutdownHook(
+        thread(name = "ShutdownThread", start = false) {
             if (serverThreadDaemon != null) {
                 println("Stopping server because jvm is shutting down.")
                 serverThreadDaemon!!.outputHandler.interrupt()
                 serverThreadDaemon!!.stopServer(true)
             }
         }
-        this.addShutdownHook(thread)
-    }
+    )
     consoleHandler = ConsoleHandler()
     consoleHandler.start()
     //registerEvents()
@@ -177,23 +178,24 @@ fun main(args: Array<String>) {
     logger.info("Hello World!")
     val os = ManagementFactory.getOperatingSystemMXBean()
     val runtime = ManagementFactory.getRuntimeMXBean()
-    logger.info("$PRODUCT_NAME ${BuildProperties["version"]} is running on ${os.name} ${os.arch} ${os.version} at pid ${runtime.pid}")
+    logger.info("$PRODUCT_NAME ${BuildProperties["version"]} is running on ${os.name} ${os.arch} ${os.version} at PID ${runtime.pid}")
     try {
         if (Config.load()) {
-            if (!Files.exists(Path(joinFilePaths("server"))) || !Files.isDirectory(Path(joinFilePaths("server")))) {
-                Files.createDirectory(Path(joinFilePaths("server")))
+            val serverPath = Path(joinFilePaths("server"))
+            if (!serverPath.exists() || !serverPath.isDirectory()) {
+                Files.createDirectory(serverPath))
             }
             exitProcess(1)
         }
-        if (DebugOptions.mainDebug()) {
+        ifMainDebug {
             logger.info("Config:")
-            logger.info("\tServerWorkingDirectory: ${Config.config.workingDir}")
-            logger.info("\tLaunchCommand: ${Config.config.launchCommand}")
-            logger.info("\tPluginDirectory: ${Config.config.pluginDirectory}")
-            logger.info("\tServerType: ${Config.config.serverType}")
-            logger.info("\tDebugOptions: $DebugOptions")
+            logger.info("\tServerWorkingDirectory: {}", config.workingDir)
+            logger.info("\tLaunchCommand: {}", config.launchCommand)
+            logger.info("\tPluginDirectory: {}", config.pluginDirectory)
+            logger.info("\tServerType: {}", config.serverType)
+            logger.info("\tDebugOptions: {}", DebugOptions)
         }
-        SharedConstants.language = Config.config.lang
+        SharedConstants.language = config.lang
         TranslateManager.init()
         CommandHelpManager.init()
         eventDispatcher = EventDispatcher()

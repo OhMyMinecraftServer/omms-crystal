@@ -69,84 +69,85 @@ val helpCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.con
 }
 
 
-val permissionCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.config.commandPrefix + "permission").then(
-    literal("set").then(
-        wordArgument("player")
-            .then(
-                wordArgument("permissionLevel").requires {
+val permissionCommand: LiteralArgumentBuilder<CommandSourceStack> =
+    literal(Config.config.commandPrefix + "permission").then(
+        literal("set").then(
+            wordArgument("player")
+                .then(
+                    wordArgument("permissionLevel").requires {
+                        if (it.from == CommandSource.PLAYER)
+                            comparePermission(it.permissionLevel!!, Permission.OWNER)
+                        else
+                            true
+                    }.executes {
+                        PermissionManager.setPermission(
+                            getWord(it, "player"),
+                            resolvePermissionLevel(getWord(it, "permissionLevel"))
+                        )
+                        1
+                    }
+                )
+                .requires {
                     if (it.from == CommandSource.PLAYER)
                         comparePermission(it.permissionLevel!!, Permission.OWNER)
                     else
                         true
                 }.executes {
-                    PermissionManager.setPermission(
-                        getWord(it, "player"),
-                        resolvePermissionLevel(getWord(it, "permissionLevel"))
-                    )
+                    PermissionManager.setPermission(getWord(it, "player"))
                     1
                 }
-            )
-            .requires {
+        )
+    ).then(
+        literal("delete").then(
+            wordArgument("player").requires {
                 if (it.from == CommandSource.PLAYER)
                     comparePermission(it.permissionLevel!!, Permission.OWNER)
                 else
                     true
             }.executes {
-                PermissionManager.setPermission(getWord(it, "player"))
+                PermissionManager.deletePlayer(getWord(it, "player"))
+
                 1
             }
-    )
-).then(
-    literal("delete").then(
-        wordArgument("player").requires {
+        )
+    ).then(
+        literal("list").executes {
+            val permissionStorage = PermissionManager.convertToPermissionStorage()
+
+            val textOwner = TextGroup(
+                Text("  Owners: ").withColor(Color.LIGHT_PURPLE),
+                Text(permissionStorage.owner.joinToString(separator = ", ")).withColor(Color.RESET)
+            )
+            val textAdmin = TextGroup(
+                Text("  Admins: ").withColor(Color.YELLOW),
+                Text(permissionStorage.admin.joinToString(separator = ", ")).withColor(Color.RESET)
+            )
+            val textUser = TextGroup(
+                Text("  Users: ").withColor(Color.AQUA),
+                Text(permissionStorage.user.joinToString(separator = ", ")).withColor(Color.RESET)
+            )
+            val textGuest = TextGroup(
+                Text("  Guests: ").withColor(Color.BLUE),
+                Text(permissionStorage.guest.joinToString(separator = ", ")).withColor(Color.RESET)
+            )
+            it.source.sendFeedback(Text("Permissions:"))
+            it.source.sendFeedback(textOwner)
+            it.source.sendFeedback(textAdmin)
+            it.source.sendFeedback(textUser)
+            it.source.sendFeedback(textGuest)
+            1
+        }
+    ).then(
+        literal("save").requires {
             if (it.from == CommandSource.PLAYER)
                 comparePermission(it.permissionLevel!!, Permission.OWNER)
             else
                 true
         }.executes {
-            PermissionManager.deletePlayer(getWord(it, "player"))
-
+            PermissionManager.writePermission()
             1
         }
     )
-).then(
-    literal("list").executes {
-        val permissionStorage = PermissionManager.convertToPermissionStorage()
-
-        val textOwner = TextGroup(
-            Text("  Owners: ").withColor(Color.light_purple),
-            Text(permissionStorage.owner.joinToString(separator = ", ")).withColor(Color.reset)
-        )
-        val textAdmin = TextGroup(
-            Text("  Admins: ").withColor(Color.yellow),
-            Text(permissionStorage.admin.joinToString(separator = ", ")).withColor(Color.reset)
-        )
-        val textUser = TextGroup(
-            Text("  Users: ").withColor(Color.aqua),
-            Text(permissionStorage.user.joinToString(separator = ", ")).withColor(Color.reset)
-        )
-        val textGuest = TextGroup(
-            Text("  Guests: ").withColor(Color.blue),
-            Text(permissionStorage.guest.joinToString(separator = ", ")).withColor(Color.reset)
-        )
-        it.source.sendFeedback(Text("Permissions:"))
-        it.source.sendFeedback(textOwner)
-        it.source.sendFeedback(textAdmin)
-        it.source.sendFeedback(textUser)
-        it.source.sendFeedback(textGuest)
-        1
-    }
-).then(
-    literal("save").requires {
-        if (it.from == CommandSource.PLAYER)
-            comparePermission(it.permissionLevel!!, Permission.OWNER)
-        else
-            true
-    }.executes {
-        PermissionManager.writePermission()
-        1
-    }
-)
 
 val startCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.config.commandPrefix + "start").requires {
     if (it.from == CommandSource.PLAYER)
@@ -182,27 +183,26 @@ val stopCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.con
         )
         1
     }
-)
-    .requires {
-        if (it.from == CommandSource.PLAYER)
-            comparePermission(it.permissionLevel!!, Permission.ADMIN)
-        else
-            true
-    }.executes {
-        SharedConstants.eventLoop.dispatch(
-            ServerStopEvent,
-            ServerStopEventArgs(
-                when (it.source.from) {
-                    CommandSource.PLAYER -> it.source.player!!
-                    CommandSource.PLUGIN -> "plugin"
-                    CommandSource.REMOTE -> "central"
-                    CommandSource.CONSOLE -> "console"
-                },
-                false
-            )
+).requires {
+    if (it.from == CommandSource.PLAYER)
+        comparePermission(it.permissionLevel!!, Permission.ADMIN)
+    else
+        true
+}.executes {
+    SharedConstants.eventLoop.dispatch(
+        ServerStopEvent,
+        ServerStopEventArgs(
+            when (it.source.from) {
+                CommandSource.PLAYER -> it.source.player!!
+                CommandSource.PLUGIN -> "plugin"
+                CommandSource.REMOTE -> "central"
+                CommandSource.CONSOLE -> "console"
+            },
+            false
         )
-        1
-    }
+    )
+    1
+}
 
 val executeCommand: LiteralArgumentBuilder<CommandSourceStack> =
     literal(Config.config.commandPrefix + "execute")
@@ -239,8 +239,8 @@ val pluginCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.c
             true
     }.executes {
         logger.warn("Plugin reloading is highly experimental, in some cases it can cause severe problems.")
-        logger.warn("Reloading plugin ${getWord(it,"plugin")}!")
-        PluginManager.reload(getWord(it,"plugin"))
+        logger.warn("Reloading plugin ${getWord(it, "plugin")}!")
+        PluginManager.reload(getWord(it, "plugin"))
         1
     }))
     .then(literal("reloadAll").requires {
@@ -267,7 +267,7 @@ fun registerBuiltinCommandHelp() {
         dispatcher.root,
         CommandSourceStack(from = CommandSource.PLAYER, player = "", permissionLevel = Permission.OWNER),
         false
-    ).toList()
+    )
     val help = usage.map {
         it to it.removePrefix(Config.config.commandPrefix).split(" ")
             .joinToString(separator = ".")

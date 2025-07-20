@@ -38,8 +38,7 @@ enum class ServerStatus {
 class ServerThreadDaemon(
     private val launchCommand: String,
     private val workingDir: String,
-) :
-    Thread("ServerThreadDaemon") {
+) : Thread("ServerThreadDaemon") {
 
     private val logger = createLogger("ServerThreadDaemon")
     private lateinit var out: OutputStream
@@ -57,7 +56,7 @@ class ServerThreadDaemon(
             input = process!!.inputStream
         } catch (e: Exception) {
             logger.error("Cannot start server.", e)
-            SharedConstants.eventLoop.dispatch(ServerStoppedEvent, ServerStoppedEventArgs(Integer.MIN_VALUE, who))
+            CrystalServer.postEvent(ServerStoppedEvent(Int.MIN_VALUE, actionHost))
             return
         }
         outputHandler = ServerOutputHandler(process!!)
@@ -69,8 +68,8 @@ class ServerThreadDaemon(
                     synchronized(queue) {
                         while (queue.isNotEmpty()) {
                             val line = queue.poll()
-                            if (DebugOptions.serverDebug()) logger.info("[DEBUG] Handling input $line")
-                            writer.write(line + "\n")
+                            ifServerDebug { logger.info("[DEBUG] Handling input $line") }
+                            writer.appendLine(line)
                             writer.flush()
                         }
                     }
@@ -82,8 +81,9 @@ class ServerThreadDaemon(
         }
         val exitCode = process!!.exitValue()
         //logger.info("Server exited with exit code $exitCode.")
-        serverThreadDaemon = null
-        SharedConstants.eventLoop.dispatch(ServerStoppedEvent, ServerStoppedEventArgs(exitCode, who))
+
+        CrystalServer.destroyDaemon()
+        CrystalServer.postEvent(ServerStoppedEvent(exitCode, actionHost))
     }
 
     fun input(str: String) {
@@ -103,13 +103,12 @@ class ServerThreadDaemon(
 }
 
 
-class ServerOutputHandler(private val serverProcess: Process) :
-    Thread("ServerOutputHandler") {
+class ServerOutputHandler(private val serverProcess: Process) : Thread("ServerOutputHandler") {
     private val serverLogger = createServerLogger()
     private val logger = createLogger("ServerOutputHandler")
     private lateinit var input: InputStream
     private val parser = ParserManager.getParser(Config.config.serverType)
-        ?: throw IllegalArgumentException("Specified parser ${Config.config.serverType} does not exist.")
+        ?: error("Specified parser ${Config.config.serverType} does not exist.")
 
     override fun run() {
         try {
@@ -125,7 +124,7 @@ class ServerOutputHandler(private val serverProcess: Process) :
                             println(string)
                         } else {
                             //dispatch a global info first
-                            SharedConstants.eventLoop.dispatch(ServerInfoEvent, ServerInfoEventArgs(info))
+                            CrystalServer.postEvent(ServerLoggingEvent(info))
                             //and then started to parse
                             parseAndDispatch(info.info)
                             when (info.level) {
@@ -150,48 +149,42 @@ class ServerOutputHandler(private val serverProcess: Process) :
     private fun parseAndDispatch(processedInfo: String) {
         val serverStartingInfo = parser.parseServerStartingInfo(processedInfo)
         if (serverStartingInfo != null) {
-            dispatchEvent(ServerStartingEvent, ServerStartingEventArgs(serverProcess.pid(), serverStartingInfo.version))
+            dispatchEvent(ServerStartingEvent(serverProcess.pid(), serverStartingInfo.version))
             return
         }
         val serverStartedInfo = parser.parseServerStartedInfo(processedInfo)
         if (serverStartedInfo != null) {
-            dispatchEvent(ServerStartedEvent, ServerStartedEventArgs(timeUsed = serverStartedInfo.timeElapsed))
+            dispatchEvent(ServerStartedEvent(serverStartedInfo.timeElapsed))
             return
         }
         val serverOverloadInfo = parser.parseServerOverloadInfo(processedInfo)
         if (serverOverloadInfo != null) {
-            dispatchEvent(
-                ServerOverloadEvent,
-                ServerOverloadEventArgs(serverOverloadInfo.ticks, serverOverloadInfo.time)
-            )
+            dispatchEvent(ServerOverloadEvent(serverOverloadInfo.ticks, serverOverloadInfo.time))
             return
         }
         val serverStoppingInfo = parser.parseServerStoppingInfo(processedInfo)
         if (serverStoppingInfo != null) {
-            dispatchEvent(ServerStoppingEvent, ServerStoppingEventArgs())
+            dispatchEvent(ServerStoppingEvent())
             return
         }
         val playerJoinInfo = parser.parsePlayerJoinInfo(processedInfo)
         if (playerJoinInfo != null) {
-            dispatchEvent(PlayerJoinEvent, PlayerJoinEventArgs(player = playerJoinInfo.player))
+            dispatchEvent(PlayerJoinEvent(playerJoinInfo.player))
             return
         }
         val rconInfo = parser.parseRconStartInfo(processedInfo)
         if (rconInfo != null) {
-            dispatchEvent(RconStartedEvent, RconStartedEventArgs(rconInfo.port))
+            dispatchEvent(RconServerStartedEvent(rconInfo.port))
             return
         }
         val playerInfo = parser.parsePlayerInfo(processedInfo)
         if (playerInfo != null) {
-            dispatchEvent(
-                PlayerInfoEvent,
-                PlayerInfoEventArgs(content = playerInfo.content, player = playerInfo.player)
-            )
+            dispatchEvent(PlayerChatEvent(playerInfo.content, playerInfo))
             return
         }
         val playerLeftInfo = parser.parsePlayerLeftInfo(processedInfo)
         if (playerLeftInfo != null) {
-            dispatchEvent(PlayerLeftEvent, PlayerLeftEventArgs(player = playerLeftInfo.player))
+            dispatchEvent(PlayerLeftEvent(playerLeftInfo.player))
             return
         }
         return

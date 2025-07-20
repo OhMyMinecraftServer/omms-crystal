@@ -1,11 +1,8 @@
 package icu.takeneko.omms.crystal.plugin
 
-import icu.takeneko.omms.crystal.main.DebugOptions
 import icu.takeneko.omms.crystal.main.SharedConstants
 import icu.takeneko.omms.crystal.parser.ParserManager
 import icu.takeneko.omms.crystal.plugin.metadata.PluginDependency
-import icu.takeneko.omms.crystal.plugin.metadata.PluginDependencyRequirement
-import icu.takeneko.omms.crystal.plugin.metadata.PluginMetadata
 import icu.takeneko.omms.crystal.util.*
 import java.io.File
 import java.io.InputStream
@@ -40,7 +37,7 @@ object PluginManager : Manager<String, PluginInstance>(
     initializer = {
         pluginClassLoader.loadJar(File(it))
         PluginInstance(pluginClassLoader, it) { before, after ->
-            if (DebugOptions.pluginDebug()) {
+            ifPluginDebug {
                 logger.info("Plugin ${this.pluginMetadata.id} state changed from $before to $after")
                 logger.info(
                     "[DEBUG] Plugin ${
@@ -101,50 +98,49 @@ object PluginManager : Manager<String, PluginInstance>(
 }
 
 private fun Manager<String, PluginInstance>.checkRequirements() {
-    val dependencies = mutableListOf<PluginDependency>()
-    dependencies += PluginDependency(
-        ModuleDescriptor.Version.parse(BuildProperties["version"]!!),
-        BuildProperties["applicationName"]!!
-    )
-    map.forEach {
-        dependencies += PluginDependency(ModuleDescriptor.Version.parse(it.value.pluginMetadata.version), it.key)
+    val dependencies = buildList {
+        add(PluginDependency(ModuleDescriptor.Version.parse(BuildProperties["version"]!!), BuildProperties["applicationName"]!!))
+        map.forEach {
+            add(PluginDependency(ModuleDescriptor.Version.parse(it.value.pluginMetadata.version), it.key))
+        }
     }
-    val unsatisfied = mutableMapOf<PluginMetadata, List<PluginDependencyRequirement>>()
-    map.forEach {
-        unsatisfied += it.value.pluginMetadata to it.value.checkPluginDependencyRequirements(dependencies)
+    val unsatisfied = buildMap {
+        map.forEach { put(it.value.pluginMetadata, it.value.checkPluginDependencyRequirements(dependencies)) }
     }
+
     if (unsatisfied.any { it.value.isNotEmpty() }) {
-        val dependencyMap = mutableMapOf<String, String>()
-        dependencies.forEach {
-            dependencyMap += it.id to it.version.toString()
+        val dependencyMap = buildMap {
+            dependencies.forEach {
+                put(it.id, it.version.toString())
+            }
         }
-        val builder = StringBuilder()
-        builder.append("Incompatible plugin set.\n")
-        builder.append("Unmet dependency listing:\n")
-        unsatisfied.forEach {
-            it.value.forEach { requirement ->
-                builder.append(
-                    "\t${it.key.id} ${it.key.version} requires ${requirement.id} ${requirement.requirement}, ${
-                        if (requirement.id !in dependencyMap)
-                            "which is missing!"
+        val string = buildString {
+            appendLine("Incompatible plugin set.")
+            appendLine("Unmet dependency listing:")
+            unsatisfied.forEach {
+                it.value.forEach { requirement ->
+                    appendLine(
+                        "\t${it.key.id} ${it.key.version} requires ${requirement.id} ${requirement.requirement}, ${
+                            if (requirement.id !in dependencyMap)
+                                "which is missing!"
+                            else
+                                "but only the wrong version are present: ${dependencyMap[requirement.id]}!"
+                        }"
+                    )
+                }
+            }
+            appendLine("A potential solution has been determined:")
+            unsatisfied.forEach { entry ->
+                entry.value.forEach {
+                    appendLine(
+                        if (it.id !in dependencyMap)
+                            "\tInstall ${it.id} ${it.requirement}."
                         else
-                            "but only the wrong version are present: ${dependencyMap[requirement.id]}!"
-                    }\n"
-                )
+                            "\tReplace ${it.id} ${dependencyMap[it.id]} with ${it.id} ${it.requirement}"
+                    )
+                }
             }
         }
-        builder.append("A potential solution has been determined:\n")
-        unsatisfied.forEach { entry ->
-            entry.value.forEach {
-                builder.append(
-                    if (it.id !in dependencyMap)
-                        "\tInstall ${it.id} ${it.requirement}."
-                    else
-                        "\tReplace ${it.id} ${dependencyMap[it.id]} with ${it.id} ${it.requirement}"
-                )
-                builder.append("\n")
-            }
-        }
-        throw PluginException(builder.toString())
+        throw PluginException(string)
     }
 }

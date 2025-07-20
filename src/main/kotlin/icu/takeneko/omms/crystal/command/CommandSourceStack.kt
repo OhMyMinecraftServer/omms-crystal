@@ -81,13 +81,9 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
                 feedbackText.add(text.toRawString())
             }
 
-            CommandSource.REMOTE -> {
-                feedbackText.add(text.toRawString())
-            }
+            CommandSource.REMOTE -> feedbackText.add(text.toRawString())
 
-            else -> {
-                logger.info(text.toRawString())
-            }
+            else -> logger.info(text.toRawString())
         }
     }
 }

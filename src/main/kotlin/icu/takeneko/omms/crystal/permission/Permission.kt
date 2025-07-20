@@ -80,9 +80,7 @@ object PermissionManager {
         permissionMap.forEach { (t, u) -> function(t, u) }
     }
 
-    fun playerExists(player: String): Boolean {
-        return permissionMap.containsKey(player)
-    }
+    fun playerExists(player: String): Boolean = permissionMap.containsKey(player)
 
     operator fun contains(player: String) = playerExists(player)
 
@@ -102,21 +100,10 @@ object PermissionManager {
         val guest: ArrayList<String> = arrayListOf()
         permissionMap.forEach { (player, permission) ->
             when (permission) {
-                Permission.USER -> {
-                    user.add(player)
-                }
-
-                Permission.OWNER -> {
-                    owner.add(player)
-                }
-
-                Permission.ADMIN -> {
-                    admin.add(player)
-                }
-
-                Permission.GUEST -> {
-                    guest.add(player)
-                }
+                Permission.USER -> user.add(player)
+                Permission.OWNER -> owner.add(player)
+                Permission.ADMIN -> admin.add(player)
+                Permission.GUEST -> guest.add(player)
             }
         }
         owner.sort()
@@ -127,9 +114,7 @@ object PermissionManager {
     }
 
     @Synchronized
-    fun getPermission(player: String): Permission {
-        return permissionMap[player] ?: defaultPermissionLevel
-    }
+    fun getPermission(player: String): Permission = permissionMap[player] ?: defaultPermissionLevel
 }
 
 //level compare a > b : true
@@ -145,6 +130,4 @@ fun toIntegerPermissionLevel(permission: Permission): Int = when (permission) {
 }
 
 
-fun resolvePermissionLevel(name: String): Permission {
-    return Permission.valueOf(name.uppercase(Locale.getDefault()))
-}
+fun resolvePermissionLevel(name: String): Permission =Permission.valueOf(name.uppercase(Locale.getDefault()))

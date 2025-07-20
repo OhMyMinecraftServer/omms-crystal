@@ -10,11 +10,14 @@ class PluginDependencyRequirement {
     @SerializedName(value = "id", alternate = ["pluginId"])
     lateinit var id: String
         private set
+
     @SerializedName(value = "requirement", alternate = ["require"])
     lateinit var requirement: String
         private set
+
     lateinit var symbol: String
         private set
+
     lateinit var parsedVersion: ModuleDescriptor.Version
         private set
 
@@ -30,7 +33,5 @@ class PluginDependencyRequirement {
         parsedVersion = ModuleDescriptor.Version.parse(match.group(2))
     }
 
-    fun requirementMatches(dependency: PluginDependency): Boolean {
-        return pluginRequirementMatches(this, dependency)
-    }
+    fun requirementMatches(dependency: PluginDependency): Boolean = pluginRequirementMatches(this, dependency)
 }

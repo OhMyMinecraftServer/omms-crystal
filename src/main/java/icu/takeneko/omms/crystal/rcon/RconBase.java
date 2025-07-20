@@ -34,7 +34,7 @@ public abstract class RconBase implements Runnable {
         if (null != this.thread) {
             int i = 0;
 
-            while(this.thread.isAlive()) {
+            while (this.thread.isAlive()) {
                 try {
                     this.thread.join(1000L);
                     ++i;

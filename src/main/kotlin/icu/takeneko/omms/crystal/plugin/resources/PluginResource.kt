@@ -5,22 +5,15 @@ import java.io.InputStreamReader
 
 class PluginResource(val bundleId: String) {
 
-    var resDataMap = mutableMapOf<String, String>()
-        private set
-    var resMetaDataMap = mutableMapOf<String, String>()
-        private set
+    val resDataMap = mutableMapOf<String, String>()
 
-    fun getResValue(id: String): String? {
-        return resDataMap[id]
-    }
+    val resMetaDataMap = mutableMapOf<String, String>()
 
-    fun getResMetaValue(id: String): String? {
-        return resMetaDataMap[id]
-    }
+    fun getResValue(id: String): String? = resDataMap[id]
 
-    override fun toString(): String {
-        return "meta = $resMetaDataMap, data = $resDataMap "
-    }
+    fun getResMetaValue(id: String): String? = resMetaDataMap[id]
+
+    override fun toString(): String = "meta = $resMetaDataMap, data = $resDataMap "
 
     companion object {
         fun fromReader(id: String, reader: InputStreamReader): PluginResource {
@@ -35,12 +28,18 @@ class PluginResource(val bundleId: String) {
                     value = s.subList(1, s.size).joinToString("=")
                 }
                 if (key.startsWith("res?")) {
-                    resMeta += key.removePrefix("res?") to value
+                    resMeta[key.removePrefix("res?")] = value
                     return@forEachLine
                 }
-                resStore += key to value
+                resStore[key] = value
             }
-            return PluginResource(id).run { this.resMetaDataMap = resMeta; this.resDataMap = resStore;this }
+            return PluginResource(id).run {
+                this.resMetaDataMap.clear()
+                this.resMetaDataMap.putAll(resMeta)
+                this.resDataMap.clear()
+                this.resDataMap.putAll(resStore)
+                this
+            }
         }
     }
 }

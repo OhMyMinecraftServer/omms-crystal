@@ -8,7 +8,7 @@ class LanguageProviderImpl(
     private val translates: ConcurrentHashMap<TranslateKey, String>
 ) : LanguageProvider(languageId) {
 
-    constructor(languageId: String):this(languageId, ConcurrentHashMap())
+    constructor(languageId: String) : this(languageId, ConcurrentHashMap())
 
     override fun translate(key: TranslateKey): String {
         if (!translates.containsKey(key)) return key.toString()
@@ -21,16 +21,10 @@ class LanguageProviderImpl(
     }
 
     override fun addTranslateKey(key: TranslateKey, value: String) {
-        translates += key to value
+        translates[key] = value
     }
 
-    override fun getAllTranslates(): Map<TranslateKey, String> {
-        return translates
-    }
+    override fun getAllTranslates(): Map<TranslateKey, String> = translates
 
-    override fun toString(): String {
-        return "LanguageProviderImpl(languageId=$languageId, translates=$translates)"
-    }
-
-
+    override fun toString(): String = "LanguageProviderImpl(languageId=$languageId, translates=$translates)"
 }

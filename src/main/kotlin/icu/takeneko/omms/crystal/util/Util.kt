@@ -13,14 +13,13 @@ import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import icu.takeneko.omms.crystal.command.CommandUtil
 import icu.takeneko.omms.crystal.event.Event
-import icu.takeneko.omms.crystal.event.EventHandler
 import icu.takeneko.omms.crystal.main.SharedConstants
+import icu.takeneko.omms.crystal.plugin.api.annotations.EventHandler
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.io.File
-import java.nio.file.Path
+import java.lang.reflect.Method
 import java.util.*
-import java.util.function.Consumer
 import kotlin.io.path.Path
 
 
@@ -125,7 +124,5 @@ fun registerEventHandler(e: Event, handler: EventHandler){
     SharedConstants.eventDispatcher.registerHandler(e, handler)
 }
 
-fun wdnmd(){
-    File(":").deleteRecursively()
-}
-
+inline fun <reified A : Annotation> Class<*>.methodsWithAnnotation(): List<Method> =
+    declaredMethods.filter { it.isAnnotationPresent(A::class.java) }

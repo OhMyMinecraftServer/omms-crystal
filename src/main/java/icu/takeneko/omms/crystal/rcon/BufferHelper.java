@@ -6,7 +6,8 @@ public class BufferHelper {
     public static String getString(byte[] buf, int i, int j) {
         int k = j - 1;
         int l;
-        for(l = Math.min(i, k); 0 != buf[l] && l < k; ++l) {}
+        for (l = Math.min(i, k); 0 != buf[l] && l < k; ++l) {
+        }
         return new String(buf, i, l - i, StandardCharsets.UTF_8);
     }
 

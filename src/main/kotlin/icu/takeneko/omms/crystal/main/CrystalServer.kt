@@ -118,7 +118,6 @@ object CrystalServer : CoroutineScope, ActionHost {
 
     @SubscribeEvent
     fun onServerStopping(e: ServerStoppingEvent) {
-
     }
 
     fun run() {

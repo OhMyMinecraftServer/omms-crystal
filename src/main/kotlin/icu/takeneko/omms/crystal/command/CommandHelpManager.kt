@@ -6,21 +6,22 @@ import net.kyori.adventure.text.TextComponent
 
 object CommandHelpManager {
 
-    val map = mutableMapOf<String,  CommandHelpProvider>()
+    val map = mutableMapOf<String, CommandHelpProvider>()
+
     fun init() {
         map.clear()
         registerBuiltinCommandHelp()
     }
 
-    fun registerHelpMessage(command: String, textProvider: () -> String){
+    fun registerHelpMessage(command: String, textProvider: () -> String) {
         map[command] = CommandHelpProvider { textProvider() }
     }
 
-    fun registerHelpMessage(command: String, helpProvider: CommandHelpProvider){
+    fun registerHelpMessage(command: String, helpProvider: CommandHelpProvider) {
         map[command] = helpProvider
     }
 
-    fun displayAll(commandSourceStack: CommandSourceStack,) {
+    fun displayAll(commandSourceStack: CommandSourceStack) {
         displayFiltered(commandSourceStack) { true }
     }
 
@@ -28,8 +29,8 @@ object CommandHelpManager {
         commandSourceStack: CommandSourceStack,
         predicate: String.() -> Boolean
     ) {
-        map.forEach{ (k, v) ->
-            if (predicate(k)){
+        map.forEach { (k, v) ->
+            if (predicate(k)) {
                 commandSourceStack.sendFeedback(Component.text("$k -> ${v()}"))
             }
         }

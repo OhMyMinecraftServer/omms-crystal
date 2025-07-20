@@ -3,21 +3,23 @@ package icu.takeneko.omms.crystal.main
 import java.util.*
 
 object DebugOptions {
+
     /*
-    #debug options:
- #   N/O:None/Off
- #   A:All
- #   E:Event
- #   M:Main
- #   P:Plugin
- #   S:Server
-     */
+    * Debug options:
+    * N/O:None/Off
+    * A:All
+    * E:Event
+    * M:Main
+    * P:Plugin
+    * S:Server
+    */
     private var off = true
     private var all = false
     private var event = false
     private var main = false
     private var plugin = false
     private var server = false
+
     fun parse(options: String) {
         val o = options.uppercase(Locale.getDefault())
         off = o.contains("N") or o.contains("O")
@@ -34,19 +36,16 @@ object DebugOptions {
     fun pluginDebug() = !off and (all or plugin)
     fun serverDebug() = !off and (all or server)
 
-    override fun toString(): String {
-        return if (off)
-            "OFF "
-        else (
-                if (allDebug())
-                    "ALL "
-                else (
-                        (if (eventDebug()) "EVENT " else "")
-                                + (if (mainDebug()) "MAIN " else "")
-                                + (if (pluginDebug()) "PLUGIN " else "")
-                                + (if (serverDebug()) "SERVER " else "")
-                        )
-                )
-
+    override fun toString(): String = buildString {
+        when {
+            off -> append("OFF")
+            allDebug() -> append("ALL")
+            else -> listOf(
+                "EVENT" to ::eventDebug,
+                "MAIN" to ::mainDebug,
+                "PLUGIN" to ::pluginDebug,
+                "SERVER" to ::serverDebug
+            ).filter { it.second() }.joinTo(this, separator = " ") { it.first }
+        }
     }
 }

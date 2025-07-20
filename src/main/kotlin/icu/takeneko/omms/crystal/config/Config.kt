@@ -15,12 +15,12 @@ object Config {
     }
 
     private val logger = createLogger("Config")
-    lateinit var config:ConfigData
+    lateinit var config: ConfigData
     private val configFile = Path("./config.json")
 
     fun load(): Boolean {
         var isInit = false
-        if (!configFile.exists()){
+        if (!configFile.exists()) {
             logger.error("Configuration is missing, creating default config.")
             isInit = true
             config = ConfigData()
@@ -31,26 +31,29 @@ object Config {
                 json.decodeFromString(it.readText())
             }
             DebugOptions.parse(config.debugOptions)
-        } catch (t:Throwable) {
-            logger.error("Looks like Crystal is not properly configured at current directory, Crystal will not start up until the errors are resolved.", t)
+        } catch (t: Throwable) {
+            logger.error(
+                "Looks like Crystal is not properly configured at current directory, Crystal will not start up until the errors are resolved.",
+                t
+            )
             isInit = true
         }
         if (config.enableRcon and config.rconPassword.isBlank()) {
             logger.error("Rcon is enabled and no password provided!")
             logger.info("Attempt to fill config with server.properties")
-            try{
+            try {
                 val serverProperties = ServerPropertiesAccess.tryAccess()
                 config.enableRcon = (serverProperties["enable-rcon"] as String?).toBoolean()
                 config.rconPassword = serverProperties["rcon.password"] as String? ?: ""
                 config.rconPort = (serverProperties["rcon.port"] as String? ?: "25575").toInt()
-            }catch (e:Exception){
+            } catch (e: Exception) {
                 throw RuntimeException("Bad config file, cannot fill config with detected environment.", e)
             }
         }
         return isInit
     }
 
-    private fun write(){
+    private fun write() {
         val s = json.encodeToString(config)
         configFile.deleteIfExists()
         configFile.createFile()

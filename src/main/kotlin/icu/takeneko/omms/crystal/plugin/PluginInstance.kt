@@ -13,7 +13,9 @@ import icu.takeneko.omms.crystal.plugin.metadata.PluginDependencyRequirement
 import icu.takeneko.omms.crystal.plugin.metadata.PluginMetadata
 import icu.takeneko.omms.crystal.plugin.resources.PluginResource
 import icu.takeneko.omms.crystal.util.createLogger
+import icu.takeneko.omms.crystal.util.ifDebug
 import icu.takeneko.omms.crystal.util.joinFilePaths
+import icu.takeneko.omms.crystal.util.methodsWithAnnotation
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -33,7 +35,7 @@ class PluginInstance(
     private val pluginStateChangeListener: PluginInstance.(PluginState, PluginState) -> Unit = { _, _ -> }
 ) {
     var pluginMetadata: PluginMetadata = PluginMetadata()
-    private lateinit var pluginClazz: Class<*>
+    private lateinit var pluginClass: Class<*>
     private lateinit var instance: PluginInitializer
     private var _pluginState = PluginState.WAIT
     private lateinit var pluginConfigPath: Path
@@ -46,16 +48,13 @@ class PluginInstance(
     private val logger = createLogger("PluginInstance")
     val pluginParsers = mutableMapOf<String, MinecraftParser>()
     val pluginResources = mutableMapOf<String, PluginResource>()
+
     fun loadPluginMetadata() {
         pluginState = PluginState.ERROR
         try {
             useInJarFile("crystal.plugin.json") {
                 pluginMetadata = PluginMetadata.fromJson(readAllBytes().decodeToString())
-                if (pluginMetadata.pluginDependencies != null) {
-                    pluginMetadata.pluginDependencies!!.forEach { it2 ->
-                        it2.parseRequirement()
-                    }
-                }
+                pluginMetadata.pluginDependencies?.forEach { it.parseRequirement() }
                 checkMetadata()
             }
             pluginConfigPath = Path(joinFilePaths("config", pluginMetadata.id!!))
@@ -67,78 +66,80 @@ class PluginInstance(
 
     fun loadPluginClasses() {
         pluginState = PluginState.ERROR
-        if (pluginMetadata.pluginInitializerClass != null) {
-            try {
-                pluginClazz = classLoader.loadClass(pluginMetadata.pluginInitializerClass)
-                val ins = pluginClazz.getConstructor().newInstance()
-                if (ins !is PluginInitializer) {
-                    throw PluginException("Plugin initializer class did not implement PluginInitializer.")
-                }
-                instance = ins
-            } catch (e: Exception) {
-                throw PluginException("Cannot load plugin initializer.", e)
-            }
-        }
-        if (pluginMetadata.pluginEventHandlers != null) {
-            if (pluginMetadata.pluginEventHandlers!!.isNotEmpty()) {
-                val classes = mutableListOf<Class<out Any>>()
-                pluginMetadata.pluginEventHandlers!!.forEach {
-                    try {
-                        classes += classLoader.loadClass(it)
-                    } catch (e: ClassNotFoundException) {
-                        throw PluginException("Cannot load event handler class $it", e)
-                    }
-                }
-                classes.map {
-                    return@map it.getDeclaredConstructor().apply { isAccessible = true }.newInstance() to
-                            Arrays.stream(it.declaredMethods)
-                                .filter { it3 -> it3.annotations.any { it2 -> it2 is EventHandler } }
-                                .map { it2 ->
-                                    it2.getAnnotation(EventHandler::class.java).run { this.event.java to it2 }
-                                }
-                                .toList()
-                }.forEach { p ->
-                    p.second.forEach { (s, m) ->
-                        try {
-                            m.isAccessible = true
-                            val event = findPluginEventInstance(s)
-                            eventListeners += event to { args ->
-                                try {
-                                    m.invoke(p.first, args)
-                                } catch (e: Exception) {
-                                    logger.error(
-                                        "Cannot invoke plugin(${pluginMetadata.id}) event listener ${m.toGenericString()}.",
-                                        e
-                                    )
-                                }
-                            }
-                        } catch (e: IllegalArgumentException) {
-                            throw PluginException("Cannot transform method ${m.toGenericString()} into EventHandler", e)
-                        } catch (e: Exception) {
-                            throw PluginException("", e)
-                        }
-                    }
-                }
-            }
-        }
-        if (pluginMetadata.pluginMinecraftParsers != null && pluginMetadata.pluginMinecraftParsers!!.isNotEmpty()) {
-            pluginMetadata.pluginMinecraftParsers!!.forEach {
-                try {
-                    val clazz = classLoader.loadClass(it.value)
-                    val instance = clazz.getConstructor().newInstance()
-                    if (instance !is MinecraftParser) {
-                        throw PluginException("Plugin declared Minecraft parser class is not derived from MinecraftParser.")
-                    }
-                    pluginParsers += it.key to instance
-                } catch (e: ClassNotFoundException) {
-                    throw PluginException("Cannot load class ${it.value},", e)
-                } catch (e: NoSuchMethodException) {
-                    throw PluginException("Cannot load class ${it.value},", e)
-                }
-            }
-        }
+        loadInitializer()
+        loadEventHandlers()
+        loadMinecraftParsers()
 
         pluginState = PluginState.INITIALIZED
+    }
+
+    private fun loadInitializer() {
+        val className = pluginMetadata.pluginInitializerClass ?: return
+        try {
+            pluginClass = classLoader.loadClass(className)
+            val ins = pluginClass.getConstructor().newInstance()
+            if (ins !is PluginInitializer) {
+                throw PluginException("Plugin initializer class did not implement PluginInitializer.")
+            }
+            instance = ins
+        } catch (e: Exception) {
+            throw PluginException("Cannot load plugin initializer.", e)
+        }
+    }
+
+    private fun loadEventHandlers() {
+        val handlerClassNames = pluginMetadata.pluginEventHandlers.takeIf { !it.isNullOrEmpty() } ?: return
+        handlerClassNames.map { classLoader.loadClass(it) }.map { clazz ->
+            val constructor = clazz.getDeclaredConstructor().apply { isAccessible = true }
+            val targetMethods = clazz.methodsWithAnnotation<EventHandler>().associateBy { method ->
+                val eventType = method.getAnnotation(EventHandler::class.java)!!.event.java
+                method.trySetAccessible()
+                eventType
+            }
+            constructor.newInstance() to targetMethods
+        }.forEach { (constructor, methods) ->
+            methods.forEach { (clazz, method) ->
+                try {
+                    method.trySetAccessible()
+                    val event = findPluginEventInstance(clazz)
+                    eventListeners += event to { args: Any? ->
+                        try {
+                            method.invoke(constructor, args)
+                        } catch (e: Exception) {
+                            logger.error(
+                                "Cannot invoke plugin({}) event listener {}.",
+                                pluginMetadata.id, method.toGenericString(), e
+                            )
+                        }
+                    }
+                } catch (e: IllegalArgumentException) {
+                    throw PluginException(
+                        "Cannot transform method ${method.toGenericString()} into EventHandler",
+                        e
+                    )
+                } catch (e: Exception) {
+                    throw PluginException("", e)
+                }
+            }
+        }
+    }
+
+    private fun loadMinecraftParsers() {
+        val parsers = pluginMetadata.pluginMinecraftParsers.takeIf { !it.isNullOrEmpty() } ?: return
+        parsers.forEach { parser ->
+            try {
+                val clazz = classLoader.loadClass(parser.value)
+                val instance = clazz.getConstructor().newInstance()
+                if (instance !is MinecraftParser) {
+                    throw PluginException("Plugin declared Minecraft parser class is not derived from MinecraftParser.")
+                }
+                pluginParsers[parser.key] = instance
+            } catch (e: ClassNotFoundException) {
+                throw PluginException("Cannot load class ${parser.value},", e)
+            } catch (e: NoSuchMethodException) {
+                throw PluginException("Cannot load class ${parser.value},", e)
+            }
+        }
     }
 
     private fun findPluginEventInstance(clazz: Class<out Event>) =
@@ -151,25 +152,27 @@ class PluginInstance(
 
     fun injectArguments() {
         pluginState = PluginState.ERROR
-        if (DebugOptions.pluginDebug()) logger.info("[DEBUG] Injecting argument")
-        for (field in pluginClazz.declaredFields) {
+
+        ifPluginDebug { logger.info("[DEBUG] Injecting argument") }
+
+        for (field in pluginClass.declaredFields) {
             field.isAccessible = true
             if (field.isAnnotationPresent(InjectArgument::class.java)) {
-                when (val name = field.getAnnotation(InjectArgument::class.java).name) {
+                when (val name = field.getAnnotation(InjectArgument::class.java)!!.name) {
                     "pluginConfig" -> {
-                        if (DebugOptions.pluginDebug()) logger.info("[DEBUG] Injecting pluginConfig into $field")
-                        if (field.type != Path::class.java) {
-                            throw IllegalArgumentException("Illegal field type of pluginConfig injection.(Require java.nio.file.Path, but found ${field.type.name}) ")
+                        ifPluginDebug { logger.info("[DEBUG] Injecting pluginConfig into $field") }
+                        require(field.type != Path::class.java) {
+                            "Illegal field type of pluginConfig injection.(Require java.nio.file.Path, but found ${field.type.name})"
                         }
                         field.set(instance, pluginConfigPath)
                     }
 
-                    else -> throw IllegalArgumentException("Illegal injection type $name")
+                    else -> error("Illegal injection type $name")
                 }
                 continue
             }
-            if (field.isAnnotationPresent(Config::class.java) and field.isAnnotationPresent(InjectArgument::class.java)) {
-                throw IllegalArgumentException("@Config cannot be used simultaneously with @InjectArgument (at field $field in class $pluginClazz).")
+            if (field.isAnnotationPresent(Config::class.java) && field.isAnnotationPresent(InjectArgument::class.java)) {
+                error("@Config cannot be used simultaneously with @InjectArgument (at field $field in class $pluginClass).")
             }
             if (field.isAnnotationPresent(Config::class.java)) {
                 val configClass = field.type
@@ -221,11 +224,10 @@ class PluginInstance(
 
     fun checkPluginDependencyRequirements(dependencies: List<PluginDependency>): List<PluginDependencyRequirement> {
         pluginState = PluginState.ERROR
-        var result = mutableListOf<PluginDependencyRequirement>()
-        if (pluginMetadata.pluginDependencies != null) {
-            result =
-                pluginMetadata.pluginDependencies!!.filter { dependencies.none { it2 -> it.requirementMatches(it2) } }
-                    .toMutableList()
+        val result = buildList {
+            if (pluginMetadata.pluginDependencies != null) {
+                addAll(pluginMetadata.pluginDependencies!!.filter { dependencies.none { it2 -> it.requirementMatches(it2) } })
+            }
         }
         pluginState = PluginState.INITIALIZED
         return result
@@ -260,7 +262,7 @@ class PluginInstance(
             }
         }
 
-    fun getInJarFileStream(path: String) = ZipFile(File(fileFullPath)).use {
+    fun getInJarFileStream(path: String): InputStream? = ZipFile(File(fileFullPath)).use {
         val entry = it.getEntry(path)
         it.getInputStream(entry)
     }
@@ -276,25 +278,24 @@ class PluginInstance(
     }
 
     fun loadPluginResources() {
-        if (DebugOptions.pluginDebug()) logger.info("Loading plugin ${pluginMetadata.id} resources.")
-        if (pluginMetadata.resources != null) {
-            pluginMetadata.resources!!.forEach {
-                if (DebugOptions.pluginDebug()) {
-                    logger.info("[DEBUG] ${pluginMetadata.id}: ${it.key} <- ${it.value}")
-                }
+        ifPluginDebug { logger.info("Loading plugin ${pluginMetadata.id} resources.") }
 
-                useInJarFile(it.value) {
-                    pluginResources[it.key] = PluginResource.fromReader(it.key, reader(StandardCharsets.UTF_8))
-                }
+        pluginMetadata.resources?.forEach {
+            ifPluginDebug { logger.info("[DEBUG] ${pluginMetadata.id}: ${it.key} <- ${it.value}") }
+
+            useInJarFile(it.value) {
+                pluginResources[it.key] = PluginResource.fromReader(it.key, reader(StandardCharsets.UTF_8))
             }
         }
 
-        if (pluginResources.isEmpty() and DebugOptions.pluginDebug()) {
-            logger.info("[DEBUG] Plugin ${pluginMetadata.id} has no resources.")
+        ifPluginDebug {
+            if (pluginResources.isEmpty()) {
+                logger.info("[DEBUG] Plugin ${pluginMetadata.id} has no resources.")
+            }
         }
+
         pluginResources.forEach {
-            if (DebugOptions.pluginDebug())
-                logger.info("[DEBUG] Resource ${it.value}")
+            ifPluginDebug { logger.info("[DEBUG] Resource ${it.value}") }
             val resType = it.value.resMetaDataMap["type"] ?: return@forEach
             val namespace = it.value.resMetaDataMap["namespace"] ?: return@forEach
             if (resType == "lang") {
@@ -302,7 +303,7 @@ class PluginInstance(
                 TranslateManager.getOrCreateDefaultLanguageProvider(lang).apply {
                     it.value.resDataMap.forEach { (k, v) ->
                         val translateKey = TranslateKey(lang, namespace, k)
-                        if (DebugOptions.pluginDebug()) logger.info("[DEBUG] Translation: $k -> $v")
+                        ifPluginDebug { logger.info("[DEBUG] Translation: $k -> $v") }
                         this.addTranslateKey(translateKey, v)
                     }
                 }

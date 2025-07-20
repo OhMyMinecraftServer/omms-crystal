@@ -16,16 +16,16 @@ public class PluginUtil {
     @NotNull
     @Contract(pure = true)
     public static HashMap<String, MinecraftParser> getPluginDeclaredParser(@NotNull Class<? extends PluginInitializer> clazz, PluginInitializer main) {
-        HashMap<String,MinecraftParser> minecraftParserHashMap = new HashMap<>();
+        HashMap<String, MinecraftParser> minecraftParserHashMap = new HashMap<>();
         for (Class<?> declaredClass : clazz.getDeclaredClasses()) {
             var annotation = declaredClass.getAnnotation(Parser.class);
-            if (annotation!= null){
+            if (annotation != null) {
                 try {
                     var constructor = declaredClass.getConstructor(clazz);
                     constructor.setAccessible(true);
                     minecraftParserHashMap.put(annotation.name(), (MinecraftParser) constructor.newInstance(main));
-                }catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
-                        InvocationTargetException e){
+                } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
+                         InvocationTargetException e) {
                     throw new RuntimeException(e);
                 }
             }

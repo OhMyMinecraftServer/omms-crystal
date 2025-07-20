@@ -8,9 +8,9 @@ import java.nio.charset.StandardCharsets
 
 object RconClient {
 
-    private lateinit var rcon:Rcon
-    fun connect(){
-        val socketChannel = SocketChannel.open(InetSocketAddress(Config.config.rconPort.toInt()))
+    private lateinit var rcon: Rcon
+    fun connect() {
+        val socketChannel = SocketChannel.open(InetSocketAddress(Config.config.rconPort))
         rcon = Rcon.newBuilder()
             .withChannel(socketChannel)
             .withCharset(StandardCharsets.UTF_8)
@@ -20,12 +20,9 @@ object RconClient {
         rcon.tryAuthenticate(Config.config.rconPassword)
     }
 
-    fun close(){
+    fun close() {
         rcon.close()
     }
 
-    fun executeCommand(command:String): String{
-        return rcon.sendCommand(command)
-    }
-
+    fun executeCommand(command: String): String = rcon.sendCommand(command)
 }

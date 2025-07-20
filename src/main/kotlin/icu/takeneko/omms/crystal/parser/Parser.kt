@@ -12,7 +12,7 @@ abstract class MinecraftParser {
     abstract fun parseServerStartingInfo(raw: String): ServerStartingInfo?
     abstract fun parsePlayerJoinInfo(raw: String): PlayerJoinInfo?
     abstract fun parsePlayerLeftInfo(raw: String): PlayerLeftInfo?
-    abstract fun parseServerStoppingInfo(raw: String):ServerStoppingInfo?
+    abstract fun parseServerStoppingInfo(raw: String): ServerStoppingInfo?
 }
 
 class UnableToParseException : UnsupportedOperationException()
@@ -26,17 +26,15 @@ object ParserManager {
         }
     }
 
-    fun unregisterParser(id: String){
-        if(parser.containsKey(id)){
+    fun unregisterParser(id: String) {
+        if (parser.containsKey(id)) {
             parser.remove(id)
-        }else{
-            throw IllegalArgumentException("illegal parser id: $id")
+        } else {
+            error("illegal parser id: $id")
         }
     }
 
-    fun getParser(id: String): MinecraftParser? {
-        return parser[id]
-    }
+    fun getParser(id: String): MinecraftParser? = parser[id]
 
     init {
         parser["vanilla"] = BuiltinParser()

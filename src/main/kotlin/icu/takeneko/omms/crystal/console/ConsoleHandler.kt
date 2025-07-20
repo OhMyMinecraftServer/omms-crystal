@@ -4,7 +4,7 @@ import icu.takeneko.omms.crystal.command.CommandManager
 import icu.takeneko.omms.crystal.command.CommandSource
 import icu.takeneko.omms.crystal.command.CommandSourceStack
 import icu.takeneko.omms.crystal.config.Config
-import icu.takeneko.omms.crystal.main.SharedConstants.serverThreadDaemon
+import icu.takeneko.omms.crystal.main.CrystalServer.serverThreadDaemon
 import icu.takeneko.omms.crystal.util.createLogger
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
