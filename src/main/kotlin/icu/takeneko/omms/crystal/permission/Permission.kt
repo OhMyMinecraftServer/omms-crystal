@@ -1,16 +1,15 @@
 package icu.takeneko.omms.crystal.permission
 
-import cn.hutool.core.io.FileUtil
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
 import icu.takeneko.omms.crystal.util.joinFilePaths
-import org.apache.commons.io.FileUtils
-import java.io.File
-import java.nio.charset.Charset
 import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 val defaultPermissionFileContent = """
     {
@@ -39,15 +38,15 @@ object PermissionManager {
     val gson = GsonBuilder().serializeNulls().create()
     val permissionMap: ConcurrentHashMap<String, Permission> = ConcurrentHashMap<String, Permission>()
     var defaultPermissionLevel = Permission.USER
-    val filePath = joinFilePaths("permissions.json")
+    val filePath = Path(joinFilePaths("permissions.json"))
 
     @Synchronized
     fun init() {
-        if (!FileUtil.exist(filePath)) {
-            Files.createFile(Path(filePath))
-            FileUtils.write(File(filePath), defaultPermissionFileContent, Charset.defaultCharset())
+        if (!filePath.exists()) {
+            Files.createFile(filePath)
+            filePath.writeText(defaultPermissionFileContent)
         }
-        val fileContent = FileUtils.readFileToString(File(filePath), Charset.defaultCharset())
+        val fileContent = filePath.readText()
         val permissionStorage = gson.fromJson(fileContent, PermissionStorage::class.java)
         permissionStorage.guest.forEach {
             permissionMap[it] = Permission.GUEST
@@ -92,10 +91,7 @@ object PermissionManager {
     @Synchronized
     fun writePermission() {
         val permissionStorage = convertToPermissionStorage()
-        val writer = java.io.FileWriter(filePath, false)
-        gson.toJson(permissionStorage, writer)
-        writer.flush()
-        writer.close()
+        filePath.writeText(gson.toJson(permissionStorage))
     }
 
     fun convertToPermissionStorage(): PermissionStorage {

@@ -1,33 +1,6 @@
 package icu.takeneko.omms.crystal.main
 
-import com.mojang.brigadier.builder.LiteralArgumentBuilder
-import icu.takeneko.omms.crystal.command.CommandSourceStack
-import icu.takeneko.omms.crystal.console.ConsoleHandler
-import icu.takeneko.omms.crystal.event.Event
-import icu.takeneko.omms.crystal.event.EventDispatcher
-import icu.takeneko.omms.crystal.event.EventHandler
-import icu.takeneko.omms.crystal.event.EventLoop
-import icu.takeneko.omms.crystal.parser.MinecraftParser
-import icu.takeneko.omms.crystal.server.ServerThreadDaemon
-import java.lang.reflect.Method
 import java.util.*
-import kotlin.collections.HashMap
-
-object SharedConstants {
-    var serverThreadDaemon: ServerThreadDaemon? = null
-    lateinit var eventDispatcher: EventDispatcher
-    lateinit var eventLoop: EventLoop
-    lateinit var consoleHandler: ConsoleHandler
-    lateinit var serverVersion: String
-    lateinit var language: String
-
-    val pluginRegisteredCommandTable: HashMap<String, ArrayList<LiteralArgumentBuilder<CommandSourceStack>>> =
-        hashMapOf()
-    val pluginRegisteredEventTable: HashMap<String, HashMap<String, Event>> = hashMapOf()
-    val pluginDeclaredApiMethodMap: HashMap<String, HashMap<Pair<String, MutableList<Class<*>>>, Method>> = hashMapOf()
-    val pluginDeclaredEventHandlerMap: HashMap<String, HashMap<Event, EventHandler>> = hashMapOf()
-    val pluginDeclaredParserMap: HashMap<String, HashMap<String, MinecraftParser>> = hashMapOf()
-}
 
 object DebugOptions {
     /*

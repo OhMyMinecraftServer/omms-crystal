@@ -3,9 +3,18 @@ package icu.takeneko.omms.crystal.server
 
 import icu.takeneko.omms.crystal.config.Config
 import icu.takeneko.omms.crystal.event.*
-import icu.takeneko.omms.crystal.main.DebugOptions
-import icu.takeneko.omms.crystal.main.SharedConstants
-import icu.takeneko.omms.crystal.main.SharedConstants.serverThreadDaemon
+import icu.takeneko.omms.crystal.event.server.PlayerChatEvent
+import icu.takeneko.omms.crystal.event.server.PlayerJoinEvent
+import icu.takeneko.omms.crystal.event.server.PlayerLeftEvent
+import icu.takeneko.omms.crystal.event.server.RconServerStartedEvent
+import icu.takeneko.omms.crystal.event.server.ServerLoggingEvent
+import icu.takeneko.omms.crystal.event.server.ServerOverloadEvent
+import icu.takeneko.omms.crystal.event.server.ServerStartedEvent
+import icu.takeneko.omms.crystal.event.server.ServerStartingEvent
+import icu.takeneko.omms.crystal.event.server.ServerStoppedEvent
+import icu.takeneko.omms.crystal.event.server.ServerStoppingEvent
+import icu.takeneko.omms.crystal.foundation.ActionHost
+import icu.takeneko.omms.crystal.main.CrystalServer
 import icu.takeneko.omms.crystal.parser.ParserManager
 import icu.takeneko.omms.crystal.util.createLogger
 import icu.takeneko.omms.crystal.util.createServerLogger
@@ -36,7 +45,7 @@ class ServerThreadDaemon(
     private lateinit var out: OutputStream
     private lateinit var input: InputStream
     private val queue = ArrayBlockingQueue<String>(1024)
-    private var who = "crystal"
+    private var actionHost: ActionHost = CrystalServer
     private var process: Process? = null
     lateinit var outputHandler: ServerOutputHandler
 
@@ -83,8 +92,8 @@ class ServerThreadDaemon(
         }
     }
 
-    fun stopServer(force: Boolean = false, who: String = "crystal") {
-        this.who = who
+    fun stopServer(force: Boolean = false, host: ActionHost) {
+        this.actionHost = host
         if (force) {
             process!!.destroyForcibly()
         } else {
@@ -134,8 +143,7 @@ class ServerOutputHandler(private val serverProcess: Process) :
                     }
                 }
             }
-        } catch (ignored: InterruptedException) {
-            //logger.detachAndStopAllAppenders()
+        } catch (_: InterruptedException) {
         }
     }
 
@@ -189,7 +197,7 @@ class ServerOutputHandler(private val serverProcess: Process) :
         return
     }
 
-    private fun dispatchEvent(e: Event, args: EventArgs) {
-        SharedConstants.eventLoop.dispatch(e, args)
+    private fun dispatchEvent(e: Event) {
+        CrystalServer.postEvent(e)
     }
 }

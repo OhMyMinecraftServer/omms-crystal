@@ -44,7 +44,7 @@ fun exit() {
     }
 }
 
-var rconListener:RconListener? = null
+var rconListener: RconListener? = null
 
 
 fun init() {
@@ -58,8 +58,8 @@ fun init() {
     }
 
     eventDispatcher.run {
-        registerHandler(ServerStoppingEvent){
-            if (Config.config.enableRcon){
+        registerHandler(ServerStoppingEvent) {
+            if (Config.config.enableRcon) {
                 RconClient.close()
             }
         }
@@ -159,7 +159,6 @@ fun init() {
 }
 
 fun main(args: Array<String>) {
-    val start = System.currentTimeMillis()
     println("Starting icu.takeneko.omms.crystal.main.MainKt.main()")
     Runtime.getRuntime().run {
         val thread = thread(name = "ShutdownThread", start = false) {
@@ -215,7 +214,10 @@ fun main(args: Array<String>) {
             exit()
             exitProcess(0)
         }
-        eventLoop.dispatch(ServerStartEvent, ServerStartEventArgs(Config.config.launchCommand, Config.config.workingDir))
+        eventLoop.dispatch(
+            ServerStartEvent,
+            ServerStartEventArgs(Config.config.launchCommand, Config.config.workingDir)
+        )
     } catch (e: Exception) {
         logger.error("Unexpected error occurred.", e)
         exitProcess(1)

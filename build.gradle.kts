@@ -1,10 +1,9 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.toUpperCaseAsciiOnly
 
 plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
-    kotlin("jvm") version "1.9.21"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.21"
+    kotlin("jvm") version "2.2.0"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.0"
     java
     id("maven-publish")
     application
@@ -32,17 +31,14 @@ tasks{
 }
 
 dependencies {
-
+    api(kotlin("stdlib"))
     api("com.google.code.gson:gson:2.10")
     api("org.slf4j:slf4j-api:2.0.3")
     api("ch.qos.logback:logback-core:1.4.4")
     api("ch.qos.logback:logback-classic:1.4.4")
     api("com.mojang:brigadier:1.0.18")
-    api("org.jetbrains.kotlin:kotlin-reflect:1.7.20")
     api("org.jline:jline:3.21.0")
-    api("cn.hutool:hutool-all:5.8.11")
     api("commons-io:commons-io:2.11.0")
-    api("org.jetbrains.kotlin:kotlin-stdlib:1.7.22")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     api("com.alibaba.fastjson2:fastjson2:2.0.20.graal")
     api("net.kyori:adventure-api:4.13.1")
@@ -58,7 +54,9 @@ tasks.test {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "17"
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
 }
 
 application {
@@ -120,9 +118,9 @@ fun generateProperties(){
             val str = it.value.toString()
             if("MAVEN" in it.key) return@forEach
             if ("@" in str || "(" in str || ")" in str || "extension" in str || "null" == str || "\'" in str || "\\" in str || "/" in str)return@forEach
-            if ("PROJECT" in str.toUpperCaseAsciiOnly() || "PROJECT" in it.key.toUpperCaseAsciiOnly() || " " in str)return@forEach
-            if ("GRADLE" in it.key.toUpperCaseAsciiOnly() || "GRADLE" in str.toUpperCaseAsciiOnly() || "PROP" in it.key.toUpperCaseAsciiOnly())return@forEach
-            if("." in it.key || "TEST" in it.key.toUpperCaseAsciiOnly())return@forEach
+            if ("PROJECT" in str.uppercase() || "PROJECT" in it.key.uppercase() || " " in str)return@forEach
+            if ("GRADLE" in it.key.uppercase() || "GRADLE" in str.uppercase() || "PROP" in it.key.uppercase())return@forEach
+            if("." in it.key || "TEST" in it.key.uppercase())return@forEach
             m += it.key to str
         }
 

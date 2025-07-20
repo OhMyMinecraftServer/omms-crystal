@@ -4,13 +4,16 @@ import icu.takeneko.omms.crystal.main.SharedConstants
 import java.util.*
 import java.util.function.Function
 
-val builtinTranslationLanguages = listOf("en_us","zh_cn")
+val builtinTranslationLanguages = listOf("en_us", "zh_cn")
 
 object TranslateManager {
     private val languageProviders = mutableMapOf<String, LanguageProvider>()
-    fun init(){
+    private var language: String = "en_us"
+
+    fun init() {
         addBuiltinTranslations()
     }
+
     fun translate(key: TranslateKey): String {
         val provider = languageProviders[key.lang] ?: return key.toString()
         return provider.translate(key)
@@ -33,15 +36,19 @@ object TranslateManager {
     }
 
     fun addBuiltinTranslations() {
-        for (lang in builtinTranslationLanguages){
+        for (lang in builtinTranslationLanguages) {
             ResourceBundle.getBundle(lang).run {
                 for (key in this.keys) {
                     val value = this.getString(key)
-                    val trKey = TranslateKey(lang,"crystal", key)
+                    val trKey = TranslateKey(lang, "crystal", key)
                     getOrCreateDefaultLanguageProvider(lang).addTranslateKey(trKey, value)
                 }
             }
         }
+    }
+
+    fun useLanguage(name: String) {
+        this.language = name
     }
 }
 

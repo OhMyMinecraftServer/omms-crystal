@@ -17,6 +17,7 @@ object Config {
     private val logger = createLogger("Config")
     lateinit var config:ConfigData
     private val configFile = Path("./config.json")
+
     fun load(): Boolean {
         var isInit = false
         if (!configFile.exists()){
