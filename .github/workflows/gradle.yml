@@ -34,6 +34,9 @@ jobs:
       with:
         path: gradle.properties
         properties: 'version'
+    - name: Build with Gradle
+      uses: gradle/actions/setup-gradle@v4.3.1
+
     - name: Make Gradle Wrapper Executable
       run: chmod +x gradlew
     - name: Get commit sha
