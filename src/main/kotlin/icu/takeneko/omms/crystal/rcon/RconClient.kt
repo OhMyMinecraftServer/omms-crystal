@@ -20,9 +20,7 @@ object RconClient {
         rcon.tryAuthenticate(Config.config.rconClient.password)
     }
 
-    fun close() {
-        rcon.close()
-    }
+    fun close() = rcon.close()
 
     fun executeCommand(command: String): String = rcon.sendCommand(command)
 }
