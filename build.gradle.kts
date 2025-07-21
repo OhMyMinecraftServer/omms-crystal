@@ -3,18 +3,21 @@ import java.time.Instant
 import java.util.Properties
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.1.2"
-    kotlin("jvm") version "2.2.0"
-    kotlin("plugin.serialization") version "2.2.0"
-    java
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
     id("maven-publish")
+    java
     application
 }
 
-group = "icu.takeneko"
-version = properties["version"]!!
+base {
+    group = "icu.takeneko"
+    version = properties["version"]!!
+}
 
-java{
+java {
     withJavadocJar()
     withSourcesJar()
 }
@@ -51,20 +54,21 @@ tasks {
 }
 
 dependencies {
+    detektPlugins(libs.detekt.formatting)
+
     api(kotlin("stdlib"))
-    api("com.google.code.gson:gson:2.13.1")
-    api("org.slf4j:slf4j-api:2.0.17")
-    api("ch.qos.logback:logback-core:1.5.18")
-    api("ch.qos.logback:logback-classic:1.5.18")
-    api("com.mojang:brigadier:1.0.18")
-    api("org.jline:jline:3.30.4")
-    api("commons-io:commons-io:2.20.0")
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    api("net.kyori:adventure-api:4.23.0")
-    api("net.kyori:adventure-text-serializer-gson:4.23.0")
-    api("nl.vv32.rcon:rcon:1.2.0")
-    api("net.bytebuddy:byte-buddy-agent:1.17.6")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    api(libs.gson)
+    api(libs.slf4j.api)
+    api(libs.bundles.logback)
+    api(libs.brigadier)
+    api(libs.jline)
+    api(libs.commons.io)
+    api(libs.bundles.adventure)
+    api(libs.rcon)
+    api(libs.byte.buddy.agent)
+    api(libs.bundles.kotlinx.coroutines)
+    api(libs.kotlin.serialization.json)
+
     testImplementation(kotlin("test"))
 }
 
@@ -72,8 +76,8 @@ application {
     mainClass = "icu.takeneko.omms.crystal.main.MainKt"
 }
 
-getComponents().withType(AdhocComponentWithVariants::class.java).forEach { c ->
-    c.withVariantsFromConfiguration(project.configurations.shadowRuntimeElements.get()) {
+components.withType<AdhocComponentWithVariants>().forEach { component ->
+    component.withVariantsFromConfiguration(project.configurations.shadowRuntimeElements.get()) {
         skip()
     }
 }
