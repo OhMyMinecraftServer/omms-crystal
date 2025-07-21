@@ -5,20 +5,7 @@ import icu.takeneko.omms.crystal.main.CrystalServer.serverThreadDaemon
 import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 import icu.takeneko.omms.crystal.permission.Permission
-import icu.takeneko.omms.crystal.text.Text
-import icu.takeneko.omms.crystal.text.TextGroup
-import icu.takeneko.omms.crystal.text.TextSerializer
-import icu.takeneko.omms.crystal.util.createLogger
-import net.kyori.adventure.text.Component
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-
-enum class CommandSource {
-    CONSOLE, REMOTE, PLAYER, PLUGIN
-}
-
-private val logger = createLogger("CommandSourceStack")
+import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 
 class CommandSourceStack(val from: CommandSource, val player: String? = null, val permissionLevel: Permission? = null) {
     val feedbackText = mutableListOf<String>()
@@ -40,5 +27,9 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
                 }
             }
         }
+    }
+
+    companion object {
+        private val logger = createLogger("CommandSourceStack")
     }
 }

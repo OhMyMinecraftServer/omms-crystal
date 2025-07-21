@@ -65,7 +65,7 @@ dependencies {
     api(libs.commons.io)
     api(libs.bundles.adventure)
     api(libs.rcon)
-    api(libs.byte.buddy.agent)
+    api(libs.bundles.asm)
     api(libs.bundles.kotlinx.coroutines)
     api(libs.kotlin.serialization.json) {
         isTransitive = false

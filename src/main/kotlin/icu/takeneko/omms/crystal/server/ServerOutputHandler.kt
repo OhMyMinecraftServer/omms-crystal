@@ -33,7 +33,7 @@ class ServerOutputHandler(private val serverProcess: Process) : Thread("ServerOu
         { line -> parser.parseServerStoppingInfo(line)?.let { ServerStoppingEvent() } },
         { line -> parser.parsePlayerJoinInfo(line)?.let { PlayerJoinEvent(it.player) } },
         { line -> parser.parseRconStartInfo(line)?.let { RconServerStartedEvent(it.port) } },
-        { line -> parser.parsePlayerInfo(line)?.let { PlayerChatEvent(it.content, it) } },
+        { line -> parser.parsePlayerInfo(line)?.let { PlayerChatEvent(it) } },
         { line -> parser.parsePlayerLeftInfo(line)?.let { PlayerLeftEvent(it.player) } }
     )
 

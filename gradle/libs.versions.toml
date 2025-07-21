@@ -9,7 +9,7 @@ shadow = "8.3.8"
 # Shade Dependencies
 kaml = "0.85.0"
 kotlin-serialization = "1.9.0"
-byte-buddy-agent = "1.17.6"
+asm = "9.8"
 gson = "2.13.1"
 slf4j = "2.0.17"
 logback = "1.5.18"
@@ -37,7 +37,8 @@ detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", 
 # Shade Dependencies
 kaml = { module = "com.charleskorn.kaml:kaml", version.ref = "kaml" }
 kotlin-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlin-serialization" }
-byte-buddy-agent = { module = "net.bytebuddy:byte-buddy-agent", version.ref = "byte-buddy-agent" }
+asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asm" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 logback-core = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
@@ -54,3 +55,4 @@ rcon = { module = "nl.vv32.rcon:rcon", version.ref = "rcon" }
 logback = ["logback-core", "logback-classic"]
 adventure = ["adventure-api", "adventure-text-serializer-gson"]
 kotlinx-coroutines = ["kotlinx-coroutines-core"]
+asm = ["asm", "asm-util"]

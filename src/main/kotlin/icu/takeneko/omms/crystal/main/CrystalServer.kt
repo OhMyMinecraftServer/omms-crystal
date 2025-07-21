@@ -51,7 +51,7 @@ object CrystalServer : CoroutineScope, ActionHost {
 
     val eventBus = EventBus(this, Event::class.java)
 
-    val consoleHandler: ConsoleHandler = ConsoleHandler()
+    val consoleHandler = ConsoleHandler()
 
     val logger = createLogger("CrystalServer")
 
