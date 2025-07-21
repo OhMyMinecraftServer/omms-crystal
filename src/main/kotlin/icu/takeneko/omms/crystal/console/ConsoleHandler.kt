@@ -11,8 +11,6 @@ import org.jline.reader.LineReaderBuilder
 import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
 
-private val logger = createLogger("ConsoleHandler")
-
 class ConsoleHandler : Thread("ConsoleHandler") {
     private val terminal: Terminal = TerminalBuilder.builder().system(true).dumb(true).build()
     private lateinit var lineReader: LineReader
@@ -40,5 +38,9 @@ class ConsoleHandler : Thread("ConsoleHandler") {
                 break
             }
         }
+    }
+
+    companion object {
+        private val logger = createLogger("ConsoleHandler")
     }
 }

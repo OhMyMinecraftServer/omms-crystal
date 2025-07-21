@@ -13,8 +13,8 @@ import java.net.URL
 import java.util.function.Function
 
 private lateinit var pluginClassLoader: JarClassLoader
+
 private val pluginFileUrlList = mutableListOf<URL>()
-private val logger = createLogger("PluginManager")
 
 object PluginManager : Manager<String, PluginInstance>(
     beforeInit = { pluginClassLoader = JarClassLoader(ClassLoader.getSystemClassLoader()) },
@@ -58,6 +58,8 @@ object PluginManager : Manager<String, PluginInstance>(
         }
     }
 ) {
+
+    private val logger = createLogger("PluginManager")
 
     fun reload(id: String) {
         this.map[id]!!.apply {
