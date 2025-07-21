@@ -10,6 +10,7 @@ import java.nio.charset.Charset
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.locks.LockSupport
 
 var serverStatus = ServerStatus.STOPPED
 
@@ -46,21 +47,17 @@ class ServerThreadDaemon(
         outputHandler.start()
         val writer = out.writer(Charset.defaultCharset())
         while (process!!.isAlive) {
-            try {
+            synchronized(queue) {
                 if (queue.isNotEmpty()) {
-                    synchronized(queue) {
-                        while (queue.isNotEmpty()) {
-                            val line = queue.poll()
-                            ifServerDebug { logger.info("[DEBUG] Handling input $line") }
-                            writer.appendLine(line)
-                            writer.flush()
-                        }
+                    while (queue.isNotEmpty()) {
+                        val line = queue.poll()
+                        ifServerDebug { logger.info("[DEBUG] Handling input $line") }
+                        writer.appendLine(line)
+                        writer.flush()
                     }
                 }
-                sleep(10)
-            } catch (e: ConcurrentModificationException) {
-                e.printStackTrace()
             }
+            LockSupport.parkNanos(1000)
         }
         val exitCode = process!!.exitValue()
         //logger.info("Server exited with exit code $exitCode.")

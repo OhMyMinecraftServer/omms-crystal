@@ -13,17 +13,11 @@ import org.jline.terminal.TerminalBuilder
 
 class ConsoleHandler : Thread("ConsoleHandler") {
     private val terminal: Terminal = TerminalBuilder.builder().system(true).dumb(true).build()
-    private lateinit var lineReader: LineReader
-
-    @Synchronized
-    fun reload() {
-        lineReader = LineReaderBuilder.builder().terminal(terminal).completer(CommandManager.completer()).build()
-    }
+    private val lineReader: LineReader = LineReaderBuilder.builder().terminal(terminal).completer(CommandManager.completer).build()
 
     override fun run() {
         while (true) {
             try {
-                reload()
                 val str = lineReader.readLine(">")
                 if (str.startsWith(Config.config.commandPrefix)) {
                     try {
@@ -34,7 +28,7 @@ class ConsoleHandler : Thread("ConsoleHandler") {
                 } else {
                     serverThreadDaemon?.input(str)
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 break
             }
         }

@@ -1,13 +1,12 @@
 package icu.takeneko.omms.crystal.main
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException
+import icu.takeneko.omms.crystal.command.*
 import icu.takeneko.omms.crystal.command.BuiltinCommand.helpCommand
 import icu.takeneko.omms.crystal.command.BuiltinCommand.permissionCommand
 import icu.takeneko.omms.crystal.command.BuiltinCommand.pluginCommand
 import icu.takeneko.omms.crystal.command.BuiltinCommand.startCommand
 import icu.takeneko.omms.crystal.command.BuiltinCommand.stopCommand
-import icu.takeneko.omms.crystal.command.CommandHelpManager
-import icu.takeneko.omms.crystal.command.CommandManager
 import icu.takeneko.omms.crystal.config.Config
 import icu.takeneko.omms.crystal.console.ConsoleHandler
 import icu.takeneko.omms.crystal.event.Event
@@ -24,9 +23,6 @@ import icu.takeneko.omms.crystal.rcon.RconListener
 import icu.takeneko.omms.crystal.server.ServerStatus
 import icu.takeneko.omms.crystal.server.ServerThreadDaemon
 import icu.takeneko.omms.crystal.server.serverStatus
-import icu.takeneko.omms.crystal.text.Color
-import icu.takeneko.omms.crystal.text.Text
-import icu.takeneko.omms.crystal.text.TextGroup
 import icu.takeneko.omms.crystal.util.BuildProperties
 import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import icu.takeneko.omms.crystal.util.PRODUCT_NAME
@@ -37,6 +33,8 @@ import icu.takeneko.omms.crystal.util.file.FileUtil.joinFilePaths
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import kotlin.concurrent.thread
@@ -194,30 +192,35 @@ object CrystalServer : CoroutineScope, ActionHost {
     }
 
     @SubscribeEvent
-    fun onPlayerInfo(e: PlayerInfoEvent) {
+    fun onPlayerInfo(e: PlayerChatEvent) {
         if (!e.content.startsWith(Config.config.commandPrefix)) return
 
         val commandSourceStack =
-            CommandSourceStack(CommandSource.PLAYER, e.player, PermissionManager[e.player])
+            CommandSourceStack(CommandSource.PLAYER, e.info.player, PermissionManager[e.info.player])
         try {
             CommandManager.execute(e.content, commandSourceStack)
         } catch (e: CommandSyntaxException) {
             commandSourceStack.sendFeedback(
-                Text("Incomplete or invalid command${if (e.message != null) ", see errors below:" else ""}\n")
-                    .withColor(Color.RED)
+                Component.text("Incomplete or invalid command${if (e.message != null) ", see errors below:" else ""}\n")
+                    .color(NamedTextColor.RED)
             )
             if (e.message != null) {
-                commandSourceStack.sendFeedback(Text(e.message!!).withColor(Color.RED))
+                commandSourceStack.sendFeedback(Component.text(e.message!!).color(NamedTextColor.RED))
             }
         } catch (e: Exception) {
             logger.error("An exception was thrown while processing command.", e)
             commandSourceStack.sendFeedback(
-                TextGroup(
-                    Text("Unexpected error occurred while executing command:\n").withColor(Color.RED),
-                    Text(e.message!!).withColor(Color.RED)
-                )
+                Component.text("Unexpected error occurred while executing command:\n").color(NamedTextColor.RED),
+                Component.text(e.message!!).color(NamedTextColor.RED).hoverEvent(Component.text(e.stackTraceToString()))
             )
         }
+    }
+
+    fun input(command: String) {
+        if (serverThreadDaemon != null) {
+            serverThreadDaemon?.input(command)
+        }
+        logger.warn("There is no running server instance for command input to take action.")
     }
 
     @SubscribeEvent

@@ -1,5 +1,6 @@
 package icu.takeneko.omms.crystal.plugin
 
+import icu.takeneko.omms.crystal.foundation.Manager
 import icu.takeneko.omms.crystal.main.SharedConstants
 import icu.takeneko.omms.crystal.parser.ParserManager
 import icu.takeneko.omms.crystal.plugin.metadata.PluginDependency
@@ -16,7 +17,7 @@ private lateinit var pluginClassLoader: JarClassLoader
 
 private val pluginFileUrlList = mutableListOf<URL>()
 
-object PluginManager : Manager<String, PluginInstance>(
+object PluginManager : Manager<PluginInstance>(
     beforeInit = { pluginClassLoader = JarClassLoader(ClassLoader.getSystemClassLoader()) },
     afterInit = {
         checkRequirements()
