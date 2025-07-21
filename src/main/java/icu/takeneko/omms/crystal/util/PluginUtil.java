@@ -2,13 +2,11 @@ package icu.takeneko.omms.crystal.util;
 
 import icu.takeneko.omms.crystal.parser.MinecraftParser;
 import icu.takeneko.omms.crystal.plugin.PluginInitializer;
-import icu.takeneko.omms.crystal.plugin.api.annotations.EventHandler;
 import icu.takeneko.omms.crystal.plugin.api.annotations.Parser;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 
 public class PluginUtil {

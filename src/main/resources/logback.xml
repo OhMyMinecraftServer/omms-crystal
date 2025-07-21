@@ -3,19 +3,19 @@
 
     <contextName>omms-central</contextName>
     <property name="LOG_HOME" value="logs"/>
-<!--
+    <!--
 
-    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>OFF</level>
-        </filter>
-        <encoder>
-            <pattern>[%cyan(%d{yyyy-MM-dd HH:mm:ss.SSS})] [%boldYellow(%thread)/%highlight(%level)]: %msg%n</pattern>
-        </encoder>
-    </appender>
+        <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>OFF</level>
+            </filter>
+            <encoder>
+                <pattern>[%cyan(%d{yyyy-MM-dd HH:mm:ss.SSS})] [%boldYellow(%thread)/%highlight(%level)]: %msg%n</pattern>
+            </encoder>
+        </appender>
 
 
--->
+    -->
     <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>

@@ -5,7 +5,7 @@ import icu.takeneko.omms.crystal.command.CommandManager;
 import icu.takeneko.omms.crystal.util.command.CommandSourceStack;
 
 public class CommandApi {
-    public static void registerCommand(LiteralArgumentBuilder<CommandSourceStack> command){
+    public static void registerCommand(LiteralArgumentBuilder<CommandSourceStack> command) {
         CommandManager.INSTANCE.register(command);
     }
 }

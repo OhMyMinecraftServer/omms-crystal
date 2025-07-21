@@ -1,6 +1,6 @@
 package icu.takeneko.omms.crystal.util
 
-import java.util.ResourceBundle
+import java.util.*
 
 object BuildProperties {
     val map = mutableMapOf<String, String>()

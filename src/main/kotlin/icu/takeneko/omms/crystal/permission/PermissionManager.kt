@@ -1,9 +1,9 @@
 package icu.takeneko.omms.crystal.permission
 
 import icu.takeneko.omms.crystal.util.file.FileUtil.JSON
+import icu.takeneko.omms.crystal.util.file.FileUtil.joinFilePaths
 import icu.takeneko.omms.crystal.util.file.readTextWithBuffer
 import icu.takeneko.omms.crystal.util.file.writeTextWithBuffer
-import icu.takeneko.omms.crystal.util.file.FileUtil.joinFilePaths
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.Path
@@ -40,7 +40,7 @@ object PermissionManager {
             when (level) {
                 Permission.OWNER -> storage.owner
                 Permission.ADMIN -> storage.admin
-                Permission.USER  -> storage.user
+                Permission.USER -> storage.user
                 Permission.GUEST -> storage.guest
             }.forEach { player ->
                 players[level]!!.add(player)
@@ -58,7 +58,7 @@ object PermissionManager {
         defaultLevel,
         owner = players[Permission.OWNER]!!.sorted(),
         admin = players[Permission.ADMIN]!!.sorted(),
-        user  = players[Permission.USER]!!.sorted(),
+        user = players[Permission.USER]!!.sorted(),
         guest = players[Permission.GUEST]!!.sorted()
     )
 

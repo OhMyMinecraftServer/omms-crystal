@@ -5,6 +5,6 @@ import kotlin.io.path.Path
 
 object Directory {
     val workingDir by lazy {
-        Path( File("").absolutePath)
+        Path(File("").absolutePath)
     }
 }

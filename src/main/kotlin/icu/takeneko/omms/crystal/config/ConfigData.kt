@@ -30,7 +30,7 @@ data class ConfigData(
     @SerialName("command-prefix")
     val commandPrefix: String = ".",
 
-    @YamlComment( "Configures builtin rcon client to execute command on server")
+    @YamlComment("Configures builtin rcon client to execute command on server")
     @SerialName("rcon-client")
     val rconClient: RconClient = RconClient(),
 

@@ -4,6 +4,7 @@ import icu.takeneko.omms.crystal.main.SharedConstants
 import icu.takeneko.omms.crystal.parser.ParserManager
 import icu.takeneko.omms.crystal.plugin.metadata.PluginDependency
 import icu.takeneko.omms.crystal.util.*
+import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import icu.takeneko.omms.crystal.util.file.FileUtil.joinFilePaths
 import java.io.File
 import java.io.InputStream
@@ -89,7 +90,7 @@ object PluginManager : Manager<String, PluginInstance>(
 
     fun getPluginInJarFileStream(id: String, resourceLocation: String): InputStream {
         val instance = this.map[id] ?: throw PluginException("Plugin $id not found.")
-        return instance.getInJarFileStream(resourceLocation)
+        return instance.getInJarFileStream(resourceLocation)!!
     }
 
     fun <R> usePluginInJarFile(id: String, resourceLocation: String, func: Function<InputStream, R>): R =
@@ -100,7 +101,12 @@ object PluginManager : Manager<String, PluginInstance>(
 
 private fun Manager<String, PluginInstance>.checkRequirements() {
     val dependencies = buildList {
-        add(PluginDependency(ModuleDescriptor.Version.parse(BuildProperties["version"]!!), BuildProperties["applicationName"]!!))
+        add(
+            PluginDependency(
+                ModuleDescriptor.Version.parse(BuildProperties["version"]!!),
+                BuildProperties["applicationName"]!!
+            )
+        )
         map.forEach {
             add(PluginDependency(ModuleDescriptor.Version.parse(it.value.pluginMetadata.version), it.key))
         }

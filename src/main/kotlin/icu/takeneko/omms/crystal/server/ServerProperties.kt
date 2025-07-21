@@ -5,7 +5,7 @@ import icu.takeneko.omms.crystal.util.file.FileUtil.joinFilePaths
 import java.io.File
 import java.io.FileNotFoundException
 import java.nio.charset.StandardCharsets
-import java.util.Properties
+import java.util.*
 
 object ServerProperties {
     private val file = File(joinFilePaths(Config.config.workingDirectory, "server.properties"))

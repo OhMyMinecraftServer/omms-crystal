@@ -1,6 +1,6 @@
 package icu.takeneko.omms.crystal.permission
 
-import java.util.Locale
+import java.util.*
 
 enum class Permission {
     GUEST,
