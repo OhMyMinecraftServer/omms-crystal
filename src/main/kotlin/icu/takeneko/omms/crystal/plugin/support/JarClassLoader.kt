@@ -21,5 +21,6 @@ class JarClassLoader(parent: ClassLoader) : URLClassLoader(arrayOf(), parent) {
                 }
             }
         }
+        return ScanData()
     }
 }
