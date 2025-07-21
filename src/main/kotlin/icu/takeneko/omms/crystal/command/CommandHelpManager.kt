@@ -1,7 +1,7 @@
 package icu.takeneko.omms.crystal.command
 
+import icu.takeneko.omms.crystal.util.command.CommandSourceStack
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.TextComponent
 
 
 object CommandHelpManager {

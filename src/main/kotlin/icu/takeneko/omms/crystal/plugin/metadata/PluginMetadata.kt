@@ -20,13 +20,13 @@ class PluginMetadata {
     var pluginEventHandlers: List<String>? = mutableListOf()
 
     @SerializedName(value = "pluginMinecraftParsers", alternate = ["parsers", "minecraftParsers"])
-    var pluginMinecraftParsers: Map<String,String>? = mutableMapOf()
+    var pluginMinecraftParsers: Map<String, String>? = mutableMapOf()
 
     @SerializedName(value = "languages", alternate = ["res", "resources", "lang"])
     var resources: Map<String, String>? = null
 
     companion object {
-        fun fromJson(s: String?): PluginMetadata =gsonForPluginMetadata.fromJson(s, PluginMetadata::class.java)
+        fun fromJson(s: String?): PluginMetadata = gsonForPluginMetadata.fromJson(s, PluginMetadata::class.java)
     }
 }
 

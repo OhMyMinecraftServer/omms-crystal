@@ -3,7 +3,6 @@ package icu.takeneko.omms.crystal.plugin
 import icu.takeneko.omms.crystal.event.Event
 import icu.takeneko.omms.crystal.event.EventArgs
 import icu.takeneko.omms.crystal.i18n.*
-import icu.takeneko.omms.crystal.main.DebugOptions
 import icu.takeneko.omms.crystal.parser.MinecraftParser
 import icu.takeneko.omms.crystal.plugin.api.annotations.Config
 import icu.takeneko.omms.crystal.plugin.api.annotations.EventHandler
@@ -13,7 +12,6 @@ import icu.takeneko.omms.crystal.plugin.metadata.PluginDependencyRequirement
 import icu.takeneko.omms.crystal.plugin.metadata.PluginMetadata
 import icu.takeneko.omms.crystal.plugin.resources.PluginResource
 import icu.takeneko.omms.crystal.util.createLogger
-import icu.takeneko.omms.crystal.util.ifDebug
 import icu.takeneko.omms.crystal.util.joinFilePaths
 import icu.takeneko.omms.crystal.util.methodsWithAnnotation
 import java.io.File

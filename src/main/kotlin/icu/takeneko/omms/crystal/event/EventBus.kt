@@ -1,7 +1,6 @@
 package icu.takeneko.omms.crystal.event
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import java.lang.invoke.MethodHandle
@@ -10,6 +9,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import kotlin.coroutines.Continuation
 
+@Suppress("unused")
 class EventBus(
     private val coroutineScope: CoroutineScope,
     private val eventBaseClass: Class<out Any> = Event::class.java
@@ -22,13 +22,13 @@ class EventBus(
     private val eventSubscribers: MutableMap<Class<out Event>, MutableMap<EventPriority, MutableList<EventConsumer>>> =
         mutableMapOf()
 
-    fun getSubscribers(clazz: Class<out Event>): MutableMap<EventPriority, MutableList<EventConsumer>> {
-        return eventSubscribers.computeIfAbsent(clazz) { mutableMapOf() }
-    }
+    fun getSubscribers(clazz: Class<out Event>): MutableMap<EventPriority, MutableList<EventConsumer>> =
+        eventSubscribers.computeIfAbsent(clazz) { mutableMapOf() }
 
-    fun getSubscribers(clazz: Class<out Event>, priority: EventPriority): MutableList<EventConsumer> {
-        return getSubscribers(clazz).computeIfAbsent(priority) { mutableListOf() }
-    }
+
+    fun getSubscribers(clazz: Class<out Event>, priority: EventPriority): MutableList<EventConsumer> =
+        getSubscribers(clazz).computeIfAbsent(priority) { mutableListOf() }
+
 
     fun register(obj: Any) {
         if (obj !is Class<*>) {
@@ -39,12 +39,13 @@ class EventBus(
         registerMethods(normal, sus, true, null)
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun extractEventClass(mt: MethodHandle): Class<out Event> {
         val arg = mt.type().parameterType(0)
         if (eventBaseClass.isAssignableFrom(arg)) {
             return arg as Class<out Event>
         }
-        throw IllegalArgumentException("Could not extract argument class from $mt")
+        error("Could not extract argument class from $mt")
     }
 
     private fun registerMethods(
@@ -55,8 +56,8 @@ class EventBus(
     ) {
         normal.forEach { (method, priority) ->
             val handle = lookup.unreflect(method)
-            val ec = extractEventClass(handle)
-            getSubscribers(ec, priority).add(NoSuspendEventConsumer<Event> {
+            val eventClass = extractEventClass(handle)
+            getSubscribers(eventClass, priority).add(NoSuspendEventConsumer<Event> {
                 if (isStatic) {
                     handle.invoke(this)
                     return@NoSuspendEventConsumer
@@ -67,8 +68,8 @@ class EventBus(
 
         suspended.forEach { (method, priority) ->
             val handle = lookup.unreflect(method)
-            val ec = extractEventClass(handle)
-            getSubscribers(ec, priority).add(SuspendEventConsumer<Event> {
+            val eventClass = extractEventClass(handle)
+            getSubscribers(eventClass, priority).add(SuspendEventConsumer<Event> {
                 if (isStatic) {
                     return@SuspendEventConsumer kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn {
                         handle.invoke(this, it)
@@ -137,6 +138,7 @@ class EventBus(
             }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private inline fun <reified T : Event> subscribe(
         priority: EventPriority = EventPriority.NORMAL,
         noinline fn: T.() -> Unit
@@ -145,6 +147,7 @@ class EventBus(
         getSubscribers(T::class.java, priority).add(NoSuspendEventConsumer<T>(fn as Event.() -> Unit))
     }
 
+    @Suppress("UNCHECKED_CAST")
     private inline fun <reified T : Event> subscribeSuspend(
         priority: EventPriority = EventPriority.NORMAL,
         noinline fn: suspend T.() -> Unit

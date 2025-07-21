@@ -2,7 +2,6 @@ package icu.takeneko.omms.crystal.i18n
 
 import icu.takeneko.omms.crystal.main.SharedConstants
 import java.util.*
-import java.util.function.Function
 
 val builtinTranslationLanguages = listOf("en_us", "zh_cn")
 

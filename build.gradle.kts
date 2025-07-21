@@ -67,7 +67,10 @@ dependencies {
     api(libs.rcon)
     api(libs.byte.buddy.agent)
     api(libs.bundles.kotlinx.coroutines)
-    api(libs.kotlin.serialization.json)
+    api(libs.kotlin.serialization.json) {
+        isTransitive = false
+    }
+    api(libs.kaml)
 
     testImplementation(kotlin("test"))
 }

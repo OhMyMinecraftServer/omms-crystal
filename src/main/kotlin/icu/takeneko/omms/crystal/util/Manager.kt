@@ -18,6 +18,7 @@ open class Manager<T, K>(
     val map: MutableMap<T, K> = mutableMapOf()
     private val fileList = mutableListOf<String>()
     private val logger = createLogger("ManagerBase")
+
     fun init() {
         map.clear()
         fileList.clear()

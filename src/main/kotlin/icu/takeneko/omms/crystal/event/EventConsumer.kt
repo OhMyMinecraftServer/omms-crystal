@@ -4,14 +4,14 @@ interface EventConsumer {
     suspend fun accept(e: Event)
 }
 
-class SuspendEventConsumer<T>(private val cons: suspend Event.() -> Unit) : EventConsumer {
+class SuspendEventConsumer<T>(private val consumer: suspend Event.() -> Unit) : EventConsumer {
     override suspend fun accept(e: Event) {
-        cons(e)
+        consumer(e)
     }
 }
 
-class NoSuspendEventConsumer<T>(private val cons: Event.() -> Unit) : EventConsumer {
+class NoSuspendEventConsumer<T>(private val consumer: Event.() -> Unit) : EventConsumer {
     override suspend fun accept(e: Event) {
-        cons(e)
+        consumer(e)
     }
 }

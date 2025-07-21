@@ -1,4 +1,4 @@
-package icu.takeneko.omms.crystal.main
+package icu.takeneko.omms.crystal.util.constants
 
 import java.util.*
 

@@ -1,6 +1,5 @@
 package icu.takeneko.omms.crystal.plugin.resources
 
-import icu.takeneko.omms.crystal.main.DebugOptions
 import java.io.InputStreamReader
 
 class PluginResource(val bundleId: String) {

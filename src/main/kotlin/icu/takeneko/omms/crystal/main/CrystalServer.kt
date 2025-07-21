@@ -1,6 +1,8 @@
 package icu.takeneko.omms.crystal.main
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException
 import icu.takeneko.omms.crystal.command.CommandHelpManager
+import icu.takeneko.omms.crystal.command.CommandManager
 import icu.takeneko.omms.crystal.command.helpCommand
 import icu.takeneko.omms.crystal.command.permissionCommand
 import icu.takeneko.omms.crystal.command.pluginCommand
@@ -12,18 +14,33 @@ import icu.takeneko.omms.crystal.event.Event
 import icu.takeneko.omms.crystal.event.EventBus
 import icu.takeneko.omms.crystal.event.PluginBusEvent
 import icu.takeneko.omms.crystal.event.SubscribeEvent
-import icu.takeneko.omms.crystal.event.server.LaunchServerEvent
+import icu.takeneko.omms.crystal.event.server.StartServerEvent
+import icu.takeneko.omms.crystal.event.server.PlayerInfoEvent
+import icu.takeneko.omms.crystal.event.server.PlayerJoinEvent
+import icu.takeneko.omms.crystal.event.server.RconServerStartedEvent
 import icu.takeneko.omms.crystal.event.server.RegisterCommandEvent
+import icu.takeneko.omms.crystal.event.server.ServerStartedEvent
+import icu.takeneko.omms.crystal.event.server.ServerStartingEvent
 import icu.takeneko.omms.crystal.event.server.ServerStoppedEvent
 import icu.takeneko.omms.crystal.event.server.ServerStoppingEvent
+import icu.takeneko.omms.crystal.event.server.StopServerEvent
 import icu.takeneko.omms.crystal.foundation.ActionHost
 import icu.takeneko.omms.crystal.i18n.TranslateManager
 import icu.takeneko.omms.crystal.permission.PermissionManager
 import icu.takeneko.omms.crystal.plugin.PluginManager
+import icu.takeneko.omms.crystal.rcon.RconClient
 import icu.takeneko.omms.crystal.rcon.RconListener
+import icu.takeneko.omms.crystal.server.ServerStatus
 import icu.takeneko.omms.crystal.server.ServerThreadDaemon
+import icu.takeneko.omms.crystal.server.serverStatus
+import icu.takeneko.omms.crystal.text.Color
+import icu.takeneko.omms.crystal.text.Text
+import icu.takeneko.omms.crystal.text.TextGroup
 import icu.takeneko.omms.crystal.util.BuildProperties
+import icu.takeneko.omms.crystal.util.constants.DebugOptions
 import icu.takeneko.omms.crystal.util.PRODUCT_NAME
+import icu.takeneko.omms.crystal.util.command.CommandSource
+import icu.takeneko.omms.crystal.util.command.CommandSourceStack
 import icu.takeneko.omms.crystal.util.createLogger
 import icu.takeneko.omms.crystal.util.joinFilePaths
 import kotlinx.coroutines.CoroutineScope
@@ -37,73 +54,89 @@ import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.system.exitProcess
+import kotlin.time.measureTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 object CrystalServer : CoroutineScope, ActionHost {
     val coroutineDispatcher = Dispatchers.IO.limitedParallelism(Runtime.getRuntime().availableProcessors())
-    var rconListener: RconListener? = null
+
     val eventBus = EventBus(this, Event::class.java)
-    var serverThreadDaemon: ServerThreadDaemon? = null
+
     val consoleHandler: ConsoleHandler = ConsoleHandler()
+
     val logger = createLogger("CrystalServer")
+
     val config
         get() = Config.config
 
+    var rconListener: RconListener? = null
+
+    var serverThreadDaemon: ServerThreadDaemon? = null
+
     fun initialize(args: Array<String>) {
-        val start = System.currentTimeMillis()
-        eventBus.register(this)
-        Runtime.getRuntime().addShutdownHook(
-            thread(name = "ShutdownThread", start = false) {
-                if (serverThreadDaemon != null) {
-                    println("Stopping server because jvm is shutting down.")
-                    serverThreadDaemon!!.outputHandler.interrupt()
-                    serverThreadDaemon!!.stopServer(true)
+        val duration = measureTime {
+            eventBus.register(this)
+            Runtime.getRuntime().addShutdownHook(
+                thread(name = "ShutdownThread", start = false) {
+                    if (serverThreadDaemon != null) {
+                        println("Stopping server because jvm is shutting down.")
+                        serverThreadDaemon!!.outputHandler.interrupt()
+                        serverThreadDaemon!!.stopServer(true, this)
+                    }
                 }
-            }
-        )
-        consoleHandler.start()
-        logger.info("Hello World!")
-        val os = ManagementFactory.getOperatingSystemMXBean()
-        val runtime = ManagementFactory.getRuntimeMXBean()
-        logger.info("$PRODUCT_NAME ${BuildProperties["version"]} is running on ${os.name} ${os.arch} ${os.version} at PID ${runtime.pid}")
-        try {
-            if (Config.load()) {
-                val serverPath = Path(joinFilePaths("server"))
-                if (!serverPath.exists() || !serverPath.isDirectory()) {
-                    Files.createDirectory(serverPath)
+            )
+            consoleHandler.start()
+
+            logger.info("Hello World!")
+            val os = ManagementFactory.getOperatingSystemMXBean()
+            logger.info(
+                "{} {} is running on {} {} {} at PID {}",
+                PRODUCT_NAME,
+                BuildProperties["version"],
+                os.name,
+                os.arch,
+                os.version,
+                ManagementFactory.getRuntimeMXBean().pid
+            )
+
+            runCatching {
+                if (Config.load()) {
+                    val serverPath = Path(joinFilePaths("server"))
+                    if (!serverPath.exists() || !serverPath.isDirectory()) {
+                        Files.createDirectory(serverPath)
+                    }
+                    exitProcess(1)
                 }
+                ifMainDebug {
+                    logger.info("Config:")
+                    logger.info("\tServerWorkingDirectory: {}", config.workingDirectory)
+                    logger.info("\tLaunchCommand: {}", config.launchCommand)
+                    logger.info("\tPluginDirectory: {}", config.pluginDirectory)
+                    logger.info("\tServerType: {}", config.serverType)
+                    logger.info("\tDebugOptions: {}", DebugOptions)
+                }
+                TranslateManager.useLanguage(config.lang)
+                TranslateManager.init()
+                CommandHelpManager.init()
+                PluginManager.init()
+                PluginManager.loadAll()
+                PermissionManager.init()
+                consoleHandler.reload()
+                if (config.rconServer.enabled) {
+                    rconListener = RconListener.create()
+                }
+            }.onFailure { t ->
+                logger.error("Unexpected error occurred.", t)
                 exitProcess(1)
             }
-            ifMainDebug {
-                logger.info("Config:")
-                logger.info("\tServerWorkingDirectory: {}", config.workingDir)
-                logger.info("\tLaunchCommand: {}", config.launchCommand)
-                logger.info("\tPluginDirectory: {}", config.pluginDirectory)
-                logger.info("\tServerType: {}", config.serverType)
-                logger.info("\tDebugOptions: {}", DebugOptions)
-            }
-            TranslateManager.useLanguage(config.lang)
-            TranslateManager.init()
-            CommandHelpManager.init()
-            init()
-            PluginManager.init()
-            PluginManager.loadAll()
-            PermissionManager.init()
-            consoleHandler.reload()
-            if (config.enableRconServer) {
-                rconListener = RconListener.create()
-            }
-            val end = System.currentTimeMillis()
-            logger.info("Startup preparations finished in ${end - start} milliseconds.")
-            if (args.contains("--noserver")) {
-                Thread.sleep(1500)
-                exit()
-                exitProcess(0)
-            }
+        }
 
-        } catch (e: Exception) {
-            logger.error("Unexpected error occurred.", e)
-            exitProcess(1)
+        logger.info("Startup preparations finished in {}", duration.inWholeMilliseconds)
+
+        if (args.contains("--no-server")) {
+            Thread.sleep(1500)
+            exit()
+            exitProcess(0)
         }
     }
 
@@ -118,10 +151,110 @@ object CrystalServer : CoroutineScope, ActionHost {
 
     @SubscribeEvent
     fun onServerStopping(e: ServerStoppingEvent) {
+        if (Config.config.rconClient.enabled) {
+            RconClient.close()
+        }
     }
 
+    @SubscribeEvent
+    fun onServerStoppedEvent(e: ServerStoppedEvent) {
+        logger.info("Server exited with return value {}", e.exitCode)
+        serverThreadDaemon = null
+        serverStatus = ServerStatus.STOPPED
+        if (e.actionHost == this) {
+            logger.info("Bye.")
+            exit()
+        }
+    }
+
+    @SubscribeEvent
+    fun onStopServer(e: StopServerEvent) {
+        if (serverThreadDaemon == null) {
+            logger.warn("Server is not running!")
+        } else {
+            serverThreadDaemon!!.stopServer(host = e.actionHost, force = e.force)
+            serverStatus = ServerStatus.STOPPING
+        }
+    }
+
+    @SubscribeEvent
+    fun onStartServer(e: StartServerEvent) {
+        if (serverThreadDaemon != null) {
+            logger.warn("Server already running!")
+        }
+        logger.info("Starting server using command {} in directory: {}", e.launchCommand, e.workingDir)
+
+        serverThreadDaemon =
+            ServerThreadDaemon(e.launchCommand, e.workingDir)
+        serverThreadDaemon!!.start()
+    }
+
+    @SubscribeEvent
+    fun onServerStarting(e: ServerStartingEvent) {
+        serverStatus = ServerStatus.STARTING
+        logger.info("Server is running at PID {}", e.pid)
+    }
+
+    @SubscribeEvent
+    fun onPlayerJoin(e: PlayerJoinEvent) {
+        if (e.player !in PermissionManager) {
+            PermissionManager[e.player] = PermissionManager.defaultLevel
+        }
+    }
+
+    @SubscribeEvent
+    fun onPlayerInfo(e: PlayerInfoEvent) {
+        if (!e.content.startsWith(Config.config.commandPrefix)) return
+
+        val commandSourceStack =
+            CommandSourceStack(CommandSource.PLAYER, e.player, PermissionManager[e.player])
+        try {
+            CommandManager.execute(e.content, commandSourceStack)
+        } catch (e: CommandSyntaxException) {
+            commandSourceStack.sendFeedback(
+                Text("Incomplete or invalid command${if (e.message != null) ", see errors below:" else ""}\n")
+                    .withColor(Color.RED)
+            )
+            if (e.message != null) {
+                commandSourceStack.sendFeedback(Text(e.message!!).withColor(Color.RED))
+            }
+        } catch (e: Exception) {
+            logger.error("An exception was thrown while processing command.", e)
+            commandSourceStack.sendFeedback(
+                TextGroup(
+                    Text("Unexpected error occurred while executing command:\n").withColor(Color.RED),
+                    Text(e.message!!).withColor(Color.RED)
+                )
+            )
+        }
+    }
+
+    @SubscribeEvent
+    fun onServerStarted(e: ServerStartedEvent) {
+        serverStatus = ServerStatus.RUNNING
+    }
+
+    @SubscribeEvent
+    fun onRconServerStarted(e: RconServerStartedEvent) {
+        if (config.rconClient.enabled) {
+            logger.info("Attempt to init rcon connection.")
+            RconClient.connect()
+            logger.info("Rcon connected.")
+        }
+    }
+
+//    TODO
+//    @SubscribeEvent
+//    fun onServerLogging(e: ServerLoggingEvent) {
+//        if (serverThreadDaemon != null) {
+//            serverThreadDaemon!!.input(it.content)
+//        } else {
+//            logger.warn("Server is NOT running!")
+//        }
+//    }
+
     fun run() {
-        postEvent(LaunchServerEvent(config.launchCommand, Path(config.workingDir)))
+        postEvent(StartServerEvent(config.launchCommand, Path(config.workingDirectory)))
     }
 
     inline fun <reified T : Event> postEvent(e: T) {

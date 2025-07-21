@@ -9,8 +9,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import icu.takeneko.omms.crystal.command.CommandManager;
-import icu.takeneko.omms.crystal.command.CommandSource;
-import icu.takeneko.omms.crystal.command.CommandSourceStack;
+import icu.takeneko.omms.crystal.util.command.CommandSource;
+import icu.takeneko.omms.crystal.util.command.CommandSourceStack;
 import icu.takeneko.omms.crystal.permission.Permission;
 import icu.takeneko.omms.crystal.util.UtilKt;
 import kotlin.collections.CollectionsKt;

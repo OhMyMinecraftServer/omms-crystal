@@ -1,8 +1,5 @@
 package icu.takeneko.omms.crystal.parser
 
-import java.lang.IllegalArgumentException
-
-
 abstract class MinecraftParser {
     abstract fun parseToBareInfo(raw: String): Info?
     abstract fun parseServerStartedInfo(raw: String): ServerStartedInfo?
@@ -16,8 +13,10 @@ abstract class MinecraftParser {
 }
 
 class UnableToParseException : UnsupportedOperationException()
+
 object ParserManager {
-    private val parser: HashMap<String, MinecraftParser> = hashMapOf()
+    private val parser = mutableMapOf<String, MinecraftParser>()
+
     fun registerParser(id: String, minecraftParser: MinecraftParser, override: Boolean = false) {
         if (parser.containsKey(id) and !override) {
             throw java.lang.UnsupportedOperationException("This parser($minecraftParser) already exists.")

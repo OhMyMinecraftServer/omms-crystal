@@ -26,7 +26,7 @@ class JarClassLoader(parent: ClassLoader) : ClassLoader(parent) {
     fun loadJar(file: File) {
         synchronized(fileLoadingLock) {
             synchronized(classLoadingLock) {
-                logger.debug("Add jar({}) to classloader.", file)
+                logger.debug("Added jar {} to classloader.", file)
                 if (!file.exists()) throw FileNotFoundException(file.toString())
                 jarFiles += file
                 val entries = mutableListOf<String>()

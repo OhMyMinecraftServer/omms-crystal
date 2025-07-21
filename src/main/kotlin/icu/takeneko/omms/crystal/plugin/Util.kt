@@ -2,7 +2,7 @@ package icu.takeneko.omms.crystal.plugin
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import icu.takeneko.omms.crystal.main.DebugOptions
+import icu.takeneko.omms.crystal.util.constants.DebugOptions
 import net.bytebuddy.agent.ByteBuddyAgent
 import icu.takeneko.omms.crystal.plugin.metadata.PluginDependency
 import icu.takeneko.omms.crystal.plugin.metadata.PluginDependencyRequirement

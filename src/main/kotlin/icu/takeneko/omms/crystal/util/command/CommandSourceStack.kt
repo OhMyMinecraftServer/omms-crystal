@@ -1,14 +1,16 @@
-package icu.takeneko.omms.crystal.command
+package icu.takeneko.omms.crystal.util.command
 
-import cn.hutool.core.date.DateTime
+import icu.takeneko.omms.crystal.main.CrystalServer.serverThreadDaemon
 import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
-import icu.takeneko.omms.crystal.main.SharedConstants
 import icu.takeneko.omms.crystal.permission.Permission
 import icu.takeneko.omms.crystal.text.Text
 import icu.takeneko.omms.crystal.text.TextGroup
 import icu.takeneko.omms.crystal.text.TextSerializer
 import icu.takeneko.omms.crystal.util.createLogger
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 enum class CommandSource {
     CONSOLE, REMOTE, PLAYER, PLUGIN
@@ -20,11 +22,10 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
     val feedbackText = mutableListOf<String>()
 
     fun sendFeedback(text: TextGroup) {
-
         when (from) {
             CommandSource.PLAYER -> {
-                assert(SharedConstants.serverThreadDaemon != null)
-                SharedConstants.serverThreadDaemon!!.runCatching {
+                assert(serverThreadDaemon != null)
+                serverThreadDaemon!!.runCatching {
                     text.getTexts().forEach {
                         this.input("tellraw $player ${TextSerializer.serialize(it)}")
                     }
@@ -35,14 +36,12 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
                 text.getTexts().forEach {
                     feedbackText.add(it.toRawString())
                 }
-
             }
 
             else -> {
                 text.getTexts().forEach {
                     logger.info(it.toRawString())
                 }
-
             }
         }
     }
@@ -50,11 +49,12 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
     fun sendFeedback(text: TextComponent) {
         when (from) {
             CommandSource.PLAYER -> {
-                assert(SharedConstants.serverThreadDaemon != null)
-                SharedConstants.serverThreadDaemon!!.runCatching {
+                assert(serverThreadDaemon != null)
+                serverThreadDaemon!!.runCatching {
                     this.input("tellraw $player ${GsonComponentSerializer.gson().serialize(text)}")
                 }
-                DateTime.of(0).toString("YYYY-MM-DD hh-mm-ss.SSS")
+                LocalDateTime.now(ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("YYYY-MM-DD hh-mm-ss.SSS"))
             }
 
             CommandSource.REMOTE -> {
@@ -70,8 +70,8 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
     fun sendFeedback(text: Text) {
         when (from) {
             CommandSource.PLAYER -> {
-                assert(SharedConstants.serverThreadDaemon != null)
-                SharedConstants.serverThreadDaemon!!.run {
+                assert(serverThreadDaemon != null)
+                serverThreadDaemon!!.run {
                     this.input("tellraw $player ${TextSerializer.serialize(text)}")
                 }
             }

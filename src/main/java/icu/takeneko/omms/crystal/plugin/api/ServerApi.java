@@ -1,13 +1,13 @@
 package icu.takeneko.omms.crystal.plugin.api;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import icu.takeneko.omms.crystal.main.SharedConstants;
-import icu.takeneko.omms.crystal.server.ServerThreadDaemonKt;
+import icu.takeneko.omms.crystal.main.CrystalServer;
 import icu.takeneko.omms.crystal.server.ServerStatus;
+import icu.takeneko.omms.crystal.server.ServerThreadDaemonKt;
 import icu.takeneko.omms.crystal.text.Text;
 import icu.takeneko.omms.crystal.text.TextGroup;
 import icu.takeneko.omms.crystal.text.TextSerializer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 
 public class ServerApi {
     public static void tell(String player, Text text){
@@ -22,10 +22,10 @@ public class ServerApi {
         if (ServerThreadDaemonKt.getServerStatus() != ServerStatus.RUNNING){
             throw new IllegalStateException("Server is not running!");
         }
-        if (SharedConstants.INSTANCE.getServerThreadDaemon() == null){
+        if (CrystalServer.INSTANCE.getServerThreadDaemon() == null){
             throw new IllegalStateException("Server Controller is null.");
         }
-        SharedConstants.INSTANCE.getServerThreadDaemon().input("tellraw %s %s".formatted(player, serialize));
+        CrystalServer.INSTANCE.getServerThreadDaemon().input("tellraw %s %s".formatted(player, serialize));
     }
 
     public static void tell(String player, TextGroup textGroup){
@@ -33,9 +33,9 @@ public class ServerApi {
     }
 
     public static void executeCommand(String command){
-        if (SharedConstants.INSTANCE.getServerThreadDaemon() == null){
+        if (CrystalServer.INSTANCE.getServerThreadDaemon() == null){
             throw new IllegalStateException("Server Controller is null.");
         }
-        SharedConstants.INSTANCE.getServerThreadDaemon().input(command);
+        CrystalServer.INSTANCE.getServerThreadDaemon().input(command);
     }
 }

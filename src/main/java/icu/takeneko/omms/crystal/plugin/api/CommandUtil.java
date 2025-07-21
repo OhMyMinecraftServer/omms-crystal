@@ -6,7 +6,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import icu.takeneko.omms.crystal.command.CommandSourceStack;
+import icu.takeneko.omms.crystal.util.command.CommandSourceStack;
 
 public class CommandUtil {
     public static LiteralArgumentBuilder<CommandSourceStack> literal(String name) {

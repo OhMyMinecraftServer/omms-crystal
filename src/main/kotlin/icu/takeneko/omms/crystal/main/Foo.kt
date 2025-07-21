@@ -2,19 +2,17 @@ package icu.takeneko.omms.crystal.main
 
 import icu.takeneko.omms.crystal.plugin.PluginException
 import java.io.IOException
-import java.io.InputStream
 import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.jar.JarFile
 import java.util.zip.ZipException
-import java.util.zip.ZipFile
 import kotlin.io.path.isDirectory
 
-class ServerClassLoader(val array: Array<URL>): URLClassLoader(array) {
+class ServerClassLoader(val array: Array<URL>) : URLClassLoader(array) {
     override fun loadClass(name: String): Class<*> {
-        println(name)
-        if ("org.apache.logging" in name){
+        if ("org.apache.logging" in name) {
             throw ClassNotFoundException("Class $name is forbidden.")
         }
         return super.loadClass(name)
@@ -27,15 +25,31 @@ class JarServerLauncher(
     val serverJarPath: Path,
     val workingDir: Path
 ) {
+    private val librariesJarPaths = mutableListOf<Path>()
+    private lateinit var classLoader: ServerClassLoader
+    private lateinit var mainClass: String
 
-    fun <R> useInJarFile(fileFullPath: Path, fileName: String, consumer: InputStream.() -> R): R =
-        ZipFile(fileFullPath.toFile()).use {
+    fun loadJars() {
+        val jarPaths = buildList {
+            addAll(
+                Files.walk(librariesPath)
+                    .filter { Files.isRegularFile(it) }
+                    .filter {
+                        it.toString().let { s ->
+                            !s.contains("log4j", true) &&
+                                    !s.contains("slf4j", true) &&
+                                    !s.contains("logging", true)
+                        }
+                    }.toList()
+            )
+            addAll(Files.walk(versionsPath).filter { !it.isDirectory() }.toList())
+            add(serverJarPath)
+        }
+        println(jarPaths.joinToString("\n"))
+
+        mainClass = JarFile(serverJarPath.toFile()).use { jar ->
             try {
-                val entry = it.getEntry(fileName)
-                val inputStream = it.getInputStream(entry)
-                val r = consumer(inputStream)
-                inputStream.close()
-                r
+                jar.manifest.mainAttributes.getValue("Main-Class")
             } catch (e: PluginException) {
                 throw e
             } catch (e: ZipException) {
@@ -46,28 +60,6 @@ class JarServerLauncher(
                 throw PluginException("Cannot read plugin jar file.", e)
             }
         }
-
-    private val librariesJarPaths = mutableListOf<Path>()
-    private lateinit var classLoader: ServerClassLoader
-    private lateinit var mainClass:String
-    fun loadJars() {
-        val jarPaths =
-            Files.walk(librariesPath).filter {
-                !it.isDirectory() && !it.toString().contains("log4j") && !it.toString()
-                    .contains("slf4j") && !it.toString().contains("logging")
-            }.toList().toMutableList()
-        jarPaths += Files.walk(versionsPath).filter { !it.isDirectory() }.toList()
-        jarPaths.add(serverJarPath)
-        println(jarPaths.joinToString("\n"))
-        mainClass = useInJarFile(serverJarPath, "META-INF/MANIFEST.MF") {
-            this.bufferedReader().readLines().forEach {
-                val item = it.split(": ")
-                if (item[0] == "Main-Class") {
-                    return@useInJarFile item.subList(1, item.size).joinToString(": ")
-                }
-            }
-            return@useInJarFile null
-        } ?: return
         println(mainClass)
         classLoader = ServerClassLoader(jarPaths.map { it.toFile().toURI().toURL() }.toTypedArray())
     }

@@ -104,7 +104,7 @@ class Text constructor(
 
 @Deprecated("Replace TextGroup with Adventure API")
 class TextGroup private constructor() {
-    private var texts: MutableList<Text> = mutableListOf()
+    private val texts: MutableList<Text> = mutableListOf()
     fun getTexts(): MutableList<Text> = texts
 
     fun toRawString(): String {
@@ -117,7 +117,8 @@ class TextGroup private constructor() {
     }
 
     constructor(vararg text: Text) : this() {
-        this.texts = mutableListOf(*text)
+        this.texts.clear()
+        this.texts.addAll(text)
     }
 
 }

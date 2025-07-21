@@ -14,3 +14,5 @@ class PlayerLeftEvent(val player: String) : PluginBusEvent
 
 class PlayerJoinEvent(val player: String) : PluginBusEvent
 
+class PlayerInfoEvent(val content: String, val player: String) : PluginBusEvent
+

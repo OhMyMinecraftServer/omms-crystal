@@ -21,10 +21,10 @@ import icu.takeneko.omms.crystal.util.createServerLogger
 import icu.takeneko.omms.crystal.util.resolveCommand
 import org.slf4j.MarkerFactory
 import org.slf4j.event.Level
-import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.Charset
+import java.nio.file.Path
 import java.util.ConcurrentModificationException
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.locks.LockSupport
@@ -37,7 +37,7 @@ enum class ServerStatus {
 
 class ServerThreadDaemon(
     private val launchCommand: String,
-    private val workingDir: String,
+    private val workingDir: Path,
 ) : Thread("ServerThreadDaemon") {
 
     private val logger = createLogger("ServerThreadDaemon")
@@ -51,7 +51,7 @@ class ServerThreadDaemon(
 
     override fun run() {
         try {
-            process = Runtime.getRuntime().exec(resolveCommand(launchCommand), null, File(workingDir))
+            process = Runtime.getRuntime().exec(resolveCommand(launchCommand), null, workingDir.toFile())
             out = process!!.outputStream
             input = process!!.inputStream
         } catch (e: Exception) {
@@ -102,13 +102,23 @@ class ServerThreadDaemon(
     }
 }
 
-
 class ServerOutputHandler(private val serverProcess: Process) : Thread("ServerOutputHandler") {
     private val serverLogger = createServerLogger()
     private val logger = createLogger("ServerOutputHandler")
     private lateinit var input: InputStream
     private val parser = ParserManager.getParser(Config.config.serverType)
         ?: error("Specified parser ${Config.config.serverType} does not exist.")
+
+    private val strategies: List<(String) -> Event?> = listOf(
+        { line -> parser.parseServerStartingInfo(line)?.let { ServerStartingEvent(serverProcess.pid(), it.version) } },
+        { line -> parser.parseServerStartedInfo(line)?.let { ServerStartedEvent(it.timeElapsed) } },
+        { line -> parser.parseServerOverloadInfo(line)?.let { ServerOverloadEvent(it.ticks, it.time) } },
+        { line -> parser.parseServerStoppingInfo(line)?.let { ServerStoppingEvent() } },
+        { line -> parser.parsePlayerJoinInfo(line)?.let { PlayerJoinEvent(it.player) } },
+        { line -> parser.parseRconStartInfo(line)?.let { RconServerStartedEvent(it.port) } },
+        { line -> parser.parsePlayerInfo(line)?.let { PlayerChatEvent(it.content, it) } },
+        { line -> parser.parsePlayerLeftInfo(line)?.let { PlayerLeftEvent(it.player) } }
+    )
 
     override fun run() {
         try {
@@ -146,51 +156,7 @@ class ServerOutputHandler(private val serverProcess: Process) : Thread("ServerOu
         }
     }
 
-    private fun parseAndDispatch(processedInfo: String) {
-        val serverStartingInfo = parser.parseServerStartingInfo(processedInfo)
-        if (serverStartingInfo != null) {
-            dispatchEvent(ServerStartingEvent(serverProcess.pid(), serverStartingInfo.version))
-            return
-        }
-        val serverStartedInfo = parser.parseServerStartedInfo(processedInfo)
-        if (serverStartedInfo != null) {
-            dispatchEvent(ServerStartedEvent(serverStartedInfo.timeElapsed))
-            return
-        }
-        val serverOverloadInfo = parser.parseServerOverloadInfo(processedInfo)
-        if (serverOverloadInfo != null) {
-            dispatchEvent(ServerOverloadEvent(serverOverloadInfo.ticks, serverOverloadInfo.time))
-            return
-        }
-        val serverStoppingInfo = parser.parseServerStoppingInfo(processedInfo)
-        if (serverStoppingInfo != null) {
-            dispatchEvent(ServerStoppingEvent())
-            return
-        }
-        val playerJoinInfo = parser.parsePlayerJoinInfo(processedInfo)
-        if (playerJoinInfo != null) {
-            dispatchEvent(PlayerJoinEvent(playerJoinInfo.player))
-            return
-        }
-        val rconInfo = parser.parseRconStartInfo(processedInfo)
-        if (rconInfo != null) {
-            dispatchEvent(RconServerStartedEvent(rconInfo.port))
-            return
-        }
-        val playerInfo = parser.parsePlayerInfo(processedInfo)
-        if (playerInfo != null) {
-            dispatchEvent(PlayerChatEvent(playerInfo.content, playerInfo))
-            return
-        }
-        val playerLeftInfo = parser.parsePlayerLeftInfo(processedInfo)
-        if (playerLeftInfo != null) {
-            dispatchEvent(PlayerLeftEvent(playerLeftInfo.player))
-            return
-        }
-        return
-    }
-
-    private fun dispatchEvent(e: Event) {
-        CrystalServer.postEvent(e)
+    private fun parseAndDispatch(info: String) {
+        strategies.firstNotNullOfOrNull { it(info) }?.let(CrystalServer::postEvent)
     }
 }

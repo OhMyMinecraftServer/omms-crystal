@@ -3,6 +3,7 @@ package icu.takeneko.omms.crystal.command
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.tree.CommandNode
+import icu.takeneko.omms.crystal.util.command.CommandSourceStack
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import icu.takeneko.omms.crystal.util.unregisterCommand

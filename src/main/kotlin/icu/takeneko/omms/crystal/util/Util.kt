@@ -15,37 +15,28 @@ import icu.takeneko.omms.crystal.command.CommandUtil
 import icu.takeneko.omms.crystal.event.Event
 import icu.takeneko.omms.crystal.main.SharedConstants
 import icu.takeneko.omms.crystal.plugin.api.annotations.EventHandler
+import icu.takeneko.omms.crystal.util.constants.Directory.getWorkingDir
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.io.File
 import java.lang.reflect.Method
 import java.util.*
-import kotlin.io.path.Path
 
 
 const val PRODUCT_NAME = "Oh My Minecraft Server Crystal"
 const val VERSION = "0.1.0"
-fun getWorkingDir(): String {
-    val directory = File("")
-    return directory.absolutePath
-}
 
-
-val WORKING_DIR = Path(getWorkingDir())
-
-fun joinFilePaths(vararg pathComponent: String): String {
-    val paths: Array<out String?> = pathComponent
-    val path = StringBuilder()
-    path.append(getWorkingDir())
-    Arrays.stream(paths).toList().forEach {
-        path.append(File.separator)
-        path.append(it)
+fun joinFilePaths(vararg pathComponent: String): String =
+    buildString {
+        append(getWorkingDir())
+        pathComponent.forEach {
+            append(File.separator)
+            append(it)
+        }
     }
-    return path.toString()
-}
 
 fun resolveCommand(command: String): Array<out String> {
-    if (command.isEmpty()) throw IllegalArgumentException("Illegal command $command, to short or empty!")
+    if (command.isEmpty()) error("Illegal command $command, to short or empty!")
     val stringTokenizer = StringTokenizer(command)
     val list = mutableListOf<String>()
     while (stringTokenizer.hasMoreTokens()) {
@@ -75,42 +66,58 @@ fun createLoggerWithPattern(
     fileLogPattern: String = "",
     debug: Boolean = false
 ): Logger {
-    val logger = LoggerFactory.getLogger(name) as Logger
-    logger.detachAndStopAllAppenders()
+    val logger = (LoggerFactory.getLogger(name) as Logger).apply { detachAndStopAllAppenders() }
+
     val loggerContext: LoggerContext = logger.loggerContext
-    val encoder = PatternLayoutEncoder()
-    encoder.context = loggerContext
-    encoder.pattern = pattern
-    encoder.start()
-    val filter = ThresholdFilter()
-    filter.setLevel((if (debug) Level.DEBUG else Level.INFO).toString())
-    filter.start()
-    val appender: ConsoleAppender<ILoggingEvent> = ConsoleAppender<ILoggingEvent>()
-    appender.context = loggerContext
-    appender.encoder = encoder
-    appender.addFilter(filter)
-    appender.start()
+    val encoder = PatternLayoutEncoder().apply {
+        this.context = loggerContext
+        this.pattern = pattern
+        start()
+    }
+
+    val filter = ThresholdFilter().apply {
+        setLevel((if (debug) Level.DEBUG else Level.INFO).toString())
+        start()
+    }
+
+    val appender = ConsoleAppender<ILoggingEvent>().apply {
+        this.context = loggerContext
+        this.encoder = encoder
+        addFilter(filter)
+        start()
+    }
+
     if (logToFile) {
-        val fileEncoder = PatternLayoutEncoder()
-        fileEncoder.context = loggerContext
-        fileEncoder.pattern = fileLogPattern
-        fileEncoder.start()
+        val fileEncoder = PatternLayoutEncoder().apply {
+            this.context = loggerContext
+            this.pattern = fileLogPattern
+            start()
+        }
+
         val fileAppender = RollingFileAppender<ILoggingEvent>()
-        val policy = SizeAndTimeBasedRollingPolicy<ILoggingEvent>()
-        policy.context = loggerContext
-        policy.setMaxFileSize(FileSize.valueOf("5 mb"))
-        policy.fileNamePattern = "logs/%d{yyyy-MM-dd}.log"
-        policy.maxHistory = 30
-        policy.setParent(fileAppender)
-        policy.start()
+
+        val policy = SizeAndTimeBasedRollingPolicy<ILoggingEvent>().apply {
+            this.context = loggerContext
+            setMaxFileSize(FileSize.valueOf("5 mb"))
+            this.fileNamePattern = "logs/%d{yyyy-MM-dd}.log"
+            this.maxHistory = 30
+            setParent(fileAppender)
+            start()
+        }
+
         val fileFilter = ThresholdFilter()
-        filter.setLevel("INFO")
-        filter.start()
-        fileAppender.encoder = fileEncoder
-        fileAppender.context = loggerContext
-        fileAppender.rollingPolicy = policy
-        fileAppender.addFilter(fileFilter)
-        fileAppender.start()
+
+        filter.apply {
+            setLevel("INFO")
+            start()
+        }
+        fileAppender.apply {
+            this.encoder = fileEncoder
+            this.context = loggerContext
+            this.rollingPolicy = policy
+            addFilter(fileFilter)
+            start()
+        }
         logger.addAppender(fileAppender)
     }
     logger.addAppender(appender)
@@ -120,7 +127,7 @@ fun createLoggerWithPattern(
 fun <S> unregisterCommand(command: LiteralArgumentBuilder<S>, dispatcher: CommandDispatcher<S>): String? =
     CommandUtil.unRegisterCommand(command, dispatcher)
 
-fun registerEventHandler(e: Event, handler: EventHandler){
+fun registerEventHandler(e: Event, handler: EventHandler) {
     SharedConstants.eventDispatcher.registerHandler(e, handler)
 }
 

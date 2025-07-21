@@ -6,7 +6,7 @@ import icu.takeneko.omms.crystal.foundation.ActionHost
 import icu.takeneko.omms.crystal.main.CrystalServer
 import java.nio.file.Path
 
-class LaunchServerEvent(
+class StartServerEvent(
     var launchCommand: String,
     var workingDir: Path
 ) : CancellableEvent()
