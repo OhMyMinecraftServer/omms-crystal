@@ -4,12 +4,7 @@ import java.io.File
 import kotlin.io.path.Path
 
 object Directory {
-
-    fun getWorkingDir(): String {
-        val directory = File("")
-        return directory.absolutePath
+    val workingDir by lazy {
+        Path( File("").absolutePath)
     }
-
-
-    val WORKING_DIR = Path(getWorkingDir())
 }

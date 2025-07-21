@@ -4,6 +4,7 @@ import icu.takeneko.omms.crystal.main.SharedConstants
 import icu.takeneko.omms.crystal.parser.ParserManager
 import icu.takeneko.omms.crystal.plugin.metadata.PluginDependency
 import icu.takeneko.omms.crystal.util.*
+import icu.takeneko.omms.crystal.util.file.FileUtil.joinFilePaths
 import java.io.File
 import java.io.InputStream
 import java.lang.module.ModuleDescriptor

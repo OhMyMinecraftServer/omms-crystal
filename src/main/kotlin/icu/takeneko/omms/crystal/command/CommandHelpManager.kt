@@ -1,5 +1,6 @@
 package icu.takeneko.omms.crystal.command
 
+import icu.takeneko.omms.crystal.command.BuiltinCommand.registerBuiltinCommands
 import icu.takeneko.omms.crystal.util.command.CommandSourceStack
 import net.kyori.adventure.text.Component
 
@@ -10,7 +11,7 @@ object CommandHelpManager {
 
     fun init() {
         map.clear()
-        registerBuiltinCommandHelp()
+        registerBuiltinCommands()
     }
 
     fun registerHelpMessage(command: String, textProvider: () -> String) {

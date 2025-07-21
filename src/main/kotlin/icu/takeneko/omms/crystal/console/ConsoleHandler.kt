@@ -5,7 +5,7 @@ import icu.takeneko.omms.crystal.util.command.CommandSource
 import icu.takeneko.omms.crystal.util.command.CommandSourceStack
 import icu.takeneko.omms.crystal.config.Config
 import icu.takeneko.omms.crystal.main.CrystalServer.serverThreadDaemon
-import icu.takeneko.omms.crystal.util.createLogger
+import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
 import org.jline.terminal.Terminal
@@ -26,7 +26,7 @@ class ConsoleHandler : Thread("ConsoleHandler") {
         while (true) {
             try {
                 reload()
-                val str = lineReader.readLine()
+                val str = lineReader.readLine(">")
                 if (str.startsWith(Config.config.commandPrefix)) {
                     try {
                         CommandManager.execute(str, CommandSourceStack(CommandSource.CONSOLE))

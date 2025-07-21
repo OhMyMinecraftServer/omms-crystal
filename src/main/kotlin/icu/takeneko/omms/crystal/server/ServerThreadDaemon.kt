@@ -1,39 +1,18 @@
 package icu.takeneko.omms.crystal.server
 
-
-import icu.takeneko.omms.crystal.config.Config
-import icu.takeneko.omms.crystal.event.*
-import icu.takeneko.omms.crystal.event.server.PlayerChatEvent
-import icu.takeneko.omms.crystal.event.server.PlayerJoinEvent
-import icu.takeneko.omms.crystal.event.server.PlayerLeftEvent
-import icu.takeneko.omms.crystal.event.server.RconServerStartedEvent
-import icu.takeneko.omms.crystal.event.server.ServerLoggingEvent
-import icu.takeneko.omms.crystal.event.server.ServerOverloadEvent
-import icu.takeneko.omms.crystal.event.server.ServerStartedEvent
-import icu.takeneko.omms.crystal.event.server.ServerStartingEvent
 import icu.takeneko.omms.crystal.event.server.ServerStoppedEvent
-import icu.takeneko.omms.crystal.event.server.ServerStoppingEvent
 import icu.takeneko.omms.crystal.foundation.ActionHost
 import icu.takeneko.omms.crystal.main.CrystalServer
-import icu.takeneko.omms.crystal.parser.ParserManager
-import icu.takeneko.omms.crystal.util.createLogger
-import icu.takeneko.omms.crystal.util.createServerLogger
-import icu.takeneko.omms.crystal.util.resolveCommand
-import org.slf4j.MarkerFactory
-import org.slf4j.event.Level
+import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.Charset
 import java.nio.file.Path
 import java.util.ConcurrentModificationException
+import java.util.StringTokenizer
 import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.locks.LockSupport
 
 var serverStatus = ServerStatus.STOPPED
-
-enum class ServerStatus {
-    STOPPED, RUNNING, STOPPING, STARTING
-}
 
 class ServerThreadDaemon(
     private val launchCommand: String,
@@ -41,17 +20,22 @@ class ServerThreadDaemon(
 ) : Thread("ServerThreadDaemon") {
 
     private val logger = createLogger("ServerThreadDaemon")
-    private lateinit var out: OutputStream
-    private lateinit var input: InputStream
-    private val queue = ArrayBlockingQueue<String>(1024)
-    private var actionHost: ActionHost = CrystalServer
-    private var process: Process? = null
-    lateinit var outputHandler: ServerOutputHandler
 
+    private val queue = ArrayBlockingQueue<String>(1024)
+
+    private lateinit var out: OutputStream
+
+    private lateinit var input: InputStream
+
+    private var actionHost: ActionHost = CrystalServer
+
+    private var process: Process? = null
+
+    lateinit var outputHandler: ServerOutputHandler
 
     override fun run() {
         try {
-            process = Runtime.getRuntime().exec(resolveCommand(launchCommand), null, workingDir.toFile())
+            process = Runtime.getRuntime().exec(resolveCommandLine(launchCommand), null, workingDir.toFile())
             out = process!!.outputStream
             input = process!!.inputStream
         } catch (e: Exception) {
@@ -100,63 +84,16 @@ class ServerThreadDaemon(
             input("stop")
         }
     }
-}
 
-class ServerOutputHandler(private val serverProcess: Process) : Thread("ServerOutputHandler") {
-    private val serverLogger = createServerLogger()
-    private val logger = createLogger("ServerOutputHandler")
-    private lateinit var input: InputStream
-    private val parser = ParserManager.getParser(Config.config.serverType)
-        ?: error("Specified parser ${Config.config.serverType} does not exist.")
+    private fun resolveCommandLine(command: String): Array<out String> {
+        if (command.isEmpty()) error("Illegal command $command, to short or empty!")
 
-    private val strategies: List<(String) -> Event?> = listOf(
-        { line -> parser.parseServerStartingInfo(line)?.let { ServerStartingEvent(serverProcess.pid(), it.version) } },
-        { line -> parser.parseServerStartedInfo(line)?.let { ServerStartedEvent(it.timeElapsed) } },
-        { line -> parser.parseServerOverloadInfo(line)?.let { ServerOverloadEvent(it.ticks, it.time) } },
-        { line -> parser.parseServerStoppingInfo(line)?.let { ServerStoppingEvent() } },
-        { line -> parser.parsePlayerJoinInfo(line)?.let { PlayerJoinEvent(it.player) } },
-        { line -> parser.parseRconStartInfo(line)?.let { RconServerStartedEvent(it.port) } },
-        { line -> parser.parsePlayerInfo(line)?.let { PlayerChatEvent(it.content, it) } },
-        { line -> parser.parsePlayerLeftInfo(line)?.let { PlayerLeftEvent(it.player) } }
-    )
-
-    override fun run() {
-        try {
-            input = serverProcess.inputStream
-            val reader = input.bufferedReader(Charset.forName(Config.config.encoding))
-            while (serverProcess.isAlive) {
-                try {
-                    LockSupport.parkNanos(10)
-                    val string = reader.readLine()
-                    if (string != null) {
-                        val info = parser.parseToBareInfo(string)
-                        if (info == null) {
-                            println(string)
-                        } else {
-                            //dispatch a global info first
-                            CrystalServer.postEvent(ServerLoggingEvent(info))
-                            //and then started to parse
-                            parseAndDispatch(info.info)
-                            when (info.level) {
-                                Level.DEBUG -> serverLogger.debug(MarkerFactory.getMarker(info.thread), info.info)
-                                Level.ERROR -> serverLogger.error(MarkerFactory.getMarker(info.thread), info.info)
-                                Level.INFO -> serverLogger.info(MarkerFactory.getMarker(info.thread), info.info)
-                                Level.TRACE -> serverLogger.trace(MarkerFactory.getMarker(info.thread), info.info)
-                                Level.WARN -> serverLogger.warn(MarkerFactory.getMarker(info.thread), info.info)
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    if (e !is InterruptedException) {
-                        logger.error("Error occurred while reading server output.", e)
-                    }
-                }
+        val stringTokenizer = StringTokenizer(command)
+        val list = buildList {
+            while (stringTokenizer.hasMoreTokens()) {
+                add(stringTokenizer.nextToken())
             }
-        } catch (_: InterruptedException) {
         }
-    }
-
-    private fun parseAndDispatch(info: String) {
-        strategies.firstNotNullOfOrNull { it(info) }?.let(CrystalServer::postEvent)
+        return list.toTypedArray()
     }
 }

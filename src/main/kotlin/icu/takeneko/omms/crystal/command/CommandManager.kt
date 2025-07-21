@@ -6,7 +6,6 @@ import com.mojang.brigadier.tree.CommandNode
 import icu.takeneko.omms.crystal.util.command.CommandSourceStack
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
-import icu.takeneko.omms.crystal.util.unregisterCommand
 import org.jline.reader.Completer
 import org.jline.reader.impl.completer.AggregateCompleter
 import org.jline.reader.impl.completer.ArgumentCompleter
@@ -67,4 +66,6 @@ object CommandManager {
         )
     }
 
+    fun <S> unregisterCommand(command: LiteralArgumentBuilder<S>, dispatcher: CommandDispatcher<S>): String? =
+        CommandUtil.unregisterCommand(command, dispatcher)
 }

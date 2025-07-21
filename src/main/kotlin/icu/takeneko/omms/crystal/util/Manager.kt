@@ -1,5 +1,6 @@
 package icu.takeneko.omms.crystal.util
 
+import icu.takeneko.omms.crystal.util.file.FileUtil.joinFilePaths
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString

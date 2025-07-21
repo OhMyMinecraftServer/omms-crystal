@@ -3,7 +3,7 @@ package icu.takeneko.omms.crystal.permission
 import icu.takeneko.omms.crystal.util.file.FileUtil.JSON
 import icu.takeneko.omms.crystal.util.file.readTextWithBuffer
 import icu.takeneko.omms.crystal.util.file.writeTextWithBuffer
-import icu.takeneko.omms.crystal.util.joinFilePaths
+import icu.takeneko.omms.crystal.util.file.FileUtil.joinFilePaths
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.Path

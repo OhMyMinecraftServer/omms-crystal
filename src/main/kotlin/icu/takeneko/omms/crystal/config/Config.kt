@@ -2,7 +2,7 @@ package icu.takeneko.omms.crystal.config
 
 import icu.takeneko.omms.crystal.util.constants.DebugOptions
 import icu.takeneko.omms.crystal.server.ServerProperties
-import icu.takeneko.omms.crystal.util.createLogger
+import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import icu.takeneko.omms.crystal.util.file.encodeToString
 import icu.takeneko.omms.crystal.util.file.decodeFromString
 import icu.takeneko.omms.crystal.util.file.FileUtil.YAML

@@ -4,8 +4,7 @@ import icu.takeneko.omms.crystal.command.CommandManager
 import icu.takeneko.omms.crystal.permission.Permission
 import icu.takeneko.omms.crystal.util.command.CommandSource
 import icu.takeneko.omms.crystal.util.command.CommandSourceStack
-import icu.takeneko.omms.crystal.util.createLogger
-import org.slf4j.Logger
+import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
@@ -79,10 +78,10 @@ class RconServer(
                 continue
             } catch (_: IOException) {
             } catch (e: Exception) {
-                LOGGER.error("Exception whilst parsing RCON input", e)
+                logger.error("Exception whilst parsing RCON input", e)
             } finally {
                 this.close()
-                LOGGER.info("Thread {} shutting down", this.description)
+                logger.info("Thread {} shutting down", this.description)
                 this.running = false
             }
             return
@@ -135,11 +134,11 @@ class RconServer(
         try {
             this.socket.close()
         } catch (e: IOException) {
-            LOGGER.warn("Failed to close socket", e)
+            logger.warn("Failed to close socket", e)
         }
     }
 
     companion object {
-        private val LOGGER: Logger = createLogger("RconBase", false)
+        private val logger = createLogger("RconBase", false)
     }
 }

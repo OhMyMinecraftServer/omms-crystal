@@ -1,6 +1,6 @@
 package icu.takeneko.omms.crystal.rcon
 
-import icu.takeneko.omms.crystal.util.createLogger
+import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import org.slf4j.Logger
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.Volatile

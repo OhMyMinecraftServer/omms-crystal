@@ -1,7 +1,7 @@
 package icu.takeneko.omms.crystal.server
 
 import icu.takeneko.omms.crystal.config.Config
-import icu.takeneko.omms.crystal.util.joinFilePaths
+import icu.takeneko.omms.crystal.util.file.FileUtil.joinFilePaths
 import java.io.File
 import java.io.FileNotFoundException
 import java.nio.charset.StandardCharsets

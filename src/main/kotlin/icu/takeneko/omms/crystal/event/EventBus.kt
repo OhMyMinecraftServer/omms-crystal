@@ -15,6 +15,7 @@ class EventBus(
     private val eventBaseClass: Class<out Any> = Event::class.java
 ) {
     private val logger = LoggerFactory.getLogger("EventBus")
+
     private val lookup = MethodHandles.lookup()
 
     private val continuationClass = Continuation::class.java

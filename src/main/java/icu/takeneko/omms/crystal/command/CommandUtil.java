@@ -12,7 +12,7 @@ import java.util.Map;
 public class CommandUtil {
 
     @SuppressWarnings("all")
-    public static <S> String unRegisterCommand(LiteralArgumentBuilder<S> command, CommandDispatcher<S> dispatcher) {
+    public static <S> String unregisterCommand(LiteralArgumentBuilder<S> command, CommandDispatcher<S> dispatcher) {
         try {
             Field field = dispatcher.getClass().getDeclaredField("root");
             field.setAccessible(true);

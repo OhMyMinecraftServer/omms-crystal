@@ -7,16 +7,10 @@ import icu.takeneko.omms.crystal.permission.Permission
 import icu.takeneko.omms.crystal.text.Text
 import icu.takeneko.omms.crystal.text.TextGroup
 import icu.takeneko.omms.crystal.text.TextSerializer
-import icu.takeneko.omms.crystal.util.createLogger
+import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-
-enum class CommandSource {
-    CONSOLE, REMOTE, PLAYER, PLUGIN
-}
-
-private val logger = createLogger("CommandSourceStack")
 
 class CommandSourceStack(val from: CommandSource, val player: String? = null, val permissionLevel: Permission? = null) {
     val feedbackText = mutableListOf<String>()
@@ -32,17 +26,14 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
                 }
             }
 
-            CommandSource.REMOTE -> {
-                text.getTexts().forEach {
-                    feedbackText.add(it.toRawString())
-                }
+            CommandSource.REMOTE -> text.getTexts().forEach {
+                feedbackText.add(it.toRawString())
             }
 
-            else -> {
-                text.getTexts().forEach {
-                    logger.info(it.toRawString())
-                }
+            else -> text.getTexts().forEach {
+                logger.info(it.toRawString())
             }
+
         }
     }
 
@@ -57,13 +48,9 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
                     .format(DateTimeFormatter.ofPattern("YYYY-MM-DD hh-mm-ss.SSS"))
             }
 
-            CommandSource.REMOTE -> {
-                feedbackText.add(text.content())
-            }
+            CommandSource.REMOTE -> feedbackText.add(text.content())
 
-            else -> {
-                logger.info(text.content())
-            }
+            else -> logger.info(text.content())
         }
     }
 
@@ -85,5 +72,9 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
 
             else -> logger.info(text.toRawString())
         }
+    }
+
+    companion object {
+        private val logger = createLogger("CommandSourceStack")
     }
 }

@@ -11,9 +11,9 @@ import icu.takeneko.omms.crystal.plugin.metadata.PluginDependency
 import icu.takeneko.omms.crystal.plugin.metadata.PluginDependencyRequirement
 import icu.takeneko.omms.crystal.plugin.metadata.PluginMetadata
 import icu.takeneko.omms.crystal.plugin.resources.PluginResource
-import icu.takeneko.omms.crystal.util.createLogger
-import icu.takeneko.omms.crystal.util.joinFilePaths
-import icu.takeneko.omms.crystal.util.methodsWithAnnotation
+import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
+import icu.takeneko.omms.crystal.util.file.FileUtil.joinFilePaths
+import icu.takeneko.omms.crystal.util.reflect.methodsWithAnnotation
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
