@@ -1,5 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.time.Instant
+import org.jetbrains.kotlin.konan.file.File
 import java.util.Properties
 
 plugins {
@@ -112,10 +112,12 @@ publishing {
 }
 
 fun generateProperties() {
-    val propertiesFile = file("./src/main/resources/build.properties")
+    val propertiesFile = File(project.file("./src/main/resources/build.properties").toPath())
+
+
 
     propertiesFile.delete()
-    propertiesFile.createNewFile()
+    propertiesFile.createNew()
 
     val shouldSkip: (Pair<String, *>) -> Boolean = { (k, v) ->
         val s = v.toString()
@@ -134,6 +136,6 @@ fun generateProperties() {
     }
 
     propertiesFile.outputStream().use { out ->
-        props.store(out, "Auto-generated at ${Instant.now()}")
+        props.store(out, null)
     }
 }
