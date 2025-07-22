@@ -1,7 +1,6 @@
 package icu.takeneko.omms.crystal.plugin
 
 import icu.takeneko.omms.crystal.event.Event
-import icu.takeneko.omms.crystal.event.EventArgs
 import icu.takeneko.omms.crystal.i18n.*
 import icu.takeneko.omms.crystal.parser.MinecraftParser
 import icu.takeneko.omms.crystal.plugin.api.annotations.Config
@@ -36,7 +35,6 @@ class PluginInstance(
     var pluginMetadata: PluginMetadata = PluginMetadata()
     private lateinit var pluginClass: Class<*>
     private lateinit var instance: PluginInitializer
-    private var _pluginState = PluginState.WAIT
     private lateinit var pluginConfigPath: Path
     private lateinit var pluginConfigFile: File
     private var pluginState by Delegates.observable(PluginState.ERROR) { _, before, after ->
@@ -60,7 +58,7 @@ class PluginInstance(
         } catch (e: Exception) {
             throw PluginException("Cannot read plugin jar file.", e)
         }
-        pluginState = PluginState.PRE_LOAD
+        pluginState = PluginState.CONSTRUCTION
     }
 
     fun loadPluginClasses() {
@@ -69,7 +67,7 @@ class PluginInstance(
         loadEventHandlers()
         loadMinecraftParsers()
 
-        pluginState = PluginState.INITIALIZED
+        pluginState = PluginState.READY
     }
 
     private fun loadInitializer() {
@@ -148,7 +146,6 @@ class PluginInstance(
             clazz.getDeclaredConstructor().apply { isAccessible = true }.newInstance()
         } as Event
 
-
     fun injectArguments() {
         pluginState = PluginState.ERROR
 
@@ -171,7 +168,9 @@ class PluginInstance(
                 continue
             }
             if (field.isAnnotationPresent(Config::class.java) && field.isAnnotationPresent(InjectArgument::class.java)) {
-                error("@Config cannot be used simultaneously with @InjectArgument (at field $field in class $pluginClass).")
+                error(
+                    "@Config cannot be used simultaneously with @InjectArgument(at field $field in class $pluginClass)"
+                )
             }
             if (field.isAnnotationPresent(Config::class.java)) {
                 val configClass = field.type
@@ -199,7 +198,7 @@ class PluginInstance(
                 }
             }
         }
-        pluginState = PluginState.INITIALIZED
+        pluginState = PluginState.READY
     }
 
     private fun <T> fillFieldsUseDefault(t: T, default: T): T {
@@ -225,10 +224,18 @@ class PluginInstance(
         pluginState = PluginState.ERROR
         val result = buildList {
             if (pluginMetadata.pluginDependencies != null) {
-                addAll(pluginMetadata.pluginDependencies!!.filter { dependencies.none { it2 -> it.requirementMatches(it2) } })
+                addAll(
+                    pluginMetadata.pluginDependencies!!.filter {
+                        dependencies.none { it2 ->
+                            it.requirementMatches(
+                                it2
+                            )
+                        }
+                    }
+                )
             }
         }
-        pluginState = PluginState.INITIALIZED
+        pluginState = PluginState.READY
         return result
     }
 
@@ -239,7 +246,7 @@ class PluginInstance(
         } catch (e: Exception) {
             throw PluginException("onInitialize", e)
         }
-        pluginState = PluginState.LOADED
+        pluginState = PluginState.CONSTRUCTION
     }
 
     fun <R> useInJarFile(fileName: String, consumer: InputStream.() -> R): R =
@@ -273,7 +280,7 @@ class PluginInstance(
         } catch (e: Exception) {
             throw PluginException("onFinalize", e)
         }
-        pluginState = PluginState.LOADED
+        pluginState = PluginState.CONSTRUCTION
     }
 
     fun loadPluginResources() {

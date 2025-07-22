@@ -4,7 +4,6 @@ import icu.takeneko.omms.crystal.command.BuiltinCommand.registerBuiltinCommands
 import icu.takeneko.omms.crystal.util.command.CommandSourceStack
 import net.kyori.adventure.text.Component
 
-
 object CommandHelpManager {
 
     val map = mutableMapOf<String, CommandHelpProvider>()

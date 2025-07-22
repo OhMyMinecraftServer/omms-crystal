@@ -5,14 +5,14 @@ import java.util.*
 object DebugOptions {
 
     /*
-    * Debug options:
-    * N/O:None/Off
-    * A:All
-    * E:Event
-    * M:Main
-    * P:Plugin
-    * S:Server
-    */
+     * Debug options:
+     * N/O:None/Off
+     * A:All
+     * E:Event
+     * M:Main
+     * P:Plugin
+     * S:Server
+     */
     private var off = true
     private var all = false
     private var event = false

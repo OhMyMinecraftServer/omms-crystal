@@ -37,8 +37,8 @@ class JarServerLauncher(
                     .filter {
                         it.toString().let { s ->
                             !s.contains("log4j", true) &&
-                                    !s.contains("slf4j", true) &&
-                                    !s.contains("logging", true)
+                                !s.contains("slf4j", true) &&
+                                !s.contains("logging", true)
                         }
                     }.toList()
             )

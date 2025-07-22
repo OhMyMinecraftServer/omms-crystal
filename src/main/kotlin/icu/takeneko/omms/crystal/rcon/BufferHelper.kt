@@ -15,11 +15,14 @@ object BufferHelper {
 
     fun getIntLE(buf: ByteArray, start: Int): Int = getIntLE(buf, start, buf.size)
 
+    @Suppress("UnnecessaryParentheses")
     fun getIntLE(buf: ByteArray, start: Int, limit: Int): Int =
         if (0 > limit - start - 4) {
             0
         } else {
-            buf[start + 3].toInt() shl 24 or ((buf[start + 2].toInt() and 255) shl 16) or ((buf[start + 1].toInt() and 255) shl 8) or (buf[start].toInt() and 255)
+            buf[start + 3].toInt() shl 24 or
+                ((buf[start + 2].toInt() and 255) shl 16) or
+                ((buf[start + 1].toInt() and 255) shl 8) or
+                (buf[start].toInt() and 255)
         }
-
 }

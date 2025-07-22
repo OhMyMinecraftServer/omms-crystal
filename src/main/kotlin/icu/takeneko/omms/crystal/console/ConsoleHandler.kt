@@ -13,7 +13,12 @@ import org.jline.terminal.TerminalBuilder
 
 class ConsoleHandler : Thread("ConsoleHandler") {
     private val terminal: Terminal = TerminalBuilder.builder().system(true).dumb(true).build()
-    private val lineReader: LineReader = LineReaderBuilder.builder().terminal(terminal).completer(CommandManager.completer).build()
+    private lateinit var lineReader: LineReader
+
+    @Synchronized
+    fun reload() {
+        lineReader = LineReaderBuilder.builder().terminal(terminal).completer(CommandManager.completer).build()
+    }
 
     override fun run() {
         while (true) {

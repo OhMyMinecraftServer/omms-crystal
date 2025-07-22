@@ -253,7 +253,6 @@ object CrystalServer : CoroutineScope, ActionHost {
 
     inline fun <reified T : Event> postEvent(e: T) {
         if (e is PluginBusEvent) {
-
             return
         }
         eventBus.dispatch(e)

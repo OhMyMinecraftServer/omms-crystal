@@ -50,9 +50,9 @@ class ServerOutputHandler(private val serverProcess: Process) : Thread("ServerOu
                         if (info == null) {
                             println(string)
                         } else {
-                            //dispatch a global info first
+                            // dispatch a global info first
                             CrystalServer.postEvent(ServerLoggingEvent(info))
-                            //and then started to parse
+                            // and then started to parse
                             parseAndDispatch(info.info)
                             when (info.level) {
                                 Level.DEBUG -> serverLogger.debug(MarkerFactory.getMarker(info.thread), info.info)

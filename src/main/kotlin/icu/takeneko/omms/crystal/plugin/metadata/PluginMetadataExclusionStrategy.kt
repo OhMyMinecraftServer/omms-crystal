@@ -6,7 +6,9 @@ import java.lang.module.ModuleDescriptor
 
 object PluginMetadataExclusionStrategy : ExclusionStrategy {
     override fun shouldSkipField(fieldAttributes: FieldAttributes): Boolean =
-        fieldAttributes.name == "symbol" || fieldAttributes.name == "parsedVersion" || fieldAttributes.declaredClass == ModuleDescriptor.Version::class.java
+        fieldAttributes.name == "symbol" ||
+            fieldAttributes.name == "parsedVersion" ||
+            fieldAttributes.declaredClass == ModuleDescriptor.Version::class.java
 
     override fun shouldSkipClass(aClass: Class<*>?): Boolean = false
 }

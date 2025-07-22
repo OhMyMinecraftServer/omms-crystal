@@ -2,10 +2,10 @@ package icu.takeneko.omms.crystal.util.command
 
 import icu.takeneko.omms.crystal.main.CrystalServer
 import icu.takeneko.omms.crystal.main.CrystalServer.serverThreadDaemon
-import net.kyori.adventure.text.TextComponent
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 import icu.takeneko.omms.crystal.permission.Permission
 import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
+import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 
 class CommandSourceStack(val from: CommandSource, val player: String? = null, val permissionLevel: Permission? = null) {
     val feedbackText = mutableListOf<String>()

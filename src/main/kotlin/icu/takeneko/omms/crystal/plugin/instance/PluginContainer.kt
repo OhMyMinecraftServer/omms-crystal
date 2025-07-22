@@ -10,7 +10,7 @@ import icu.takeneko.omms.crystal.plugin.metadata.PluginMetadata
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.CoroutineContext
 
-abstract class PluginContainer: Keyable, ActionHost, CoroutineScope {
+abstract class PluginContainer : Keyable, ActionHost, CoroutineScope {
     var pluginState: PluginState = PluginState.UNKNOWN
         private set
 

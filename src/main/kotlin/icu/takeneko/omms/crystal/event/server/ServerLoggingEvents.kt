@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package icu.takeneko.omms.crystal.event.server
 
 import icu.takeneko.omms.crystal.event.PluginBusEvent
@@ -23,4 +25,3 @@ class PlayerChatEvent(val info: PlayerInfo, val content: String = info.content, 
 class PlayerLeftEvent(val player: String) : PluginBusEvent
 
 class PlayerJoinEvent(val player: String) : PluginBusEvent
-

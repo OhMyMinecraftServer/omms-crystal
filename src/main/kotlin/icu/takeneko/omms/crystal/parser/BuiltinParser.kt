@@ -2,11 +2,11 @@ package icu.takeneko.omms.crystal.parser
 
 import org.slf4j.event.Level
 
-
 open class BuiltinParser : MinecraftParser() {
 
-    private val regexRawInfo =
-        Regex("\\[(\\d{2}:\\d{2}:\\d{2})\\] \\[([A-Za-z0-9\\u0020！/.@#$%^&*\\(\\)+=_-]*)[/]([A-Za-z0-9_-]*)\\]: ([^\\f\\r\\n\\v]*\\w*)")
+    private val regexRawInfo = Regex(
+        "\\[(\\d{2}:\\d{2}:\\d{2})] \\[([A-Za-z0-9\\u0020！/.@#$%^&*()+=_-]*)/([A-Za-z0-9_-]*)]: ([^\\f\\r\\n\\v]*\\w*)"
+    )
 
     override fun parseToBareInfo(raw: String): Info? {
         val matcher = regexRawInfo.toPattern().matcher(raw)
@@ -15,9 +15,8 @@ open class BuiltinParser : MinecraftParser() {
         return Info(matcher.group(4), matcher.group(2), level)
     }
 
-
     // Done (6.343s)! For help, type "help"
-    private val regexServerStarted = Regex("Done \\(([0-9.]*)s\\)\\! For help\\, type \\\"help\\\"")
+    private val regexServerStarted = Regex("Done \\(([0-9.]*)s\\)! For help, type \"help\"")
 
     override fun parseServerStartedInfo(raw: String): ServerStartedInfo? {
         val matcher = regexServerStarted.toPattern().matcher(raw)
@@ -25,7 +24,6 @@ open class BuiltinParser : MinecraftParser() {
         val time = matcher.group(1).toDouble()
         return ServerStartedInfo(time)
     }
-
 
     private val regexPlayerInfo = Regex("<([0-9A-Za-z_]*)> ([^\\n\\r]*)")
 
@@ -37,7 +35,6 @@ open class BuiltinParser : MinecraftParser() {
         return PlayerInfo(player = player, content = content, isNotSecure = raw.contains("[Not Secure] "))
     }
 
-
     private val regexRconInfo = Regex("RCON running on ([0-9.]+):([0-9]+)")
 
     override fun parseRconStartInfo(raw: String): RconInfo? {
@@ -47,9 +44,7 @@ open class BuiltinParser : MinecraftParser() {
         return RconInfo(rconPort.toInt())
     }
 
-
-    private val regexServerOverload =
-        Regex("Can't keep up! Is the server overloaded\\? Running ([0-9]*)ms or ([0-9]*) ticks behind")
+    private val regexServerOverload = Regex("Can't keep up! Is the server overloaded\\? Running ([0-9]*)ms or ([0-9]*) ticks behind")
 
     override fun parseServerOverloadInfo(raw: String): ServerOverloadInfo? {
         val matcher = regexServerOverload.toPattern().matcher(raw)
@@ -58,7 +53,6 @@ open class BuiltinParser : MinecraftParser() {
         val ticks = matcher.group(2).toLong()
         return ServerOverloadInfo(ticks, timeMillis)
     }
-
 
     private val regexServerStarting = Regex("Starting minecraft server version ([a-zA-Z0-9_.-]*)")
 
@@ -69,7 +63,6 @@ open class BuiltinParser : MinecraftParser() {
         return ServerStartingInfo(version)
     }
 
-
     // ZhuRuoLing joined the game
     private val regexPlayerJoin = Regex("([0-9A-Za-z_]*) joined the game")
 
@@ -79,7 +72,6 @@ open class BuiltinParser : MinecraftParser() {
         val player = m.group(1)
         return PlayerJoinInfo(player)
     }
-
 
     // ZhuRuoLing left the game
     private val regexPlayerLeft = Regex("([0-9A-Za-z_]*) left the game")
@@ -93,5 +85,4 @@ open class BuiltinParser : MinecraftParser() {
 
     override fun parseServerStoppingInfo(raw: String): ServerStoppingInfo? =
         if (raw == "Stopping server") ServerStoppingInfo() else null
-
 }

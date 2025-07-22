@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package icu.takeneko.omms.crystal.event
 
 interface Event

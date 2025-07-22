@@ -35,7 +35,9 @@ object PluginManagerr : Manager<PluginInstance>(
         if (it.endsWith(".jar")) {
             pluginFileUrlList += File(joinFilePaths("plugins", it)).toURI().toURL()
             true
-        } else false
+        } else {
+            false
+        }
     },
     scanFolder = "plugins",
     initializer = {
@@ -45,9 +47,11 @@ object PluginManagerr : Manager<PluginInstance>(
                 logger.info("Plugin ${this.pluginMetadata.id} state changed from $before to $after")
                 logger.info(
                     "[DEBUG] Plugin ${
-                        if ((this.pluginMetadata.id == null) or (this.pluginMetadata.version == null))
+                        if ((this.pluginMetadata.id == null) or (this.pluginMetadata.version == null)) {
                             "...${it.subSequence(it.length - 40, it.length)}"
-                        else "${pluginMetadata.id}@${pluginMetadata.version}"
+                        } else {
+                            "${pluginMetadata.id}@${pluginMetadata.version}"
+                        }
                     } state changed from $before to $after"
                 )
             }
@@ -132,10 +136,11 @@ private fun Manager<String, PluginInstance>.checkRequirements() {
                 it.value.forEach { requirement ->
                     appendLine(
                         "\t${it.key.id} ${it.key.version} requires ${requirement.id} ${requirement.requirement}, ${
-                            if (requirement.id !in dependencyMap)
+                            if (requirement.id !in dependencyMap) {
                                 "which is missing!"
-                            else
+                            } else {
                                 "but only the wrong version are present: ${dependencyMap[requirement.id]}!"
+                            }
                         }"
                     )
                 }
@@ -144,10 +149,11 @@ private fun Manager<String, PluginInstance>.checkRequirements() {
             unsatisfied.forEach { entry ->
                 entry.value.forEach {
                     appendLine(
-                        if (it.id !in dependencyMap)
+                        if (it.id !in dependencyMap) {
                             "\tInstall ${it.id} ${it.requirement}."
-                        else
+                        } else {
                             "\tReplace ${it.id} ${dependencyMap[it.id]} with ${it.id} ${it.requirement}"
+                        }
                     )
                 }
             }

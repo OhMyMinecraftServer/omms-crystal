@@ -1,6 +1,6 @@
 package icu.takeneko.omms.crystal.i18n
 
-import icu.takeneko.omms.crystal.main.SharedConstants
+import icu.takeneko.omms.crystal.main.CrystalServer
 import java.util.*
 
 val builtinTranslationLanguages = listOf("en_us", "zh_cn")
@@ -52,7 +52,7 @@ object TranslateManager {
 }
 
 fun <R> withTranslateContext(namespace: String, func: TranslateContext.() -> R): R =
-    func(TranslateContext(SharedConstants.language, namespace))
+    func(TranslateContext(CrystalServer.config.lang, namespace))
 
 class TranslateContext(private val language: String, private val namespace: String) {
     fun tr(t: String, vararg element: Any) = translate(t, *element)

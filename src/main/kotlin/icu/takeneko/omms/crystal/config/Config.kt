@@ -57,5 +57,4 @@ object Config {
         configFile.createFile()
         configFile.writeText(s)
     }
-
 }

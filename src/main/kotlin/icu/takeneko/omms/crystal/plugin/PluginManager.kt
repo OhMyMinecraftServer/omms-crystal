@@ -13,4 +13,16 @@ object PluginManager : Manager<PluginContainer>("plugins") {
     override fun createInstance(path: Path): PluginContainer {
         TODO("Not yet implemented")
     }
+
+    fun loadAll() {
+        TODO()
+    }
+
+    fun reload(id: String) {
+        TODO()
+    }
+
+    fun reloadAll() {
+        TODO()
+    }
 }

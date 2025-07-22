@@ -5,7 +5,6 @@ import icu.takeneko.omms.crystal.plugin.pluginRequirementMatches
 import icu.takeneko.omms.crystal.plugin.versionNamePattern
 import java.lang.module.ModuleDescriptor
 
-
 class PluginDependencyRequirement {
     @SerializedName(value = "id", alternate = ["pluginId"])
     lateinit var id: String

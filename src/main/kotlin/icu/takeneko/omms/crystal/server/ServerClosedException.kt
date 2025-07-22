@@ -1,4 +1,3 @@
 package icu.takeneko.omms.crystal.server
 
-class ServerClosedException : Exception() {
-}
+class ServerClosedException : Exception()

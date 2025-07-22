@@ -56,5 +56,4 @@ data class ConfigData(
         val port: Int = 25575,
         val password: String = ""
     )
-
 }

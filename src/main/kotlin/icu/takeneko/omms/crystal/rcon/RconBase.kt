@@ -45,7 +45,7 @@ abstract class RconBase(val description: String?) : Runnable {
                         )
                         this.thread!!.interrupt()
                     }
-                } catch (ignored: InterruptedException) {
+                } catch (_: InterruptedException) {
                 }
             }
 
@@ -67,5 +67,4 @@ abstract class RconBase(val description: String?) : Runnable {
             }
         }
     }
-
 }

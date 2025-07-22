@@ -11,13 +11,14 @@ import icu.takeneko.omms.crystal.permission.Permission
 import icu.takeneko.omms.crystal.permission.PermissionManager
 import icu.takeneko.omms.crystal.permission.isAtLeast
 import icu.takeneko.omms.crystal.plugin.PluginManager
-import icu.takeneko.omms.crystal.text.Color
-import icu.takeneko.omms.crystal.text.Text
-import icu.takeneko.omms.crystal.text.TextGroup
 import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import icu.takeneko.omms.crystal.util.command.*
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.Style
 import kotlin.io.path.Path
 
+@Suppress("LoggingSimilarMessage")
 object BuiltinCommand {
 
     private val logger = createLogger("Command")
@@ -43,8 +44,9 @@ object BuiltinCommand {
                         wordArgument("permissionLevel").requires {
                             if (it.from == CommandSource.PLAYER) {
                                 it.permissionLevel!!.isAtLeast(Permission.OWNER)
-                            } else
+                            } else {
                                 true
+                            }
                         }.executes {
                             PermissionManager[getWord(it, "player")] =
                                 Permission.from(getWord(it, "permissionLevel"))
@@ -52,10 +54,11 @@ object BuiltinCommand {
                         }
                     )
                     .requires {
-                        if (it.from == CommandSource.PLAYER)
+                        if (it.from == CommandSource.PLAYER) {
                             it.permissionLevel!!.isAtLeast(Permission.OWNER)
-                        else
+                        } else {
                             true
+                        }
                     }.executes {
                         PermissionManager[getWord(it, "player")] = PermissionManager.defaultLevel
                         1
@@ -64,10 +67,11 @@ object BuiltinCommand {
         ).then(
             literal("delete").then(
                 wordArgument("player").requires {
-                    if (it.from == CommandSource.PLAYER)
+                    if (it.from == CommandSource.PLAYER) {
                         it.permissionLevel!!.isAtLeast(Permission.OWNER)
-                    else
+                    } else {
                         true
+                    }
                 }.executes {
                     PermissionManager.remove(getWord(it, "player"))
 
@@ -78,35 +82,40 @@ object BuiltinCommand {
             literal("list").executes {
                 val permissionStorage = PermissionManager.getPermissionStorage()
 
-                val textOwner = TextGroup(
-                    Text("  Owners: ").withColor(Color.LIGHT_PURPLE),
-                    Text(permissionStorage.owner.joinToString(separator = ", ")).withColor(Color.RESET)
-                )
-                val textAdmin = TextGroup(
-                    Text("  Admins: ").withColor(Color.YELLOW),
-                    Text(permissionStorage.admin.joinToString(separator = ", ")).withColor(Color.RESET)
-                )
-                val textUser = TextGroup(
-                    Text("  Users: ").withColor(Color.AQUA),
-                    Text(permissionStorage.user.joinToString(separator = ", ")).withColor(Color.RESET)
-                )
-                val textGuest = TextGroup(
-                    Text("  Guests: ").withColor(Color.BLUE),
-                    Text(permissionStorage.guest.joinToString(separator = ", ")).withColor(Color.RESET)
-                )
-                it.source.sendFeedback(Text("Permissions:"))
-                it.source.sendFeedback(textOwner)
-                it.source.sendFeedback(textAdmin)
-                it.source.sendFeedback(textUser)
-                it.source.sendFeedback(textGuest)
+                val owner = Component.text().append(
+                    Component.text("  Owners: ").style(Style.style(NamedTextColor.LIGHT_PURPLE)),
+                    Component.text(permissionStorage.owner.joinToString(separator = ", "))
+                ).build()
+
+                val admin = Component.text().append(
+                    Component.text("  Admins: ").style(Style.style(NamedTextColor.YELLOW)),
+                    Component.text(permissionStorage.admin.joinToString(separator = ", "))
+                ).build()
+
+                val user = Component.text().append(
+                    Component.text("  Users: ").style(Style.style(NamedTextColor.AQUA)),
+                    Component.text(permissionStorage.user.joinToString(separator = ", "))
+                ).build()
+
+                val guest = Component.text().append(
+                    Component.text("  Guests: ").style(Style.style(NamedTextColor.BLUE)),
+                    Component.text(permissionStorage.guest.joinToString(separator = ", "))
+                ).build()
+
+                it.source.sendFeedback(Component.text("Permissions:"))
+                it.source.sendFeedback(owner)
+                it.source.sendFeedback(admin)
+                it.source.sendFeedback(user)
+                it.source.sendFeedback(guest)
                 1
             }
         ).then(
             literal("save").requires {
-                if (it.from == CommandSource.PLAYER)
+                if (it.from == CommandSource.PLAYER) {
                     it.permissionLevel!!.isAtLeast(Permission.OWNER)
-                else
+                } else {
                     true
+                }
             }.executes {
                 PermissionManager.save()
                 1
@@ -115,10 +124,11 @@ object BuiltinCommand {
 
     val startCommand: LiteralArgumentBuilder<CommandSourceStack> =
         literal(Config.config.commandPrefix + "start").requires {
-            if (it.from == CommandSource.PLAYER)
+            if (it.from == CommandSource.PLAYER) {
                 it.permissionLevel!!.isAtLeast(Permission.ADMIN)
-            else
+            } else {
                 true
+            }
         }.executes {
             CrystalServer.postEvent(
                 StartServerEvent(Config.config.launchCommand, Path(Config.config.workingDirectory))
@@ -128,10 +138,11 @@ object BuiltinCommand {
 
     val stopCommand: LiteralArgumentBuilder<CommandSourceStack> = literal(Config.config.commandPrefix + "stop").then(
         literal("force").requires {
-            if (it.from == CommandSource.PLAYER)
+            if (it.from == CommandSource.PLAYER) {
                 it.permissionLevel!!.isAtLeast(Permission.ADMIN)
-            else
+            } else {
                 true
+            }
         }.executes {
             CrystalServer.postEvent(
                 StopServerEvent(
@@ -142,10 +153,11 @@ object BuiltinCommand {
             1
         }
     ).requires {
-        if (it.from == CommandSource.PLAYER)
+        if (it.from == CommandSource.PLAYER) {
             it.permissionLevel!!.isAtLeast(Permission.ADMIN)
-        else
+        } else {
             true
+        }
     }.executes {
         CrystalServer.postEvent(
             StopServerEvent(
@@ -184,28 +196,36 @@ object BuiltinCommand {
 //        PluginManager.unload(getWord(it,"plugin"))
 //        1
 //    }))
-        .then(literal("reload").then(wordArgument("plugin").requires {
-            if (it.from == CommandSource.PLAYER)
-                it.permissionLevel!!.isAtLeast(Permission.ADMIN)
-            else
-                true
-        }.executes {
-            logger.warn("Plugin reloading is highly experimental, in some cases it can cause severe problems.")
-            logger.warn("Reloading plugin ${getWord(it, "plugin")}!")
-            PluginManager.reload(getWord(it, "plugin"))
-            1
-        }))
-        .then(literal("reloadAll").requires {
-            if (it.from == CommandSource.PLAYER)
-                it.permissionLevel!!.isAtLeast(Permission.ADMIN)
-            else
-                true
-        }.executes {
-            logger.warn("Plugin reloading is highly experimental, in some cases it can cause severe problems.")
-            logger.warn("Reloading all plugins!")
-            PluginManager.reloadAllPlugins()
-            1
-        })
+        .then(
+            literal("reload").then(
+                wordArgument("plugin").requires {
+                    if (it.from == CommandSource.PLAYER) {
+                        it.permissionLevel!!.isAtLeast(Permission.ADMIN)
+                    } else {
+                        true
+                    }
+                }.executes {
+                    logger.warn("Plugin reloading is highly experimental, in some cases it can cause severe problems.")
+                    logger.warn("Reloading plugin ${getWord(it, "plugin")}!")
+                    PluginManager.reload(getWord(it, "plugin"))
+                    1
+                }
+            )
+        )
+        .then(
+            literal("reloadAll").requires {
+                if (it.from == CommandSource.PLAYER) {
+                    it.permissionLevel!!.isAtLeast(Permission.ADMIN)
+                } else {
+                    true
+                }
+            }.executes {
+                logger.warn("Plugin reloading is highly experimental, in some cases it can cause severe problems.")
+                logger.warn("Reloading all plugins!")
+                PluginManager.reloadAll()
+                1
+            }
+        )
 
     private val commands = listOf(
         helpCommand,

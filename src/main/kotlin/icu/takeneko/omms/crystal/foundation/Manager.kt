@@ -5,7 +5,7 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
-abstract class Manager<K: Keyable>(private val scanFolder: String) {
+abstract class Manager<K : Keyable>(private val scanFolder: String) {
     val map: MutableMap<String, K> = mutableMapOf()
     private val fileList = mutableListOf<String>()
 
@@ -26,5 +26,5 @@ abstract class Manager<K: Keyable>(private val scanFolder: String) {
 
     abstract fun shouldAcceptFile(path: Path): Boolean
 
-    abstract fun createInstance(path: Path):K
+    abstract fun createInstance(path: Path): K
 }

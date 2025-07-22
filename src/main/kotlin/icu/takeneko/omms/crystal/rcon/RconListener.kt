@@ -62,7 +62,7 @@ class RconListener(private val listener: ServerSocket, private val password: Str
 
         fun create(): RconListener? {
             val hostname = "0.0.0.0"
-            val rconPort: Int = Config.config.rconServer.port //rcon port
+            val rconPort: Int = Config.config.rconServer.port // rcon port
             if (0 < rconPort && 65535 >= rconPort) {
                 val rconPassword: String = Config.config.rconServer.password
                 if (rconPassword.isEmpty()) {

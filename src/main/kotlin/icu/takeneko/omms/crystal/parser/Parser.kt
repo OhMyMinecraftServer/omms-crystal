@@ -12,14 +12,14 @@ abstract class MinecraftParser {
     abstract fun parseServerStoppingInfo(raw: String): ServerStoppingInfo?
 }
 
-class UnableToParseException : UnsupportedOperationException()
+class UnableToParseException(message: String) : UnsupportedOperationException(message)
 
 object ParserManager {
     private val parser = mutableMapOf<String, MinecraftParser>()
 
     fun registerParser(id: String, minecraftParser: MinecraftParser, override: Boolean = false) {
         if (parser.containsKey(id) and !override) {
-            throw java.lang.UnsupportedOperationException("This parser($minecraftParser) already exists.")
+            throw UnableToParseException("This parser($minecraftParser) already exists.")
         } else {
             parser[id] = minecraftParser
         }

@@ -26,10 +26,8 @@ class EventBus(
     fun getSubscribers(clazz: Class<out Event>): MutableMap<EventPriority, MutableList<EventConsumer>> =
         eventSubscribers.computeIfAbsent(clazz) { mutableMapOf() }
 
-
     fun getSubscribers(clazz: Class<out Event>, priority: EventPriority): MutableList<EventConsumer> =
         getSubscribers(clazz).computeIfAbsent(priority) { mutableListOf() }
-
 
     fun register(obj: Any) {
         if (obj !is Class<*>) {
@@ -58,28 +56,32 @@ class EventBus(
         normal.forEach { (method, priority) ->
             val handle = lookup.unreflect(method)
             val eventClass = extractEventClass(handle)
-            getSubscribers(eventClass, priority).add(NoSuspendEventConsumer<Event> {
-                if (isStatic) {
-                    handle.invoke(this)
-                    return@NoSuspendEventConsumer
+            getSubscribers(eventClass, priority).add(
+                NoSuspendEventConsumer<Event> {
+                    if (isStatic) {
+                        handle.invoke(this)
+                        return@NoSuspendEventConsumer
+                    }
+                    handle.invoke(instance, this)
                 }
-                handle.invoke(instance, this)
-            })
+            )
         }
 
         suspended.forEach { (method, priority) ->
             val handle = lookup.unreflect(method)
             val eventClass = extractEventClass(handle)
-            getSubscribers(eventClass, priority).add(SuspendEventConsumer<Event> {
-                if (isStatic) {
-                    return@SuspendEventConsumer kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn {
-                        handle.invoke(this, it)
+            getSubscribers(eventClass, priority).add(
+                SuspendEventConsumer<Event> {
+                    if (isStatic) {
+                        return@SuspendEventConsumer kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn {
+                            handle.invoke(this, it)
+                        }
+                    }
+                    kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn {
+                        handle.invoke(instance, this, it)
                     }
                 }
-                kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn {
-                    handle.invoke(instance, this, it)
-                }
-            })
+            )
         }
     }
 
@@ -102,16 +104,16 @@ class EventBus(
                         if (isStatic) {
                             logger.error(
                                 "Expected @SubscribeEvent method {} to be static because register()" +
-                                        " was called with a class type. Either make the method static," +
-                                        " or call register() with an instance of {}.",
+                                    " was called with a class type. Either make the method static," +
+                                    " or call register() with an instance of {}.",
                                 it,
                                 clazz
                             )
                         } else {
                             logger.error(
                                 "Expected @SubscribeEvent method {} to NOT be static because " +
-                                        "register() was called with an instance type. " +
-                                        "Either make the method non-static, or call register({}.class).",
+                                    "register() was called with an instance type. " +
+                                    "Either make the method non-static, or call register({}.class).",
                                 it,
                                 clazz.simpleName
                             )
@@ -182,6 +184,4 @@ class EventBus(
             }
         }
     }
-
-
 }

@@ -60,7 +60,7 @@ class ServerThreadDaemon(
             LockSupport.parkNanos(1000)
         }
         val exitCode = process!!.exitValue()
-        //logger.info("Server exited with exit code $exitCode.")
+        // logger.info("Server exited with exit code $exitCode.")
 
         CrystalServer.destroyDaemon()
         CrystalServer.postEvent(ServerStoppedEvent(exitCode, actionHost))
