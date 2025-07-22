@@ -1,7 +1,7 @@
 package icu.takeneko.omms.crystal.console
 
 import icu.takeneko.omms.crystal.command.CommandManager
-import icu.takeneko.omms.crystal.config.Config
+import icu.takeneko.omms.crystal.config.ConfigManager
 import icu.takeneko.omms.crystal.main.CrystalServer.serverThreadDaemon
 import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import icu.takeneko.omms.crystal.util.command.CommandSource
@@ -24,7 +24,7 @@ class ConsoleHandler : Thread("ConsoleHandler") {
         while (true) {
             try {
                 val str = lineReader.readLine(">")
-                if (str.startsWith(Config.config.commandPrefix)) {
+                if (str.startsWith(ConfigManager.config.commandPrefix)) {
                     try {
                         CommandManager.execute(str, CommandSourceStack(CommandSource.CONSOLE))
                     } catch (e: Exception) {

@@ -1,6 +1,6 @@
 package icu.takeneko.omms.crystal.server
 
-import icu.takeneko.omms.crystal.config.Config
+import icu.takeneko.omms.crystal.config.ConfigManager
 import icu.takeneko.omms.crystal.util.file.FileUtil.joinFilePaths
 import java.io.File
 import java.io.FileNotFoundException
@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 
 object ServerProperties {
-    private val file = File(joinFilePaths(Config.config.workingDirectory, "server.properties"))
+    private val file = File(joinFilePaths(ConfigManager.config.workingDirectory, "server.properties"))
 
     private val lazyProps = lazy { loadFromDisk() }
 

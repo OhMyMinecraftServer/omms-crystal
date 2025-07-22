@@ -1,6 +1,6 @@
 package icu.takeneko.omms.crystal.rcon
 
-import icu.takeneko.omms.crystal.config.Config
+import icu.takeneko.omms.crystal.config.ConfigManager
 import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import org.slf4j.Logger
 import java.io.IOException
@@ -62,9 +62,9 @@ class RconListener(private val listener: ServerSocket, private val password: Str
 
         fun create(): RconListener? {
             val hostname = "0.0.0.0"
-            val rconPort: Int = Config.config.rconServer.port // rcon port
+            val rconPort: Int = ConfigManager.config.rconServer.port // rcon port
             if (0 < rconPort && 65535 >= rconPort) {
-                val rconPassword: String = Config.config.rconServer.password
+                val rconPassword: String = ConfigManager.config.rconServer.password
                 if (rconPassword.isEmpty()) {
                     logger.warn("No rcon password set in server.properties, rcon disabled!")
                     return null

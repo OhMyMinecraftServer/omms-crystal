@@ -7,7 +7,7 @@ import icu.takeneko.omms.crystal.command.BuiltinCommand.permissionCommand
 import icu.takeneko.omms.crystal.command.BuiltinCommand.pluginCommand
 import icu.takeneko.omms.crystal.command.BuiltinCommand.startCommand
 import icu.takeneko.omms.crystal.command.BuiltinCommand.stopCommand
-import icu.takeneko.omms.crystal.config.Config
+import icu.takeneko.omms.crystal.config.ConfigManager
 import icu.takeneko.omms.crystal.console.ConsoleHandler
 import icu.takeneko.omms.crystal.event.Event
 import icu.takeneko.omms.crystal.event.EventBus
@@ -56,7 +56,7 @@ object CrystalServer : CoroutineScope, ActionHost {
     val logger = createLogger("CrystalServer")
 
     val config
-        get() = Config.config
+        get() = ConfigManager.config
 
     var rconListener: RconListener? = null
 
@@ -89,7 +89,7 @@ object CrystalServer : CoroutineScope, ActionHost {
             )
 
             runCatching {
-                if (Config.load()) {
+                if (ConfigManager.load()) {
                     val serverPath = Path(joinFilePaths("server"))
                     if (!serverPath.exists() || !serverPath.isDirectory()) {
                         Files.createDirectory(serverPath)
@@ -140,7 +140,7 @@ object CrystalServer : CoroutineScope, ActionHost {
 
     @SubscribeEvent
     fun onServerStopping(e: ServerStoppingEvent) {
-        if (Config.config.rconClient.enabled) {
+        if (ConfigManager.config.rconClient.enabled) {
             RconClient.close()
         }
     }
@@ -193,7 +193,7 @@ object CrystalServer : CoroutineScope, ActionHost {
 
     @SubscribeEvent
     fun onPlayerInfo(e: PlayerChatEvent) {
-        if (!e.content.startsWith(Config.config.commandPrefix)) return
+        if (!e.content.startsWith(ConfigManager.config.commandPrefix)) return
 
         val commandSourceStack =
             CommandSourceStack(CommandSource.PLAYER, e.info.player, PermissionManager[e.info.player])

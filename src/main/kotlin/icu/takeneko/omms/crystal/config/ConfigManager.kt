@@ -8,24 +8,24 @@ import icu.takeneko.omms.crystal.util.file.decodeFromString
 import icu.takeneko.omms.crystal.util.file.encodeToString
 import kotlin.io.path.*
 
-object Config {
+object ConfigManager {
     private val logger = createLogger("Config")
 
     lateinit var config: ConfigData
 
-    private val configFile = Path("./config.yaml")
+    private val file = Path("./config.yaml")
 
     fun load(): Boolean {
         var isInit = false
 
-        if (!configFile.exists()) {
+        if (!file.exists()) {
             logger.error("Configuration is missing, creating default config.")
             isInit = true
             config = ConfigData()
             write()
         }
         try {
-            config = configFile.inputStream().bufferedReader().use {
+            config = file.inputStream().bufferedReader().use {
                 YAML.decodeFromString(it.readText())
             }
             DebugOptions.parse(config.debugOptions)
@@ -53,8 +53,8 @@ object Config {
 
     private fun write() {
         val s = YAML.encodeToString(config)
-        configFile.deleteIfExists()
-        configFile.createFile()
-        configFile.writeText(s)
+        file.deleteIfExists()
+        file.createFile()
+        file.writeText(s)
     }
 }

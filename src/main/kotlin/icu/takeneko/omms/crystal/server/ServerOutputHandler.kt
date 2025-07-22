@@ -1,6 +1,6 @@
 package icu.takeneko.omms.crystal.server
 
-import icu.takeneko.omms.crystal.config.Config
+import icu.takeneko.omms.crystal.config.ConfigManager
 import icu.takeneko.omms.crystal.event.Event
 import icu.takeneko.omms.crystal.event.server.*
 import icu.takeneko.omms.crystal.main.CrystalServer
@@ -23,8 +23,8 @@ class ServerOutputHandler(private val serverProcess: Process) : Thread("ServerOu
 
     private lateinit var input: InputStream
 
-    private val parser = ParserManager.getParser(Config.config.serverType)
-        ?: error("Specified parser ${Config.config.serverType} does not exist.")
+    private val parser = ParserManager.getParser(ConfigManager.config.serverType)
+        ?: error("Specified parser ${ConfigManager.config.serverType} does not exist.")
 
     private val strategies: List<(String) -> Event?> = listOf(
         { line -> parser.parseServerStartingInfo(line)?.let { ServerStartingEvent(serverProcess.pid(), it.version) } },
@@ -40,7 +40,7 @@ class ServerOutputHandler(private val serverProcess: Process) : Thread("ServerOu
     override fun run() {
         try {
             input = serverProcess.inputStream
-            val reader = input.bufferedReader(Charset.forName(Config.config.encoding))
+            val reader = input.bufferedReader(Charset.forName(ConfigManager.config.encoding))
             while (serverProcess.isAlive) {
                 try {
                     LockSupport.parkNanos(10)
