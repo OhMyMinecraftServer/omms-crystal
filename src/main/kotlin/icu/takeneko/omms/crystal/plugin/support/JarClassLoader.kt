@@ -1,7 +1,6 @@
 package icu.takeneko.omms.crystal.plugin.support
 
 import org.objectweb.asm.ClassReader
-import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -17,32 +16,32 @@ class JarClassLoader(parent: ClassLoader) : URLClassLoader(arrayOf(), parent) {
     }
 
     fun scanClasses(file: File): List<ScanData> {
-        val scanDatas = mutableListOf<ScanData>()
-        ZipFile(file).use {
-            for (entry in it.entries().asSequence()) {
+        val scanData = mutableListOf<ScanData>()
+        ZipFile(file).use { zip ->
+            for (entry in zip.entries().asSequence()) {
                 if (entry.name.endsWith(".class")) {
-                    val bytes = it.getInputStream(entry).readBytes()
+                    val bytes = zip.getInputStream(entry).readBytes()
                     val classNode = ClassNode().apply {
                         ClassReader(bytes).accept(this@apply, 0)
                     }
-                    scanDatas += ScanData(
+                    scanData += ScanData(
                         entry.name.replace("/", "."),
-                        classNode.visibleAnnotations.map {
+                        classNode.visibleAnnotations.map { annotation ->
                             AnnotationData(
-                                it.desc,
-                                it.values.sliceAnnotationEntries()
+                                annotation.desc,
+                                annotation.values.sliceAnnotationEntries()
                             )
                         },
-                        classNode.methods.associate {
+                        classNode.methods.associate { method ->
                             MethodData(
-                                it.access,
+                                method.access,
                                 classNode.name,
-                                it.name,
-                                it.desc
-                            ) to it.visibleAnnotations.map {
+                                method.name,
+                                method.desc
+                            ) to method.visibleAnnotations.map { annotation ->
                                 AnnotationData(
-                                    it.desc,
-                                    it.values.sliceAnnotationEntries()
+                                    annotation.desc,
+                                    annotation.values.sliceAnnotationEntries()
                                 )
                             }
                         }
@@ -50,7 +49,7 @@ class JarClassLoader(parent: ClassLoader) : URLClassLoader(arrayOf(), parent) {
                 }
             }
         }
-        return scanDatas
+        return scanData
     }
 
     private fun List<Any>?.sliceAnnotationEntries(): Map<String, Any> {
