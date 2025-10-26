@@ -1,8 +1,9 @@
 package icu.takeneko.omms.crystal.parser
 
+import icu.takeneko.omms.crystal.crystalspi.ICrystalServerInfoParser
 import org.slf4j.event.Level
 
-open class BuiltinParser : MinecraftParser() {
+open class BuiltinParser : ICrystalServerInfoParser {
 
     private val regexRawInfo = Regex(
         "\\[(\\d{2}:\\d{2}:\\d{2})] \\[([A-Za-z0-9\\u0020！/.@#$%^&*()+=_-]*)/([A-Za-z0-9_-]*)]: ([^\\f\\r\\n\\v]*\\w*)"
@@ -85,4 +86,6 @@ open class BuiltinParser : MinecraftParser() {
 
     override fun parseServerStoppingInfo(raw: String): ServerStoppingInfo? =
         if (raw == "Stopping server") ServerStoppingInfo() else null
+
+    override fun key(): String = "vanilla"
 }

@@ -1,7 +1,6 @@
 package icu.takeneko.omms.crystal.util.command
 
-import icu.takeneko.omms.crystal.main.CrystalServer
-import icu.takeneko.omms.crystal.main.CrystalServer.serverThreadDaemon
+import icu.takeneko.omms.crystal.CrystalServer
 import icu.takeneko.omms.crystal.permission.Permission
 import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import net.kyori.adventure.text.TextComponent
@@ -14,7 +13,6 @@ class CommandSourceStack(val from: CommandSource, val player: String? = null, va
         for (component in text) {
             when (from) {
                 CommandSource.PLAYER -> {
-                    assert(serverThreadDaemon != null)
                     CrystalServer.input("tellraw $player ${GsonComponentSerializer.gson().serialize(component)}")
                 }
 

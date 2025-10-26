@@ -1,5 +1,7 @@
 package icu.takeneko.omms.crystal.event
 
+import icu.takeneko.omms.crystal.util.LoggerUtil
+import icu.takeneko.omms.crystal.util.constants.DebugOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
@@ -14,7 +16,7 @@ class EventBus(
     private val coroutineScope: CoroutineScope,
     private val eventBaseClass: Class<out Any> = Event::class.java
 ) {
-    private val logger = LoggerFactory.getLogger("EventBus")
+    private val logger = LoggerUtil.createLogger("EventBus", DebugOptions.eventDebug())
 
     private val lookup = MethodHandles.lookup()
 
@@ -39,8 +41,8 @@ class EventBus(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun extractEventClass(mt: MethodHandle): Class<out Event> {
-        val arg = mt.type().parameterType(0)
+    private fun extractEventClass(mt: MethodHandle, isStatic: Boolean): Class<out Event> {
+        val arg = mt.type().parameterType(if (isStatic) 0 else 1)
         if (eventBaseClass.isAssignableFrom(arg)) {
             return arg as Class<out Event>
         }
@@ -55,7 +57,7 @@ class EventBus(
     ) {
         normal.forEach { (method, priority) ->
             val handle = lookup.unreflect(method)
-            val eventClass = extractEventClass(handle)
+            val eventClass = extractEventClass(handle, isStatic)
             getSubscribers(eventClass, priority).add(
                 NoSuspendEventConsumer<Event> {
                     if (isStatic) {
@@ -69,7 +71,7 @@ class EventBus(
 
         suspended.forEach { (method, priority) ->
             val handle = lookup.unreflect(method)
-            val eventClass = extractEventClass(handle)
+            val eventClass = extractEventClass(handle, isStatic)
             getSubscribers(eventClass, priority).add(
                 SuspendEventConsumer<Event> {
                     if (isStatic) {
@@ -96,7 +98,7 @@ class EventBus(
         isStatic: Boolean
     ): Pair<List<Pair<Method, EventPriority>>, List<Pair<Method, EventPriority>>> {
         return clazz.declaredMethods
-            .filterNot { it.isAnnotationPresent(SubscribeEvent::class.java) }
+            .filter { it.isAnnotationPresent(SubscribeEvent::class.java) }
             .filter {
                 when {
                     Modifier.isStatic(it.modifiers) == isStatic -> true
@@ -104,16 +106,16 @@ class EventBus(
                         if (isStatic) {
                             logger.error(
                                 "Expected @SubscribeEvent method {} to be static because register()" +
-                                    " was called with a class type. Either make the method static," +
-                                    " or call register() with an instance of {}.",
+                                        " was called with a class type. Either make the method static," +
+                                        " or call register() with an instance of {}.",
                                 it,
                                 clazz
                             )
                         } else {
                             logger.error(
                                 "Expected @SubscribeEvent method {} to NOT be static because " +
-                                    "register() was called with an instance type. " +
-                                    "Either make the method non-static, or call register({}.class).",
+                                        "register() was called with an instance type. " +
+                                        "Either make the method non-static, or call register({}.class).",
                                 it,
                                 clazz.simpleName
                             )
@@ -160,8 +162,8 @@ class EventBus(
     }
 
     private fun validateSuitableClass(e: Class<*>) {
-        if (!eventBaseClass.isAssignableFrom(e.javaClass)) {
-            error("This bus only accepts subclasses of $eventBaseClass, which ${e.javaClass} is not.")
+        if (!eventBaseClass.isAssignableFrom(e)) {
+            error("This bus only accepts subclasses of $eventBaseClass, which $e is not.")
         }
     }
 

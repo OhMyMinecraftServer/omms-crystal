@@ -1,5 +1,6 @@
 package icu.takeneko.omms.crystal.plugin.support
 
+import icu.takeneko.omms.crystal.util.LoggerUtil
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.LoggerFactory
@@ -8,10 +9,11 @@ import java.net.URLClassLoader
 import java.util.zip.ZipFile
 
 class JarClassLoader(parent: ClassLoader) : URLClassLoader(arrayOf(), parent) {
-    private val logger = LoggerFactory.getLogger("JarClassLoader")
+    private val logger = LoggerUtil.createLogger("JarClassLoader", true)
 
     fun loadJar(file: File) {
         scanClasses(file)
+        logger.debug("Adding jar file {} to classpath", file)
         this.addURL(file.toURI().toURL())
     }
 

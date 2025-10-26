@@ -1,10 +1,11 @@
 package icu.takeneko.omms.crystal.server
 
 import icu.takeneko.omms.crystal.config.ConfigManager
+import icu.takeneko.omms.crystal.crystalspi.ICrystalServerInfoParser
 import icu.takeneko.omms.crystal.event.Event
 import icu.takeneko.omms.crystal.event.server.*
-import icu.takeneko.omms.crystal.main.CrystalServer
-import icu.takeneko.omms.crystal.parser.ParserManager
+import icu.takeneko.omms.crystal.CrystalServer
+import icu.takeneko.omms.crystal.service.CrystalServiceManager
 import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import icu.takeneko.omms.crystal.util.LoggerUtil.createLoggerWithPattern
 import org.slf4j.MarkerFactory
@@ -23,7 +24,7 @@ class ServerOutputHandler(private val serverProcess: Process) : Thread("ServerOu
 
     private lateinit var input: InputStream
 
-    private val parser = ParserManager.getParser(ConfigManager.config.serverType)
+    private val parser = CrystalServiceManager.load(ICrystalServerInfoParser::class.java)[ConfigManager.config.serverType]
         ?: error("Specified parser ${ConfigManager.config.serverType} does not exist.")
 
     private val strategies: List<(String) -> Event?> = listOf(
@@ -76,4 +77,6 @@ class ServerOutputHandler(private val serverProcess: Process) : Thread("ServerOu
     private fun parseAndDispatch(info: String) {
         strategies.firstNotNullOfOrNull { it(info) }?.let(CrystalServer::postEvent)
     }
+
+
 }

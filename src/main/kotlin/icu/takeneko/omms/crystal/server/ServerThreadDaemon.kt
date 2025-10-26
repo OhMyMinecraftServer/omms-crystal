@@ -2,7 +2,7 @@ package icu.takeneko.omms.crystal.server
 
 import icu.takeneko.omms.crystal.event.server.ServerStoppedEvent
 import icu.takeneko.omms.crystal.foundation.ActionHost
-import icu.takeneko.omms.crystal.main.CrystalServer
+import icu.takeneko.omms.crystal.CrystalServer
 import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import java.io.InputStream
 import java.io.OutputStream
@@ -12,11 +12,10 @@ import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.locks.LockSupport
 
-var serverStatus = ServerStatus.STOPPED
-
 class ServerThreadDaemon(
     private val launchCommand: String,
     private val workingDir: Path,
+    private var actionHost: ActionHost = CrystalServer
 ) : Thread("ServerThreadDaemon") {
 
     private val logger = createLogger("ServerThreadDaemon")
@@ -26,8 +25,6 @@ class ServerThreadDaemon(
     private lateinit var out: OutputStream
 
     private lateinit var input: InputStream
-
-    private var actionHost: ActionHost = CrystalServer
 
     private var process: Process? = null
 
@@ -62,7 +59,6 @@ class ServerThreadDaemon(
         val exitCode = process!!.exitValue()
         // logger.info("Server exited with exit code $exitCode.")
 
-        CrystalServer.destroyDaemon()
         CrystalServer.postEvent(ServerStoppedEvent(exitCode, actionHost))
     }
 

@@ -5,7 +5,7 @@ package icu.takeneko.omms.crystal.event.server
 import icu.takeneko.omms.crystal.event.CancellableEvent
 import icu.takeneko.omms.crystal.event.Event
 import icu.takeneko.omms.crystal.foundation.ActionHost
-import icu.takeneko.omms.crystal.main.CrystalServer
+import icu.takeneko.omms.crystal.CrystalServer
 import java.nio.file.Path
 
 class StartServerEvent(

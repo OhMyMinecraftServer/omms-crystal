@@ -1,8 +1,8 @@
 package icu.takeneko.omms.crystal.console
 
+import icu.takeneko.omms.crystal.CrystalServer
 import icu.takeneko.omms.crystal.command.CommandManager
 import icu.takeneko.omms.crystal.config.ConfigManager
-import icu.takeneko.omms.crystal.main.CrystalServer.serverThreadDaemon
 import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
 import icu.takeneko.omms.crystal.util.command.CommandSource
 import icu.takeneko.omms.crystal.util.command.CommandSourceStack
@@ -31,7 +31,7 @@ class ConsoleHandler : Thread("ConsoleHandler") {
                         logger.error(e.message)
                     }
                 } else {
-                    serverThreadDaemon?.input(str)
+                    CrystalServer.input(str)
                 }
             } catch (_: Exception) {
                 break

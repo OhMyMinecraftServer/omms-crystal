@@ -1,10 +1,11 @@
 package icu.takeneko.omms.crystal.plugin.instance
 
+import icu.takeneko.omms.crystal.event.Event
 import icu.takeneko.omms.crystal.event.EventBus
 import icu.takeneko.omms.crystal.event.PluginBusEvent
 import icu.takeneko.omms.crystal.foundation.ActionHost
 import icu.takeneko.omms.crystal.foundation.Keyable
-import icu.takeneko.omms.crystal.main.CrystalServer
+import icu.takeneko.omms.crystal.CrystalServer
 import icu.takeneko.omms.crystal.plugin.PluginState
 import icu.takeneko.omms.crystal.plugin.metadata.PluginMetadata
 import kotlinx.coroutines.CoroutineScope
@@ -24,4 +25,8 @@ abstract class PluginContainer : Keyable, ActionHost, CoroutineScope {
 
     override val coroutineContext: CoroutineContext
         get() = CrystalServer.coroutineContext
+
+    fun postEvent(e: Event) {
+        pluginEventBus.dispatch(e)
+    }
 }

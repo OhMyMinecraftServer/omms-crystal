@@ -6,7 +6,7 @@ import icu.takeneko.omms.crystal.config.ConfigManager
 import icu.takeneko.omms.crystal.event.server.StartServerEvent
 import icu.takeneko.omms.crystal.event.server.StopServerEvent
 import icu.takeneko.omms.crystal.i18n.withTranslateContext
-import icu.takeneko.omms.crystal.main.CrystalServer
+import icu.takeneko.omms.crystal.CrystalServer
 import icu.takeneko.omms.crystal.permission.Permission
 import icu.takeneko.omms.crystal.permission.PermissionManager
 import icu.takeneko.omms.crystal.permission.isAtLeast
@@ -179,64 +179,12 @@ object BuiltinCommand {
                 )
             )
 
-    val pluginCommand: LiteralArgumentBuilder<CommandSourceStack> =
-        literal(ConfigManager.config.commandPrefix + "plugin")
-//    .then(literal("load").then(wordArgument("plugin").requires {
-//        if (it.from == CommandSource.PLAYER)
-//            comparePermission(it.permissionLevel!!, Permission.ADMIN)
-//        else
-//            true
-//    }.executes {
-//        PluginManager.load(getWord(it,"plugin"))
-//        1
-//    }))
-//    .then(literal("unload").then(wordArgument("plugin").requires {
-//        if (it.from == CommandSource.PLAYER)
-//            comparePermission(it.permissionLevel!!, Permission.ADMIN)
-//        else
-//            true
-//    }.executes {
-//        PluginManager.unload(getWord(it,"plugin"))
-//        1
-//    }))
-            .then(
-                literal("reload").then(
-                    wordArgument("plugin").requires {
-                        if (it.from == CommandSource.PLAYER) {
-                            it.permissionLevel!!.isAtLeast(Permission.ADMIN)
-                        } else {
-                            true
-                        }
-                    }.executes {
-                        logger.warn("Plugin reloading is highly experimental, in some cases it can cause severe problems.")
-                        logger.warn("Reloading plugin ${getWord(it, "plugin")}!")
-                        PluginManager.reload(getWord(it, "plugin"))
-                        1
-                    }
-                )
-            )
-            .then(
-                literal("reloadAll").requires {
-                    if (it.from == CommandSource.PLAYER) {
-                        it.permissionLevel!!.isAtLeast(Permission.ADMIN)
-                    } else {
-                        true
-                    }
-                }.executes {
-                    logger.warn("Plugin reloading is highly experimental, in some cases it can cause severe problems.")
-                    logger.warn("Reloading all plugins!")
-                    PluginManager.reloadAll()
-                    1
-                }
-            )
-
     private val commands = listOf(
         helpCommand,
         permissionCommand,
         startCommand,
         stopCommand,
-        executeCommand,
-        pluginCommand
+        executeCommand
     )
 
     fun registerBuiltinCommands() {

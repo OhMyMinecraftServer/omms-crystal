@@ -1,18 +1,12 @@
 package icu.takeneko.omms.crystal.main
 
-import icu.takeneko.omms.crystal.main.CrystalServer.consoleHandler
-import icu.takeneko.omms.crystal.main.CrystalServer.rconListener
-import icu.takeneko.omms.crystal.permission.PermissionManager
-import kotlin.concurrent.thread
+import icu.takeneko.omms.crystal.CrystalServer
+import java.util.concurrent.locks.LockSupport
 
-fun exit() {
-    thread(start = true, name = "ShutdownThread") {
-        // PluginManager.unloadAll()
-        rconListener?.stop()
-        PermissionManager.save()
-        // TODO
-        // eventLoop.exit()
-        // eventDispatcher.shutdown()
-        consoleHandler.interrupt()
+fun main(args: Array<String>) {
+    CrystalServer.bootstrap(args)
+    CrystalServer.run()
+    while (CrystalServer.shouldKeepRunning) {
+        LockSupport.parkNanos(1000)
     }
 }

@@ -1,19 +1,29 @@
-package icu.takeneko.omms.crystal.main
+package icu.takeneko.omms.crystal
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException
-import icu.takeneko.omms.crystal.command.*
-import icu.takeneko.omms.crystal.command.BuiltinCommand.helpCommand
-import icu.takeneko.omms.crystal.command.BuiltinCommand.permissionCommand
-import icu.takeneko.omms.crystal.command.BuiltinCommand.pluginCommand
-import icu.takeneko.omms.crystal.command.BuiltinCommand.startCommand
-import icu.takeneko.omms.crystal.command.BuiltinCommand.stopCommand
+import icu.takeneko.omms.crystal.command.BuiltinCommand
+import icu.takeneko.omms.crystal.command.CommandHelpManager
+import icu.takeneko.omms.crystal.command.CommandManager
 import icu.takeneko.omms.crystal.config.ConfigManager
 import icu.takeneko.omms.crystal.console.ConsoleHandler
+import icu.takeneko.omms.crystal.crystalspi.ICrystalServerInfoParser
+import icu.takeneko.omms.crystal.crystalspi.ICrystalServerLauncher
 import icu.takeneko.omms.crystal.event.Event
 import icu.takeneko.omms.crystal.event.EventBus
+import icu.takeneko.omms.crystal.event.EventPriority
 import icu.takeneko.omms.crystal.event.PluginBusEvent
 import icu.takeneko.omms.crystal.event.SubscribeEvent
-import icu.takeneko.omms.crystal.event.server.*
+import icu.takeneko.omms.crystal.event.server.CrystalSetupEvent
+import icu.takeneko.omms.crystal.event.server.PlayerChatEvent
+import icu.takeneko.omms.crystal.event.server.PlayerJoinEvent
+import icu.takeneko.omms.crystal.event.server.RconServerStartedEvent
+import icu.takeneko.omms.crystal.event.server.RegisterCommandEvent
+import icu.takeneko.omms.crystal.event.server.ServerStartedEvent
+import icu.takeneko.omms.crystal.event.server.ServerStartingEvent
+import icu.takeneko.omms.crystal.event.server.ServerStoppedEvent
+import icu.takeneko.omms.crystal.event.server.ServerStoppingEvent
+import icu.takeneko.omms.crystal.event.server.StartServerEvent
+import icu.takeneko.omms.crystal.event.server.StopServerEvent
 import icu.takeneko.omms.crystal.foundation.ActionHost
 import icu.takeneko.omms.crystal.i18n.TranslateManager
 import icu.takeneko.omms.crystal.permission.PermissionManager
@@ -21,15 +31,14 @@ import icu.takeneko.omms.crystal.plugin.PluginManager
 import icu.takeneko.omms.crystal.rcon.RconClient
 import icu.takeneko.omms.crystal.rcon.RconListener
 import icu.takeneko.omms.crystal.server.ServerStatus
-import icu.takeneko.omms.crystal.server.ServerThreadDaemon
-import icu.takeneko.omms.crystal.server.serverStatus
+import icu.takeneko.omms.crystal.service.CrystalServiceManager
 import icu.takeneko.omms.crystal.util.BuildProperties
-import icu.takeneko.omms.crystal.util.LoggerUtil.createLogger
+import icu.takeneko.omms.crystal.util.LoggerUtil
 import icu.takeneko.omms.crystal.util.PRODUCT_NAME
 import icu.takeneko.omms.crystal.util.command.CommandSource
 import icu.takeneko.omms.crystal.util.command.CommandSourceStack
 import icu.takeneko.omms.crystal.util.constants.DebugOptions
-import icu.takeneko.omms.crystal.util.file.FileUtil.joinFilePaths
+import icu.takeneko.omms.crystal.util.file.FileUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,28 +58,42 @@ import kotlin.time.measureTime
 object CrystalServer : CoroutineScope, ActionHost {
     val coroutineDispatcher = Dispatchers.IO.limitedParallelism(Runtime.getRuntime().availableProcessors())
 
-    val eventBus = EventBus(this, Event::class.java)
+    lateinit var eventBus: EventBus
+        private set
 
     val consoleHandler = ConsoleHandler()
 
-    val logger = createLogger("CrystalServer")
+    private var logger = LoggerUtil.createLogger("CrystalServer", false)
 
     val config
         get() = ConfigManager.config
 
+    val classLoader: ClassLoader = Thread.currentThread().contextClassLoader
+
+    lateinit var serverLauncher: ICrystalServerLauncher
+        private set
+
     var rconListener: RconListener? = null
+        private set
 
-    var serverThreadDaemon: ServerThreadDaemon? = null
+    var serverStatus = ServerStatus.STOPPED
+        private set
 
-    fun initialize(args: Array<String>) {
+    private val _availableParsers: MutableMap<String, ICrystalServerInfoParser> = mutableMapOf()
+
+    val availableParsers: Map<String, ICrystalServerInfoParser>
+        get() = _availableParsers
+
+    var shouldKeepRunning = true
+
+    fun bootstrap(args: Array<String>) {
+
         val duration = measureTime {
-            eventBus.register(this)
             Runtime.getRuntime().addShutdownHook(
                 thread(name = "ShutdownThread", start = false) {
-                    if (serverThreadDaemon != null) {
+                    if (this::serverLauncher.isInitialized && serverLauncher.isServerRunning()) {
                         println("Stopping server because jvm is shutting down.")
-                        serverThreadDaemon!!.outputHandler.interrupt()
-                        serverThreadDaemon!!.stopServer(true, this)
+                        serverLauncher.terminate(this)
                     }
                 }
             )
@@ -90,7 +113,7 @@ object CrystalServer : CoroutineScope, ActionHost {
 
             runCatching {
                 if (ConfigManager.load()) {
-                    val serverPath = Path(joinFilePaths("server"))
+                    val serverPath = Path(FileUtil.joinFilePaths("server"))
                     if (!serverPath.exists() || !serverPath.isDirectory()) {
                         Files.createDirectory(serverPath)
                     }
@@ -104,38 +127,46 @@ object CrystalServer : CoroutineScope, ActionHost {
                     logger.info("\tServerType: {}", config.serverType)
                     logger.info("\tDebugOptions: {}", DebugOptions)
                 }
+                eventBus = EventBus(this, Event::class.java)
+                eventBus.register(this)
+                logger = LoggerUtil.createLogger("CrystalServer", DebugOptions.mainDebug())
                 TranslateManager.useLanguage(config.lang)
                 TranslateManager.init()
                 CommandHelpManager.init()
-                PluginManager.init()
+                PluginManager.bootstrap()
                 PluginManager.loadAll()
                 PermissionManager.init()
+                CommandManager.init()
                 consoleHandler.reload()
                 if (config.rconServer.enabled) {
                     rconListener = RconListener.create()
                 }
+                bootstrapServices()
             }.onFailure { t ->
                 logger.error("Unexpected error occurred.", t)
                 exitProcess(1)
             }
         }
+        this.postEvent(CrystalSetupEvent())
+        logger.info("Startup preparations finished in {} milliseconds", duration.inWholeMilliseconds)
+    }
 
-        logger.info("Startup preparations finished in {}", duration.inWholeMilliseconds)
-
-        if (args.contains("--no-server")) {
-            Thread.sleep(1500)
-            exit()
-            exitProcess(0)
-        }
+    private fun bootstrapServices() {
+        this.serverLauncher = CrystalServiceManager.load(ICrystalServerLauncher::class.java)[config.launcher]
+            ?: throw IllegalArgumentException(
+                "Crystal could not find the ICrystalServerLauncher(${config.launcher}) specified."
+            )
+        this._availableParsers += CrystalServiceManager.load(ICrystalServerInfoParser::class.java)
+        logger.debug("All available launchers: {}", this.serverLauncher)
+        logger.debug("All available parsers: {}", this._availableParsers)
     }
 
     @SubscribeEvent
     fun onRegisterCommands(e: RegisterCommandEvent) {
-        e.register(helpCommand)
-        e.register(permissionCommand)
-        e.register(startCommand)
-        e.register(stopCommand)
-        e.register(pluginCommand)
+        e.register(BuiltinCommand.helpCommand)
+        e.register(BuiltinCommand.permissionCommand)
+        e.register(BuiltinCommand.startCommand)
+        e.register(BuiltinCommand.stopCommand)
     }
 
     @SubscribeEvent
@@ -148,7 +179,6 @@ object CrystalServer : CoroutineScope, ActionHost {
     @SubscribeEvent
     fun onServerStoppedEvent(e: ServerStoppedEvent) {
         logger.info("Server exited with return value {}", e.exitCode)
-        serverThreadDaemon = null
         serverStatus = ServerStatus.STOPPED
         if (e.actionHost == this) {
             logger.info("Bye.")
@@ -158,24 +188,25 @@ object CrystalServer : CoroutineScope, ActionHost {
 
     @SubscribeEvent
     fun onStopServer(e: StopServerEvent) {
-        if (serverThreadDaemon == null) {
+        if (!serverLauncher.isServerRunning) {
             logger.warn("Server is not running!")
         } else {
-            serverThreadDaemon!!.stopServer(host = e.actionHost, force = e.force)
+            serverLauncher.stopServer(e.actionHost, e.force)
             serverStatus = ServerStatus.STOPPING
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     fun onStartServer(e: StartServerEvent) {
-        if (serverThreadDaemon != null) {
+        if (serverLauncher.isServerRunning) {
             logger.warn("Server already running!")
         }
         logger.info("Starting server using command {} in directory: {}", e.launchCommand, e.workingDir)
-
-        serverThreadDaemon =
-            ServerThreadDaemon(e.launchCommand, e.workingDir)
-        serverThreadDaemon!!.start()
+        val parser = _availableParsers[config.serverType]
+        if (parser == null){
+            throw IllegalArgumentException("Crystal could not find the parser specified: ${config.serverType}")
+        }
+        serverLauncher.launchServer(e.workingDir, e.launchCommand, parser)
     }
 
     @SubscribeEvent
@@ -217,14 +248,16 @@ object CrystalServer : CoroutineScope, ActionHost {
     }
 
     fun input(command: String) {
-        if (serverThreadDaemon != null) {
-            serverThreadDaemon?.input(command)
+        if (serverLauncher.isServerRunning) {
+            serverLauncher.input(command)
+            return
         }
         logger.warn("There is no running server instance for command input to take action.")
     }
 
     @SubscribeEvent
     fun onServerStarted(e: ServerStartedEvent) {
+        logger.debug("Server state changed to RUNNING")
         serverStatus = ServerStatus.RUNNING
     }
 
@@ -236,16 +269,6 @@ object CrystalServer : CoroutineScope, ActionHost {
             logger.info("Rcon connected.")
         }
     }
-
-//    TODO
-//    @SubscribeEvent
-//    fun onServerLogging(e: ServerLoggingEvent) {
-//        if (serverThreadDaemon != null) {
-//            serverThreadDaemon!!.input(it.content)
-//        } else {
-//            logger.warn("Server is NOT running!")
-//        }
-//    }
 
     fun run() {
         postEvent(StartServerEvent(config.launchCommand, Path(config.workingDirectory)))
@@ -266,10 +289,16 @@ object CrystalServer : CoroutineScope, ActionHost {
         return e
     }
 
-    fun destroyDaemon() {
-        this.serverThreadDaemon = null
+    fun exit() {
+        PermissionManager.save()
+        shouldKeepRunning = false
     }
 
     override val coroutineContext: CoroutineContext
         get() = coroutineDispatcher
+
+    inline fun ifMainDebug(block: () -> Unit) {
+        if (DebugOptions.mainDebug()) block()
+    }
+
 }

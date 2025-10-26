@@ -17,6 +17,13 @@ data class ConfigData(
     val pluginDirectory: String = "plugins",
 
     @YamlComment(
+        "Builtin Server Launchers: process",
+        "- process: Launches server as a child process"
+    )
+    @SerialName("launcher")
+    val launcher: String = "process",
+
+    @YamlComment(
         "Builtin Server Types: vanilla",
         "ServerType, aka. ServerParser",
         "When a plugin declared a ServerParser, it also implicitly declared a ServerType with the same name."

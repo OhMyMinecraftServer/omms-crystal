@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.konan.file.File
 import java.util.Properties
 
 plugins {
-    alias(libs.plugins.detekt)
+//    alias(libs.plugins.detekt)
     alias(libs.plugins.shadow)
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
@@ -54,7 +54,7 @@ tasks {
 }
 
 dependencies {
-    detektPlugins(libs.detekt.formatting)
+//    detektPlugins(libs.detekt.formatting)
 
     api(kotlin("stdlib"))
     api(libs.gson)
@@ -71,6 +71,7 @@ dependencies {
         isTransitive = false
     }
     api(libs.kaml)
+    api("com.google.guava:guava:33.5.0-jre")
 
     testImplementation(kotlin("test"))
 }

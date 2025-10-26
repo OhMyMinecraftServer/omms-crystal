@@ -1,6 +1,6 @@
 package icu.takeneko.omms.crystal.i18n
 
-import icu.takeneko.omms.crystal.main.CrystalServer
+import icu.takeneko.omms.crystal.CrystalServer
 import java.util.*
 
 val builtinTranslationLanguages = listOf("en_us", "zh_cn")

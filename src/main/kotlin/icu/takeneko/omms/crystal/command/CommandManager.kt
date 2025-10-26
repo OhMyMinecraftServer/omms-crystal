@@ -4,6 +4,8 @@ import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.ParseResults
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.suggestion.Suggestions
+import icu.takeneko.omms.crystal.CrystalServer
+import icu.takeneko.omms.crystal.event.server.RegisterCommandEvent
 import icu.takeneko.omms.crystal.util.command.CommandSourceStack
 import java.util.concurrent.CompletableFuture
 
@@ -13,6 +15,10 @@ object CommandManager {
 
     val completer
         get() = BrigadierCommandCompleter()
+
+    fun init() {
+        CrystalServer.postEvent(RegisterCommandEvent(dispatcher))
+    }
 
     fun register(node: LiteralArgumentBuilder<CommandSourceStack>) {
         dispatcher.register(node)
