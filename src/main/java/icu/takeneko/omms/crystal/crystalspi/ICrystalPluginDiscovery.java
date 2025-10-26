@@ -1,6 +1,6 @@
 package icu.takeneko.omms.crystal.crystalspi;
 
-import icu.takeneko.omms.crystal.plugin.instance.PluginContainer;
+import icu.takeneko.omms.crystal.plugin.container.PluginContainer;
 
 import java.util.List;
 

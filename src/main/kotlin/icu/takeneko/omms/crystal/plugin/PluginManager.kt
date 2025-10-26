@@ -2,16 +2,15 @@ package icu.takeneko.omms.crystal.plugin
 
 import icu.takeneko.omms.crystal.crystalspi.ICrystalPluginDiscovery
 import icu.takeneko.omms.crystal.CrystalServer
-import icu.takeneko.omms.crystal.plugin.instance.PluginContainer
+import icu.takeneko.omms.crystal.plugin.container.PluginContainer
 import icu.takeneko.omms.crystal.plugin.support.JarClassLoader
 import icu.takeneko.omms.crystal.service.CrystalServiceManager
 import icu.takeneko.omms.crystal.util.LoggerUtil
 import icu.takeneko.omms.crystal.util.constants.DebugOptions
-import org.slf4j.LoggerFactory
+import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.div
-import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
@@ -22,6 +21,9 @@ object PluginManager {
     private val discoveries = mutableListOf<ICrystalPluginDiscovery>()
     private val unconstructedPlugins = mutableMapOf<String, PluginContainer>()
     private val plugins = mutableMapOf<String, PluginContainer>()
+    private val _pluginFiles = mutableListOf<Path>()
+    val pluginFiles: List<Path>
+        get() = _pluginFiles
     private val pluginDir = Path(".") / Path(CrystalServer.config.pluginDirectory)
     private val logger = LoggerUtil.createLogger("PluginManager", DebugOptions.pluginDebug())
 
@@ -33,9 +35,10 @@ object PluginManager {
         if (pluginDir.notExists()) {
             pluginDir.createDirectory()
         }
-        pluginDir.listDirectoryEntries()
+        _pluginFiles += pluginDir.listDirectoryEntries()
             .filter { it.isRegularFile() }
             .filter { it.extension.lowercase() == "jar" }
+        _pluginFiles
             .map { it.toFile() }
             .forEach(pluginClassLoader::loadJar)
         discoveries += CrystalServiceManager.load(ICrystalPluginDiscovery::class.java).values
@@ -48,6 +51,10 @@ object PluginManager {
             logger.info("Dispatching plugin construction: {}", key)
             value.constructPlugin()
             plugins += key to value
+        }
+        logger.info("Loaded plugins: ")
+        plugins.forEach { (key, value) ->
+            logger.info("    - {} {}", key, value.getMetadata().version)
         }
     }
 }

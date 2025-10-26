@@ -1,4 +1,4 @@
-package icu.takeneko.omms.crystal.plugin.instance
+package icu.takeneko.omms.crystal.plugin.container
 
 import icu.takeneko.omms.crystal.event.Event
 import icu.takeneko.omms.crystal.event.EventBus

@@ -8,12 +8,13 @@ import icu.takeneko.omms.crystal.util.command.CommandSource
 import icu.takeneko.omms.crystal.util.command.CommandSourceStack
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
+import org.jline.reader.UserInterruptException
 import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
 
 class ConsoleHandler : Thread("ConsoleHandler") {
     private val terminal: Terminal = TerminalBuilder.builder().system(true).dumb(true).build()
-    private lateinit var lineReader: LineReader
+    private var lineReader: LineReader = LineReaderBuilder.builder().terminal(terminal).build()
 
     @Synchronized
     fun reload() {
@@ -33,7 +34,12 @@ class ConsoleHandler : Thread("ConsoleHandler") {
                 } else {
                     CrystalServer.input(str)
                 }
-            } catch (_: Exception) {
+            } catch (_: InterruptedException) {
+                break
+            } catch (_: UserInterruptException) {
+                break
+            } catch (e: Exception) {
+                logger.error("ConsoleHandler ran into a problem and it will exit.", e)
                 break
             }
         }

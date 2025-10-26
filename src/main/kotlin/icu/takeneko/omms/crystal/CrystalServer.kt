@@ -157,8 +157,8 @@ object CrystalServer : CoroutineScope, ActionHost {
                 "Crystal could not find the ICrystalServerLauncher(${config.launcher}) specified."
             )
         this._availableParsers += CrystalServiceManager.load(ICrystalServerInfoParser::class.java)
-        logger.debug("All available launchers: {}", this.serverLauncher)
-        logger.debug("All available parsers: {}", this._availableParsers)
+        logger.info("All available launchers: {}", this.serverLauncher)
+        logger.info("All available parsers: {}", this._availableParsers)
     }
 
     @SubscribeEvent
@@ -291,6 +291,7 @@ object CrystalServer : CoroutineScope, ActionHost {
 
     fun exit() {
         PermissionManager.save()
+        consoleHandler.interrupt()
         shouldKeepRunning = false
     }
 

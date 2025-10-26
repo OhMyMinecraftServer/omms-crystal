@@ -1,4 +1,4 @@
-package icu.takeneko.omms.crystal.plugin.instance
+package icu.takeneko.omms.crystal.plugin.container
 
 import icu.takeneko.omms.crystal.plugin.metadata.PluginMetadata
 import icu.takeneko.omms.crystal.plugin.support.JarClassLoader
@@ -8,12 +8,8 @@ class JarPluginContainer(
     private val classLoader: JarClassLoader,
     private val pluginPath: Path
 ) : PluginContainer() {
-    init {
-        classLoader.loadJar(pluginPath.toFile())
-    }
 
     override fun constructPlugin() {
-        TODO()
     }
 
     override fun getMetadata(): PluginMetadata {
