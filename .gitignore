@@ -37,3 +37,5 @@ bin/
 /backup/
 /.idea
 /*.json
+/run
+/crystal/run
