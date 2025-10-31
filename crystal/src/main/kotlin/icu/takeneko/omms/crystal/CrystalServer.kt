@@ -284,11 +284,12 @@ object CrystalServer : CoroutineScope, ActionHost {
         eventBus.dispatch(e)
     }
 
-    inline fun <reified T : Event> postEventWithReturn(e: T): T {
+    suspend inline fun <reified T : Event> postEventWithReturn(e: T): T {
         if (e is PluginBusEvent) {
+            PluginManager.postEventWithReturn(e)
             return e
         }
-        eventBus.dispatch(e)
+        eventBus.dispatchSuspend(e)
         return e
     }
 

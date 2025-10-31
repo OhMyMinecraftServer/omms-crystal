@@ -78,4 +78,10 @@ object PluginManager {
             it.pluginEventBus.dispatch(e)
         }
     }
+
+    suspend fun postEventWithReturn(e: PluginBusEvent) {
+        plugins.values.forEach {
+            it.pluginEventBus.dispatchSuspend(e)
+        }
+    }
 }
