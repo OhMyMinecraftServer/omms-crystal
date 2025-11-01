@@ -4,6 +4,7 @@ import icu.takeneko.omms.crystal.event.EventBus
 import icu.takeneko.omms.crystal.event.EventBusSubscriber
 import icu.takeneko.omms.crystal.plugin.annotation.Plugin
 import icu.takeneko.omms.crystal.plugin.container.PluginContainer
+import icu.takeneko.omms.crystal.plugin.discovery.impl.JarPluginDiscovery
 import icu.takeneko.omms.crystal.plugin.metadata.PluginMetadata
 import icu.takeneko.omms.crystal.plugin.support.JarClassLoader
 import icu.takeneko.omms.crystal.plugin.support.ScanData

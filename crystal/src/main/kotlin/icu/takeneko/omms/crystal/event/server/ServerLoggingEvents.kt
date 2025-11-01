@@ -9,6 +9,8 @@ import icu.takeneko.omms.crystal.parser.PlayerInfo
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 
+class ServerRawLoggingEvent(val content: String): PluginBusEvent
+
 class ServerOverloadEvent(val ticks: Long, val time: Long) : PluginBusEvent
 
 class ServerLoggingEvent(val info: Info) : PluginBusEvent

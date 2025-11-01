@@ -5,7 +5,6 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     id("maven-publish")
     java
-    application
     alias(libs.plugins.shadow)
 }
 
@@ -29,7 +28,12 @@ repositories {
     maven("https://jitpack.io")
 }
 
+val shadowed by configurations.creating
 tasks {
+    shadowJar {
+        dependsOn(build)
+        this.configurations = listOf(shadowed)
+    }
     test {
         useJUnitPlatform()
     }
@@ -41,6 +45,11 @@ tasks {
             jvmTarget = JvmTarget.JVM_17
         }
     }
+    register("copyBuiltPlugins", Copy::class.java) {
+        dependsOn(shadowJar)
+        from(shadowJar.get().outputs)
+        into(project(":crystal").layout.projectDirectory.dir("run").dir("plugins"))
+    }
 }
 
 dependencies {
@@ -48,6 +57,7 @@ dependencies {
     compileOnly(rootProject.project("crystal"))
     runtimeOnly(kotlin("stdlib"))
     runtimeOnly(rootProject.project("crystal"))
+    compileOnly("black.ninia:jep:4.2.2")
     // https://mvnrepository.com/artifact/black.ninia/jep
-    implementation("black.ninia:jep:4.2.2")
+    shadowed("black.ninia:jep:4.2.2")
 }

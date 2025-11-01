@@ -22,6 +22,7 @@ class ConsoleHandler : Thread("ConsoleHandler") {
     }
 
     override fun run() {
+        return
         while (true) {
             try {
                 val str = lineReader.readLine(">")

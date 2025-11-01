@@ -47,6 +47,7 @@ class ServerOutputHandler(private val serverProcess: Process) : Thread("ServerOu
                     LockSupport.parkNanos(10)
                     val string = reader.readLine()
                     if (string != null) {
+                        CrystalServer.postEvent(ServerRawLoggingEvent(string))
                         val info = parser.parseToBareInfo(string)
                         if (info == null) {
                             println(string)

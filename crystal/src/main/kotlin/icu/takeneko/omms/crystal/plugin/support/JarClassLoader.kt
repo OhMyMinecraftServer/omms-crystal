@@ -11,6 +11,7 @@ import java.util.zip.ZipFile
 class JarClassLoader(parent: ClassLoader) : URLClassLoader(arrayOf(), parent) {
     private val logger = LoggerUtil.createLogger("JarClassLoader", true)
     val allScanData = mutableMapOf<URI, List<ScanData>>()
+    val allScannedClasses = mutableListOf<String>()
     private val visitors = mutableListOf<JarVisitor>()
 
     fun loadJar(file: File) {
@@ -32,6 +33,7 @@ class JarClassLoader(parent: ClassLoader) : URLClassLoader(arrayOf(), parent) {
             for (entry in zip.entries().asSequence()) {
                 visitors.forEach { it.visitJarEntry(zip, entry) }
                 if (entry.name.endsWith(".class")) {
+                    allScannedClasses += entry.name.removeSuffix(".class")
                     val bytes = zip.getInputStream(entry).readBytes()
                     val classNode = ClassNode().apply {
                         ClassReader(bytes).accept(this@apply, 0)

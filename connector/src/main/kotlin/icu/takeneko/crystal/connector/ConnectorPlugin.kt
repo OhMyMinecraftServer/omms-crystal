@@ -20,8 +20,4 @@ class ConnectorPlugin constructor(
         CrystalServer.eventBus.register(this)
         pluginBus.register(this)
     }
-
-    @SubscribeEvent
-    fun on(e: CrystalSetupEvent) {
-    }
 }

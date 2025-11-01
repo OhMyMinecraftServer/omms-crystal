@@ -1,4 +1,4 @@
-package icu.takeneko.crystal.connector.dispacher
+package icu.takeneko.omms.crystal.util
 
 sealed interface Result<R> {
     val isSuccess: Boolean

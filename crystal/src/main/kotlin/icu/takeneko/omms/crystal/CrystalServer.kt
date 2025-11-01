@@ -13,6 +13,7 @@ import icu.takeneko.omms.crystal.event.EventBus
 import icu.takeneko.omms.crystal.event.EventPriority
 import icu.takeneko.omms.crystal.event.PluginBusEvent
 import icu.takeneko.omms.crystal.event.SubscribeEvent
+import icu.takeneko.omms.crystal.event.server.CrystalExitingEvent
 import icu.takeneko.omms.crystal.event.server.CrystalSetupEvent
 import icu.takeneko.omms.crystal.event.server.PlayerChatEvent
 import icu.takeneko.omms.crystal.event.server.PlayerJoinEvent
@@ -42,6 +43,8 @@ import icu.takeneko.omms.crystal.util.file.FileUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import java.lang.management.ManagementFactory
@@ -86,6 +89,7 @@ object CrystalServer : CoroutineScope, ActionHost {
         get() = _availableParsers
 
     var shouldKeepRunning = true
+        internal set
 
     fun bootstrap(args: Array<String>) {
 
@@ -98,7 +102,6 @@ object CrystalServer : CoroutineScope, ActionHost {
                     }
                 }
             )
-            consoleHandler.start()
 
             logger.info("Hello World!")
             val os = ManagementFactory.getOperatingSystemMXBean()
@@ -148,7 +151,14 @@ object CrystalServer : CoroutineScope, ActionHost {
                 exitProcess(1)
             }
         }
-        this.postEvent(CrystalSetupEvent())
+        this.launch{
+            postEventWithReturn(CrystalSetupEvent())
+        }.apply {
+            runBlocking {
+                this@apply.join()
+            }
+        }
+        consoleHandler.start()
         logger.info("Startup preparations finished in {} milliseconds", duration.inWholeMilliseconds)
     }
 
@@ -297,6 +307,10 @@ object CrystalServer : CoroutineScope, ActionHost {
         PermissionManager.save()
         consoleHandler.interrupt()
         shouldKeepRunning = false
+        runBlocking {
+            postEventWithReturn(CrystalExitingEvent())
+        }
+
     }
 
     override val coroutineContext: CoroutineContext
