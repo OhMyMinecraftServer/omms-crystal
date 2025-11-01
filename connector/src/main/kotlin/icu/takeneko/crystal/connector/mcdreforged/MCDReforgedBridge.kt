@@ -15,7 +15,8 @@ object MCDReforgedBridge {
     internal var mcdrInstance: MCDReforged? = null
     internal val logger = LoggerUtil.createLoggerWithPattern(
         "[%cyan(%d{yyyy-MM-dd HH:mm:ss.SSS})] [%boldYellow(MCDReforged)/%highlight(%level)]: %green(\\(%marker\\)) %msg%n",
-        "MCDReforged"
+        "MCDReforged",
+        logToFile = true
     )
     internal var pid: Long? = null
     private val logLines = mutableListOf<String>()

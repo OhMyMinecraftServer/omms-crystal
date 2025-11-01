@@ -146,19 +146,19 @@ object CrystalServer : CoroutineScope, ActionHost {
                     rconListener = RconListener.create()
                 }
                 bootstrapServices()
+                this.launch {
+                    postEventWithReturn(CrystalSetupEvent())
+                }.apply {
+                    runBlocking {
+                        this@apply.join()
+                    }
+                }
+                consoleHandler.start()
             }.onFailure { t ->
                 logger.error("Unexpected error occurred.", t)
                 exitProcess(1)
             }
         }
-        this.launch{
-            postEventWithReturn(CrystalSetupEvent())
-        }.apply {
-            runBlocking {
-                this@apply.join()
-            }
-        }
-        consoleHandler.start()
         logger.info("Startup preparations finished in {} milliseconds", duration.inWholeMilliseconds)
     }
 
@@ -215,7 +215,7 @@ object CrystalServer : CoroutineScope, ActionHost {
         }
         logger.info("Starting server using command {} in directory: {}", e.launchCommand, e.workingDir)
         val parser = _availableParsers[config.serverType]
-        if (parser == null){
+        if (parser == null) {
             throw IllegalArgumentException("Crystal could not find the parser specified: ${config.serverType}")
         }
         serverLauncher.launchServer(e.workingDir, e.launchCommand, parser)
